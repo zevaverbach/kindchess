@@ -1,0 +1,43 @@
+- [ ] create a basic DB
+  - [ ] use Redis at first for the active games
+    - [ ] make a list for each active game
+        - [ ] key is "game_<uid>"
+        - [ ] value is list of verbose moves (originating square, pieces, destination square)
+    - [x] make a hash for each game
+        - [x] key is "game_<uid>"
+        - [x] values are key/values
+            - [x] half_moves: int
+            - [x] turn: 0/1
+            - [x] white_can_castle_queenside
+            - [x] black_can_castle_queenside
+            - [x] white_can_castle_kingside
+            - [x] black_can_castle_kingside
+            - [x] half_moves_since_last_capture: null/moveNum
+            - [x] board: probably a FEN
+  - [x] use sqlite for completed games
+    - [x] fields: uid and moves
+    - [x] a function to store a completed game
+- [ ] create a basic API
+  - [ ] /game
+    - [ ] GET
+    - [ ] POST
+        - [ ] /create
+    - [ ] PUT
+        - [ ] /update
+            - [ ] resign
+            - [ ] draw
+            - [ ] abandon
+            - [ ] move
+- [ ] create a basic web interface
+  - [ ] no user registration or chat
+  - [ ] whoever creates the game is player 1
+  - [ ] the second to arrive to the game is player 2
+  - [ ] everyone else is a spectator
+  - [ ] maybe use websockets off the bat instead of polling
+
+
+# Later
+
+- [ ] game clock
+- [ ] enforce move limit (draw)
+- [ ] detect cheating
