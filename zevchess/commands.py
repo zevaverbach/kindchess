@@ -23,7 +23,7 @@ def create_game() -> t.Uid:
     uid = None
     while uid is None or r.sismember(name=EXISTING_UIDS, value=uid):
         uid = str(uuid4())
-    r.hset(uid, mapping=dc.asdict(t.GameState())) # type: ignore
+    r.hset(uid, mapping=dc.asdict(t.GameState()))  # type: ignore
     return t.Uid(uid)
 
 
@@ -60,11 +60,9 @@ def get_new_state(state: t.GameState, move: t.Move) -> t.GameState:
 
 def recalculate_castling_state(state: t.GameState, move: t.Move) -> None:
     if (
-        state.turn == 0 
-        and (state.black_can_castle_queenside or state.black_can_castle_kingside) 
-        and (move.castle is not None or 
-            (move.piece is not None and move.piece in "kr")
-        )
+        state.turn == 0
+        and (state.black_can_castle_queenside or state.black_can_castle_kingside)
+        and (move.castle is not None or (move.piece is not None and move.piece in "kr"))
     ):
         if move.castle is not None:
             state.black_can_castle_kingside = 0
@@ -78,10 +76,8 @@ def recalculate_castling_state(state: t.GameState, move: t.Move) -> None:
             state.black_can_castle_kingside = 0
     elif (
         state.turn == 1
-        and (state.white_can_castle_queenside or state.white_can_castle_kingside) 
-        and (move.castle is not None or 
-            (move.piece is not None and move.piece in "kr")
-        )
+        and (state.white_can_castle_queenside or state.white_can_castle_kingside)
+        and (move.castle is not None or (move.piece is not None and move.piece in "kr"))
     ):
         if move.castle is not None:
             state.white_can_castle_kingside = 0
@@ -135,7 +131,7 @@ def combine_FEN_fragments(f1: str, f2: str) -> t.FEN:
 
 
 def recalculate_FEN(state: t.GameState, move: t.Move) -> t.FEN:
-    ranks = str(state.FEN).split('/')[::-1]
+    ranks = str(state.FEN).split("/")[::-1]
     updated_ranks = {}
     if move.castle is not None:
         rank_origin_idx = 0 if state.turn == 0 else 7
@@ -146,17 +142,17 @@ def recalculate_FEN(state: t.GameState, move: t.Move) -> t.FEN:
             updated_rank = combine_FEN_fragments(rank_origin[:5], "rk1")
         updated_ranks[rank_origin_idx] = updated_rank
     else:
-        src_rank, src_file = move.src # type: ignore
+        src_rank, src_file = move.src  # type: ignore
         rank_origin_idx = string.ascii_lowercase.index(src_rank)
         rank_origin = ranks[rank_origin_idx]
-        dest_rank, dest_file = move.dest # type: ignore
+        dest_rank, dest_file = move.dest  # type: ignore
         updated_rank = ""
         tokens_src = split_FEN_into_tokens(rank_origin)
 
         if dest_rank == src_rank:
             for idx, token in enumerate(tokens_src):
                 if idx + 1 == dest_file:
-                    updated_rank += move.piece # type: ignore
+                    updated_rank += move.piece  # type: ignore
                     if state.turn == 1:
                         updated_rank = updated_rank.upper()
                 elif idx + 1 == src_file:
@@ -179,7 +175,7 @@ def recalculate_FEN(state: t.GameState, move: t.Move) -> t.FEN:
 
             for idx, token in enumerate(tokens_dest):
                 if idx + 1 == dest_file:
-                    updated_rank += move.piece # type: ignore
+                    updated_rank += move.piece  # type: ignore
                     if state.turn == 1:
                         updated_rank = updated_rank.upper()
             updated_ranks[rank_dest_idx] = updated_rank
@@ -197,7 +193,7 @@ def recalculate_FEN(state: t.GameState, move: t.Move) -> t.FEN:
 
 
 def store_state(uid: t.Uid, state: t.GameState) -> None:
-    r.hset(uid, mapping=dc.asdict(state)) # type: ignore
+    r.hset(uid, mapping=dc.asdict(state))  # type: ignore
 
 
 def store_completed_game(uid: t.Uid, moves: list[str]) -> None:

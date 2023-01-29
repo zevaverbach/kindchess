@@ -14,7 +14,7 @@ def get_existing_uids_from_db() -> list[t.Uid]:
 def get_game_state(uid: t.Uid) -> t.GameState:
     fields = [f.name for f in dc.fields(t.GameState)]
     print(fields)
-    return t.GameState.from_redis(r.hmget(uid, fields)) # type: ignore
+    return t.GameState.from_redis(r.hmget(uid, fields))  # type: ignore
 
 
 def get_all_legal_moves(state: t.GameState) -> list[t.Move]:
