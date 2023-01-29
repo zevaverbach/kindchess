@@ -1,5 +1,6 @@
 import dataclasses as dc
 import sqlite3
+import string
 from uuid import uuid4
 
 import zevchess.validate as v
@@ -15,6 +16,7 @@ class InvalidArguments(Exception):
 EXISTING_UIDS = "existing_uids"
 TURN = "turn"
 NUM_MOVES = "num_moves"
+BLANK = "BLANK"
 
 
 def create_game() -> t.Uid:
@@ -36,7 +38,7 @@ def make_move(uid: t.Uid, move: t.Move) -> None:
     store_move(uid, move)
 
     state = get_new_state(state, move)
-    store_state(state)
+    store_state(uid, state)
     raise NotImplementedError
 
 
@@ -49,7 +51,7 @@ def get_new_state(state: t.GameState, move: t.Move) -> t.GameState:
     else:
         state.half_moves_since_last_capture += 1
     recalculate_castling_state(state, move)
-    recalculate_FEN(state.FEN, move)
+    state.FEN = recalculate_FEN(state, move)
     state.half_moves += 1
     state.turn = int(not state.turn)
 
@@ -71,9 +73,9 @@ def recalculate_castling_state(state: t.GameState, move: t.Move) -> None:
             state.black_can_castle_kingside = 0
             state.black_can_castle_queenside = 0
         elif move.src == "a8":
-            state.black_can_castle_kingside = 0
-        elif move.src == "h8":
             state.black_can_castle_queenside = 0
+        elif move.src == "h8":
+            state.black_can_castle_kingside = 0
     elif (
         state.turn == 1
         and (state.white_can_castle_queenside or state.white_can_castle_kingside) 
@@ -88,10 +90,9 @@ def recalculate_castling_state(state: t.GameState, move: t.Move) -> None:
             state.white_can_castle_kingside = 0
             state.white_can_castle_queenside = 0
         elif move.src == "a1":
-            state.white_can_castle_kingside = 0
-        elif move.src == "h1":
             state.white_can_castle_queenside = 0
-
+        elif move.src == "h1":
+            state.white_can_castle_kingside = 0
 
 
 def store_move(uid: t.Uid, move: t.Move) -> None:
@@ -103,8 +104,96 @@ def store_move(uid: t.Uid, move: t.Move) -> None:
     r.lpush(f"game-{uid}", move_string)
 
 
-def recalculate_FEN(fen: t.FEN, move: t.Move) -> None:
-    raise NotImplementedError
+def split_FEN_into_tokens(fen: str) -> list[str]:
+    tokens = []
+    for char in fen:
+        if char.isnumeric():
+            for _ in range(int(char)):
+                tokens.append(BLANK)
+        else:
+            tokens.append(char)
+    return tokens
+
+
+def create_FEN_from_tokens(tokens: list[str]) -> t.FEN:
+    FEN = ""
+    num_blanks = 0
+    for tok in tokens:
+        if tok == BLANK:
+            num_blanks += 1
+        elif num_blanks > 0:
+            FEN += str(num_blanks)
+        FEN += tok
+    if num_blanks > 0:
+        FEN += str(num_blanks)
+    return t.FEN(FEN.encode())
+
+
+def combine_FEN_fragments(f1: str, f2: str) -> t.FEN:
+    f1_tokens, f2_tokens = split_FEN_into_tokens(f1), split_FEN_into_tokens(f2)
+    return create_FEN_from_tokens(f1_tokens + f2_tokens)
+
+
+def recalculate_FEN(state: t.GameState, move: t.Move) -> t.FEN:
+    ranks = str(state.FEN).split('/')[::-1]
+    updated_ranks = {}
+    if move.castle is not None:
+        rank_origin_idx = 0 if state.turn == 0 else 7
+        rank_origin = ranks[rank_origin_idx]
+        if move.castle == "q":
+            updated_rank = combine_FEN_fragments("2kr", rank_origin[5:])
+        else:
+            updated_rank = combine_FEN_fragments(rank_origin[:5], "rk1")
+        updated_ranks[rank_origin_idx] = updated_rank
+    else:
+        src_rank, src_file = move.src # type: ignore
+        rank_origin_idx = string.ascii_lowercase.index(src_rank)
+        rank_origin = ranks[rank_origin_idx]
+        dest_rank, dest_file = move.dest # type: ignore
+        updated_rank = ""
+        tokens_src = split_FEN_into_tokens(rank_origin)
+
+        if dest_rank == src_rank:
+            for idx, token in enumerate(tokens_src):
+                if idx + 1 == dest_file:
+                    updated_rank += move.piece # type: ignore
+                    if state.turn == 1:
+                        updated_rank = updated_rank.upper()
+                elif idx + 1 == src_file:
+                    updated_rank += BLANK
+                else:
+                    updated_rank += token
+            updated_ranks[rank_origin_idx] = updated_rank
+        else:
+            for idx, token in enumerate(tokens_src):
+                if idx + 1 == src_file:
+                    updated_rank += BLANK
+                else:
+                    updated_rank += token
+            updated_ranks[rank_origin_idx] = updated_rank
+
+            updated_rank = ""
+            rank_dest_idx = string.ascii_lowercase.index(dest_rank)
+            rank_dest = ranks[rank_dest_idx]
+            tokens_dest = split_FEN_into_tokens(rank_dest)
+
+            for idx, token in enumerate(tokens_dest):
+                if idx + 1 == dest_file:
+                    updated_rank += move.piece # type: ignore
+                    if state.turn == 1:
+                        updated_rank = updated_rank.upper()
+            updated_ranks[rank_dest_idx] = updated_rank
+
+    updated_FEN = ""
+    for i in range(7, -1, -1):
+        if i in updated_ranks:
+            section = updated_ranks[i]
+        else:
+            section = ranks[i]
+        updated_FEN += section
+        if i > 0:
+            updated_FEN += "/"
+    return t.FEN(updated_FEN.encode())
 
 
 def store_state(uid: t.Uid, state: t.GameState) -> None:

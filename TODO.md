@@ -1,8 +1,8 @@
-- [ ] create a basic DB
-  - [ ] use Redis at first for the active games
-    - [ ] make a list for each active game
-        - [ ] key is "game_<uid>"
-        - [ ] value is list of verbose moves (originating square, pieces, destination square)
+- [x] create a basic DB
+  - [x] use Redis at first for the active games
+    - [x] make a list for each active game
+        - [x] key is "game_<uid>"
+        - [x] value is list of verbose moves (originating square, pieces, destination square)
     - [x] make a hash for each game
         - [x] key is "game_<uid>"
         - [x] values are key/values
@@ -17,6 +17,15 @@
   - [x] use sqlite for completed games
     - [x] fields: uid and moves
     - [x] a function to store a completed game
+- [ ] create logic for
+  - [x] create game
+  - [ ] make move
+    - [ ] validate move
+    - [ ] persist move
+    - [x] update game state
+        - see "make a hash for each game"
+    - [ ] check if game is over
+        - [ ] if it is, persist it to "completed_games" (sqlite)
 - [ ] create a basic API
   - [ ] /game
     - [ ] GET
@@ -40,4 +49,5 @@
 
 - [ ] game clock
 - [ ] enforce move limit (draw)
+- [ ] material tracking - points, pieces
 - [ ] detect cheating
