@@ -12,8 +12,6 @@ def test_recalculate_FEN():
     )
     oldFEN = state.FEN
     newFEN = recalculate_FEN(state, move)
-    print("old FEN:", oldFEN)
-    print("newFEN:", newFEN)
     assert newFEN != oldFEN
 
 

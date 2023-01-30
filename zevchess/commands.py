@@ -40,7 +40,6 @@ def make_move(uid: t.Uid, move: t.Move) -> None:
 
     state = get_new_state(state, move)
     store_state(uid, state)
-    raise NotImplementedError
 
 
 def get_new_state(state: t.GameState, move: t.Move) -> t.GameState:
