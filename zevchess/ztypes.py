@@ -119,72 +119,121 @@ class GameState:
         )
 
 
+# TODO: replace this with the ztypes.Move, maybe remove "uid"
+@dc.dataclass
+class Move:
+    piece: str
+    src: str
+    dest: str
+    capture: bool = False
+    castle: t.Literal["k", "q"] | None = None
+
+
+@dc.dataclass
+class Piece:
+    color: int
+    square: str
+
+    def move(self, dest: str, capture: bool = False):
+        return Move(piece=self.name(), src=self.square, dest=dest, capture=capture)
+
+    @abc.abstractmethod
+    def name(self) -> str:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_possible_moves(self, board: "Board"):
+        # we're not worried here about pins, that's taken care of by the caller
+        raise NotImplementedError
+
+    @classmethod
+    def make(cls, square: str, char: str):
+        maker = None
+        match char.lower():
+            case "p":
+                maker = Pawn
+            # case "r":
+            #     maker = Rook
+            # case "b":
+            #     maker = Bishop
+            # case "n":
+            #     maker = Knight
+            # case "q":
+            #     maker = Queen
+            # case "k":
+            #     maker = King
+            case _:
+                # raise Exception("invalid piece type")
+                maker = Pawn
+        return maker(color=char.islower(), square=square)
+
+
 @dc.dataclass
 class Board:
-    a1: str | None = None
-    b1: str | None = None
-    c1: str | None = None
-    d1: str | None = None
-    e1: str | None = None
-    f1: str | None = None
-    g1: str | None = None
-    h1: str | None = None
-    a2: str | None = None
-    b2: str | None = None
-    c2: str | None = None
-    d2: str | None = None
-    e2: str | None = None
-    f2: str | None = None
-    g2: str | None = None
-    h2: str | None = None
-    a3: str | None = None
-    b3: str | None = None
-    c3: str | None = None
-    d3: str | None = None
-    e3: str | None = None
-    f3: str | None = None
-    g3: str | None = None
-    h3: str | None = None
-    a4: str | None = None
-    b4: str | None = None
-    c4: str | None = None
-    d4: str | None = None
-    e4: str | None = None
-    f4: str | None = None
-    g4: str | None = None
-    h4: str | None = None
-    a5: str | None = None
-    b5: str | None = None
-    c5: str | None = None
-    d5: str | None = None
-    e5: str | None = None
-    f5: str | None = None
-    g5: str | None = None
-    h5: str | None = None
-    a6: str | None = None
-    b6: str | None = None
-    c6: str | None = None
-    d6: str | None = None
-    e6: str | None = None
-    f6: str | None = None
-    g6: str | None = None
-    h6: str | None = None
-    a7: str | None = None
-    b7: str | None = None
-    c7: str | None = None
-    d7: str | None = None
-    e7: str | None = None
-    f7: str | None = None
-    g7: str | None = None
-    h7: str | None = None
-    a8: str | None = None
-    b8: str | None = None
-    c8: str | None = None
-    d8: str | None = None
-    e8: str | None = None
-    f8: str | None = None
-    g8: str | None = None
-    h8: str | None = None
+    a1: Piece | None = None
+    b1: Piece | None = None
+    c1: Piece | None = None
+    d1: Piece | None = None
+    e1: Piece | None = None
+    f1: Piece | None = None
+    g1: Piece | None = None
+    h1: Piece | None = None
+    a2: Piece | None = None
+    b2: Piece | None = None
+    c2: Piece | None = None
+    d2: Piece | None = None
+    e2: Piece | None = None
+    f2: Piece | None = None
+    g2: Piece | None = None
+    h2: Piece | None = None
+    a3: Piece | None = None
+    b3: Piece | None = None
+    c3: Piece | None = None
+    d3: Piece | None = None
+    e3: Piece | None = None
+    f3: Piece | None = None
+    g3: Piece | None = None
+    h3: Piece | None = None
+    a4: Piece | None = None
+    b4: Piece | None = None
+    c4: Piece | None = None
+    d4: Piece | None = None
+    e4: Piece | None = None
+    f4: Piece | None = None
+    g4: Piece | None = None
+    h4: Piece | None = None
+    a5: Piece | None = None
+    b5: Piece | None = None
+    c5: Piece | None = None
+    d5: Piece | None = None
+    e5: Piece | None = None
+    f5: Piece | None = None
+    g5: Piece | None = None
+    h5: Piece | None = None
+    a6: Piece | None = None
+    b6: Piece | None = None
+    c6: Piece | None = None
+    d6: Piece | None = None
+    e6: Piece | None = None
+    f6: Piece | None = None
+    g6: Piece | None = None
+    h6: Piece | None = None
+    a7: Piece | None = None
+    b7: Piece | None = None
+    c7: Piece | None = None
+    d7: Piece | None = None
+    e7: Piece | None = None
+    f7: Piece | None = None
+    g7: Piece | None = None
+    h7: Piece | None = None
+    a8: Piece | None = None
+    b8: Piece | None = None
+    c8: Piece | None = None
+    d8: Piece | None = None
+    e8: Piece | None = None
+    f8: Piece | None = None
+    g8: Piece | None = None
+    h8: Piece | None = None
 
     @classmethod
     def from_FEN(cls, fen: str) -> t.Self:
@@ -226,54 +275,6 @@ class Board:
         raise NotImplementedError
 
 
-# TODO: replace this with the ztypes.Move, maybe remove "uid"
-@dc.dataclass
-class Move:
-    piece: str
-    src: str
-    dest: str
-    capture: bool = False
-    castle: t.Literal["k", "q"] | None = None
-
-
-@dc.dataclass
-class Piece:
-    color: int
-    square: str
-
-    def move(self, dest: str, capture: bool = False):
-        return Move(piece=self.name(), src=self.square, dest=dest, capture=capture)
-
-    @abc.abstractmethod
-    def name(self) -> str:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def get_possible_moves(self, board: Board):
-        # we're not worried here about pins, that's taken care of by the caller
-        raise NotImplementedError
-
-    @classmethod
-    def make(cls, square: str, char: str):
-        maker = None
-        match char.lower():
-            case "p":
-                maker = Pawn
-            case "r":
-                maker = Rook
-            case "b":
-                maker = Bishop
-            case "n":
-                maker = Knight
-            case "q":
-                maker = Queen
-            case "k":
-                maker = King
-            case _:
-                raise Exception("invalid piece type")
-        return maker(color=char.islower(), square=square)
-
-
 @dc.dataclass
 class Pawn(Piece):
     square: str
@@ -284,19 +285,27 @@ class Pawn(Piece):
             return "P"
         return "p"
 
-    def get_possible_moves(self, board: Board):
+    def get_possible_moves(self, board: Board) -> list[Move]:
         # we're not worried here about pins, that's taken care of by the caller
         moves = []
         fl, rank_str = self.square
         rank = int(rank_str)
-        one_square_in_front = f"{fl}{rank + 1}"
+        if self.color:
+            one_square_in_front = f"{fl}{rank - 1}"
+        else:
+            one_square_in_front = f"{fl}{rank + 1}"
         if no_one_is_there(one_square_in_front, board):
             moves.append(self.move(one_square_in_front))
 
-        if rank == 2:
-            two_squares_in_front = f"{fl}{rank + 2}"
+        if (self.color and rank == 7) or rank == 2:
+            if self.color:
+                two_squares_in_front = f"{fl}{rank - 2}"
+            else:
+                two_squares_in_front = f"{fl}{rank + 2}"
             if no_one_is_there(two_squares_in_front, board):
                 moves.append(self.move(two_squares_in_front))
+            else:
+                print(f"someone is supposedly on {two_squares_in_front}?")
 
         diag_l = None
         prev_fl = get_prev_fl(fl)
@@ -315,6 +324,7 @@ class Pawn(Piece):
                 from_piece_perspective=self, square=diag_r, board=board
             ):
                 moves.append(self.move(diag_r, capture=True))
+        return moves
 
 
 def no_one_is_there(square: str, board: Board):
