@@ -1,8 +1,5 @@
-import abc
 import dataclasses as dc
 import sqlite3
-import string
-import typing
 
 from zevchess.db import r
 import zevchess.ztypes as t
@@ -38,5 +35,3 @@ def get_all_legal_moves(state: t.GameState) -> list[t.Move]:
 def would_be_illegal_because_check(move: t.Move, board: t.Board) -> bool:
     # is the piece pinned?
     raise NotImplementedError
-
-

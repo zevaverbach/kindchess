@@ -204,22 +204,22 @@ class Board:
         return cls(**board_dict)
 
     def black_pieces(self):
-        return [square
+        return [
+            square
             for square in self.squares()
             if square is not None and square.islower()
         ]
 
     def white_pieces(self):
-        return [square
+        return [
+            square
             for square in self.squares()
             if square is not None and square.isupper()
         ]
 
     def squares(self):
         return [
-            getattr(self, f"{fl}{rank}")
-            for rank in range(1, 9)
-            for fl in "abcdefgh"
+            getattr(self, f"{fl}{rank}") for rank in range(1, 9) for fl in "abcdefgh"
         ]
 
     def to_FEN(self) -> str:
@@ -236,7 +236,6 @@ class Move:
     castle: t.Literal["k", "q"] | None = None
 
 
-
 @dc.dataclass
 class Piece:
     color: int
@@ -247,6 +246,11 @@ class Piece:
 
     @abc.abstractmethod
     def name(self) -> str:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_possible_moves(self, board: Board):
+        # we're not worried here about pins, that's taken care of by the caller
         raise NotImplementedError
 
     @classmethod
@@ -268,15 +272,6 @@ class Piece:
             case _:
                 raise Exception("invalid piece type")
         return maker(color=char.islower(), square=square)
-        
-
-def no_one_is_there(square: str, board: Board):
-    return getattr(board, square) is None
-
-
-def an_opponent_is_there(from_piece_perspective: Piece, square: str, board: Board):
-    piece = getattr(board, square)
-    return piece is not None and piece.color != from_piece_perspective.color
 
 
 @dc.dataclass
@@ -290,6 +285,7 @@ class Pawn(Piece):
         return "p"
 
     def get_possible_moves(self, board: Board):
+        # we're not worried here about pins, that's taken care of by the caller
         moves = []
         fl, rank_str = self.square
         rank = int(rank_str)
@@ -306,15 +302,28 @@ class Pawn(Piece):
         prev_fl = get_prev_fl(fl)
         if prev_fl is not None:
             diag_l = f"{prev_fl}{rank + 1}"
-            if an_opponent_is_there(from_piece_perspective=self, square=diag_l, board=board):
+            if an_opponent_is_there(
+                from_piece_perspective=self, square=diag_l, board=board
+            ):
                 moves.append(self.move(diag_l, capture=True))
 
         diag_r = None
         next_fl = get_next_fl(fl)
         if next_fl is not None:
             diag_r = f"{next_fl}{rank + 1}"
-            if an_opponent_is_there(from_piece_perspective=self, square=diag_r, board=board):
+            if an_opponent_is_there(
+                from_piece_perspective=self, square=diag_r, board=board
+            ):
                 moves.append(self.move(diag_r, capture=True))
+
+
+def no_one_is_there(square: str, board: Board):
+    return getattr(board, square) is None
+
+
+def an_opponent_is_there(from_piece_perspective: Piece, square: str, board: Board):
+    piece = getattr(board, square)
+    return piece is not None and piece.color != from_piece_perspective.color
 
 
 def get_prev_fl(f: str) -> str | None:
