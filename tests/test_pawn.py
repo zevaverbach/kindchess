@@ -28,8 +28,7 @@ def test_get_possible_moves_pawn_pinned():
     board = t.Board.from_FEN("rnb1kbnr/ppppqppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR")
     pawn = board.e4
     assert pawn is not None
-    assert pawn.get_possible_moves(board) == [
-    ]
+    assert pawn.get_possible_moves(board) == []
 
 
 def test_get_possible_moves_pawn_black():
@@ -40,4 +39,3 @@ def test_get_possible_moves_pawn_black():
         t.Move(piece="p", src="d7", dest="d6"),
         t.Move(piece="p", src="d7", dest="d5"),
     ]
-

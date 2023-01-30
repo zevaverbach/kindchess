@@ -152,8 +152,8 @@ class Piece:
         match char.lower():
             case "p":
                 maker = Pawn
-            # case "r":
-            #     maker = Rook
+            case "r":
+                maker = Rook
             # case "b":
             #     maker = Bishop
             # case "n":
@@ -280,7 +280,7 @@ class Pawn(Piece):
     square: str
     color: int
 
-    def name(self):
+    def name(self) -> str:
         if self.color == 0:
             return "P"
         return "p"
@@ -308,8 +308,11 @@ class Pawn(Piece):
                 print(f"someone is supposedly on {two_squares_in_front}?")
 
         diag_l = None
-        prev_fl = get_prev_fl(fl)
-        if prev_fl is not None:
+        try:
+            prev_fl, _ = get_prev_fl(fl, None)
+        except Edge:
+            pass
+        else:
             diag_l = f"{prev_fl}{rank + 1}"
             if an_opponent_is_there(
                 from_piece_perspective=self, square=diag_l, board=board
@@ -317,7 +320,7 @@ class Pawn(Piece):
                 moves.append(self.move(diag_l, capture=True))
 
         diag_r = None
-        next_fl = get_next_fl(fl)
+        next_fl, _ = get_next_fl(fl, None)
         if next_fl is not None:
             diag_r = f"{next_fl}{rank + 1}"
             if an_opponent_is_there(
@@ -325,6 +328,88 @@ class Pawn(Piece):
             ):
                 moves.append(self.move(diag_r, capture=True))
         return moves
+
+
+class Obstacle(Exception):
+    pass
+
+
+class Edge(Exception):
+    pass
+
+
+@dc.dataclass
+class Rook(Piece):
+    square: str
+    color: int
+
+    def name(self) -> str:
+        if self.color == 0:
+            return "R"
+        return "r"
+
+    def get_possible_moves(self, board: Board) -> list[Move]:
+        moves = []
+        for direction in "lurd":
+            moves += self.get_possible_moves_in_direction(direction=direction, board=board)  # type: ignore
+        return moves
+
+    def get_possible_moves_in_direction(
+        self, direction: t.Literal["l", "u", "r", "d"], board: Board
+    ) -> list[Move]:
+        fl, rank_str = self.square
+        rank = int(rank_str)
+        match direction:
+            case "l":
+                incr_func = get_prev_fl
+            case "r":
+                incr_func = get_next_fl
+            case "u":
+                incr_func = get_up_rank
+            case "d":
+                incr_func = get_down_rank
+        moves = []
+        while True:
+            try:
+                fl, rank = incr_func(fl, rank)
+            except Edge:
+                break
+            else:
+                dest_square = f"{fl}{rank}"
+
+            if an_ally_is_there(self, dest_square, board):
+                break
+            if an_opponent_is_there(self, dest_square, board):
+                moves.append(self.move(dest_square, capture=True))
+                break
+            moves.append(self.move(dest_square, capture=False))
+        return moves
+
+
+def get_up_rank(_, rank: int) -> tuple[str, int]:
+    if rank == 8:
+        raise Edge
+    return _, rank + 1
+
+
+def get_down_rank(_, rank: int) -> tuple[str, int]:
+    if rank == 1:
+        raise Edge
+    return _, rank - 1
+
+
+def get_prev_fl(f: str, _) -> tuple[str, int]:
+    if f == "a":
+        raise Edge
+    idx = string.ascii_lowercase.index(f)
+    return string.ascii_lowercase[idx - 1], _
+
+
+def get_next_fl(f: str, _) -> tuple[str, int]:
+    if f == "h":
+        raise Edge
+    idx = string.ascii_lowercase.index(f)
+    return string.ascii_lowercase[idx + 1], _
 
 
 def no_one_is_there(square: str, board: Board):
@@ -336,15 +421,6 @@ def an_opponent_is_there(from_piece_perspective: Piece, square: str, board: Boar
     return piece is not None and piece.color != from_piece_perspective.color
 
 
-def get_prev_fl(f: str) -> str | None:
-    if f == "a":
-        return None
-    idx = string.ascii_lowercase.index(f)
-    return string.ascii_lowercase[idx - 1]
-
-
-def get_next_fl(f: str) -> str | None:
-    if f == "h":
-        return None
-    idx = string.ascii_lowercase.index(f)
-    return string.ascii_lowercase[idx + 1]
+def an_ally_is_there(from_piece_perspective: Piece, square: str, board: Board):
+    piece = getattr(board, square)
+    return piece is not None and piece.color == from_piece_perspective.color
