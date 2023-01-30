@@ -5,10 +5,10 @@ from zevchess.db import r
 import zevchess.ztypes as t
 
 
-def get_existing_uids_from_db() -> list[t.Uid]:
+def get_existing_uids_from_db() -> list[str]:
     with sqlite3.connect("completed_games.db") as s:
         c = s.execute("select uid from games")
-        return list(map(lambda game: t.Uid(game), c.fetchall()))
+        return c.fetchall()
 
 
 def get_game_state(uid: t.Uid) -> t.GameState:

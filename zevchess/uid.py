@@ -1,8 +1,8 @@
-from uuid import uuid4, UUID
+from uuid import uuid4
 
-from db import Uid
+import zevchess.ztypes as t
 
 
-def make_unique_id() -> Uid:
+def make_unique_id() -> t.Uid:
     uid = str(uuid4())
-    return Uid(uid)
+    return t.Uid(uid)
