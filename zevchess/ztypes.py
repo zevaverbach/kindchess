@@ -118,7 +118,6 @@ class GameState:
         )
 
 
-
 @dc.dataclass
 class Board:
     a1: str | None = None

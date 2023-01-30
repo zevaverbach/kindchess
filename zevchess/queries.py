@@ -19,7 +19,7 @@ def get_game_state(uid: t.Uid) -> t.GameState:
 
 
 def get_all_legal_moves(state: t.GameState) -> list[t.Move]:
-    # move: .piece .src .dest 
+    # move: .piece .src .dest
     # other moves: .capture .castle
     board = t.Board.from_FEN(state.FEN)
 
@@ -50,7 +50,7 @@ class Pawn:
 
 def would_it_be_illegal_because_check(move: t.Move, board: t.Board) -> bool:
     raise NotImplementedError
-        
+
 
 def get_prev_fl(f: str) -> str | None:
     if f == "a":
