@@ -8,6 +8,8 @@ FEN = t.NewType("FEN", bytes)
 Side = t.Literal[0, 1]
 Castle = t.Literal["k", "q"]
 Piece = t.Literal["q", "k", "b", "n", "r", "p"]
+File = t.Literal["a", "b", "c", "d", "e", "f", "g", "h"]
+Rank = t.Literal[1, 2, 3, 4, 5, 6, 7, 8]
 Square = t.Literal[
     "a1",
     "b1",

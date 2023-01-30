@@ -111,74 +111,88 @@ def split_FEN_into_tokens(fen: str) -> list[str]:
     return tokens
 
 
-def create_FEN_from_tokens(tokens: list[str]) -> t.FEN:
+def create_FEN_from_tokens(tokens: list[str]) -> str:
     FEN = ""
     num_blanks = 0
     for tok in tokens:
         if tok == BLANK:
             num_blanks += 1
+            continue
         elif num_blanks > 0:
             FEN += str(num_blanks)
+            num_blanks = 0
         FEN += tok
     if num_blanks > 0:
         FEN += str(num_blanks)
-    return t.FEN(FEN.encode())
+    return FEN
 
 
-def combine_FEN_fragments(f1: str, f2: str) -> t.FEN:
-    f1_tokens, f2_tokens = split_FEN_into_tokens(f1), split_FEN_into_tokens(f2)
-    return create_FEN_from_tokens(f1_tokens + f2_tokens)
+def get_updated_rank_FEN_after_castling(turn: int, castle_side: t.Castle, ranks: list[str]) -> tuple[int, str]:
+    rank_src_idx = 0 if turn == 0 else 7
+    rank_src_FEN = ranks[rank_src_idx]
+    if castle_side == "q":
+        LEFT_SIDE_FEN_AFTER_QUEEN_CASTLE = "2kr1" if turn == 1 else "2KR1"
+        LEFT_SIDE_TOKENS_AFTER_QUEEN_CASTLE = split_FEN_into_tokens(LEFT_SIDE_FEN_AFTER_QUEEN_CASTLE)
+        right_side = split_FEN_into_tokens(rank_src_FEN[3:]) # "2kr(*****)"
+        return rank_src_idx, create_FEN_from_tokens(LEFT_SIDE_TOKENS_AFTER_QUEEN_CASTLE + right_side)
+    else:
+        RIGHT_SIDE_FEN_AFTER_KING_CASTLE = "1rk1" if turn == 1 else "1RK1"
+        RIGHT_SIDE_TOKENS_AFTER_KING_CASTLE = split_FEN_into_tokens(RIGHT_SIDE_FEN_AFTER_KING_CASTLE)
+        left_side = split_FEN_into_tokens(rank_src_FEN[:4]) # "(****)1rk"
+        return rank_src_idx, create_FEN_from_tokens(left_side + RIGHT_SIDE_TOKENS_AFTER_KING_CASTLE)
 
 
 def recalculate_FEN(state: t.GameState, move: t.Move) -> t.FEN:
-    ranks = str(state.FEN).split("/")[::-1]
+    ranks = state.FEN.decode().split("/")[::-1]
     updated_ranks = {}
     if move.castle is not None:
-        rank_origin_idx = 0 if state.turn == 0 else 7
-        rank_origin = ranks[rank_origin_idx]
-        if move.castle == "q":
-            updated_rank = combine_FEN_fragments("2kr", rank_origin[5:])
-        else:
-            updated_rank = combine_FEN_fragments(rank_origin[:5], "rk1")
-        updated_ranks[rank_origin_idx] = updated_rank
+        rank_src_idx, updated_rank = get_updated_rank_FEN_after_castling(
+            turn=state.turn, 
+            castle_side=move.castle, 
+            ranks=ranks)
+        updated_ranks[rank_src_idx] = updated_rank
     else:
-        src_rank, src_file = move.src  # type: ignore
-        rank_origin_idx = string.ascii_lowercase.index(src_rank)
+        src_file, src_rank_string = move.src  # type: ignore
+        src_file_idx = string.ascii_lowercase.index(src_file)
+        src_rank = int(src_rank_string)
+        rank_origin_idx = src_rank - 1 # type: ignore
         rank_origin = ranks[rank_origin_idx]
-        dest_rank, dest_file = move.dest  # type: ignore
-        updated_rank = ""
+        
+        dest_file, dest_rank_string = move.dest  # type: ignore
+        dest_file_idx = string.ascii_lowercase.index(dest_file)
+        dest_rank = int(dest_rank_string)
+
+        updated_rank = []
         tokens_src = split_FEN_into_tokens(rank_origin)
 
         if dest_rank == src_rank:
             for idx, token in enumerate(tokens_src):
-                if idx + 1 == dest_file:
-                    updated_rank += move.piece  # type: ignore
-                    if state.turn == 1:
-                        updated_rank = updated_rank.upper()
-                elif idx + 1 == src_file:
-                    updated_rank += BLANK
+                if idx == dest_file_idx:
+                    updated_rank.append(move.piece if state.turn == 1 else move.piece.upper())  # type: ignore
+                elif idx == src_file_idx:
+                    updated_rank.append(BLANK)
                 else:
-                    updated_rank += token
-            updated_ranks[rank_origin_idx] = updated_rank
+                    updated_rank.append(token)
+            updated_ranks[rank_origin_idx] = create_FEN_from_tokens(updated_rank)
         else:
             for idx, token in enumerate(tokens_src):
-                if idx + 1 == src_file:
-                    updated_rank += BLANK
+                if idx == src_file_idx:
+                    updated_rank.append(BLANK)
                 else:
-                    updated_rank += token
-            updated_ranks[rank_origin_idx] = updated_rank
+                    updated_rank.append(token)
+            updated_ranks[rank_origin_idx] = create_FEN_from_tokens(updated_rank)
 
-            updated_rank = ""
-            rank_dest_idx = string.ascii_lowercase.index(dest_rank)
+            rank_dest_idx = dest_rank - 1 # type: ignore
             rank_dest = ranks[rank_dest_idx]
             tokens_dest = split_FEN_into_tokens(rank_dest)
+            updated_rank = []
 
             for idx, token in enumerate(tokens_dest):
-                if idx + 1 == dest_file:
-                    updated_rank += move.piece  # type: ignore
-                    if state.turn == 1:
-                        updated_rank = updated_rank.upper()
-            updated_ranks[rank_dest_idx] = updated_rank
+                if idx == dest_file_idx:
+                    updated_rank.append(move.piece if state.turn == 1 else move.piece.upper())  # type: ignore
+                else:
+                    updated_rank.append(token)
+            updated_ranks[rank_dest_idx] = create_FEN_from_tokens(updated_rank)
 
     updated_FEN = ""
     for i in range(7, -1, -1):
