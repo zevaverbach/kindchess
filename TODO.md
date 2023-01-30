@@ -21,17 +21,24 @@
   - [x] create game
   - [ ] make move
     - [ ] validate move
-    - [ ] persist move
+        - [x] pawn
+        - [x] rook
+        - [ ] knight
+        - [ ] bishop
+        - [ ] queen
+        - [ ] king
+    - [x] persist move
     - [x] update game state
         - see "make a hash for each game"
     - [ ] check if game is over
         - [ ] if it is, persist it to "completed_games" (sqlite)
+    - [ ] pawn promotion
 - [ ] create a basic API
   - [ ] /game
     - [ ] GET
     - [ ] POST
         - [ ] /create
-    - [ ] PUT
+    - [ ] PUT (maybe websockets instead)
         - [ ] /update
             - [ ] resign
             - [ ] draw
@@ -51,3 +58,6 @@
 - [ ] enforce move limit (draw)
 - [ ] material tracking - points, pieces
 - [ ] detect cheating
+- [ ] accounts/auth
+- [ ] persist/serialize the board differently
+  - instead of FEN, maybe a hash
