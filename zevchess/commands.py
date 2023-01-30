@@ -127,19 +127,29 @@ def create_FEN_from_tokens(tokens: list[str]) -> str:
     return FEN
 
 
-def get_updated_rank_FEN_after_castling(turn: int, castle_side: t.Castle, ranks: list[str]) -> tuple[int, str]:
+def get_updated_rank_FEN_after_castling(
+    turn: int, castle_side: t.Castle, ranks: list[str]
+) -> tuple[int, str]:
     rank_src_idx = 0 if turn == 0 else 7
     rank_src_FEN = ranks[rank_src_idx]
     if castle_side == "q":
         LEFT_SIDE_FEN_AFTER_QUEEN_CASTLE = "2kr1" if turn == 1 else "2KR1"
-        LEFT_SIDE_TOKENS_AFTER_QUEEN_CASTLE = split_FEN_into_tokens(LEFT_SIDE_FEN_AFTER_QUEEN_CASTLE)
-        right_side = split_FEN_into_tokens(rank_src_FEN[3:]) # "2kr(*****)"
-        return rank_src_idx, create_FEN_from_tokens(LEFT_SIDE_TOKENS_AFTER_QUEEN_CASTLE + right_side)
+        LEFT_SIDE_TOKENS_AFTER_QUEEN_CASTLE = split_FEN_into_tokens(
+            LEFT_SIDE_FEN_AFTER_QUEEN_CASTLE
+        )
+        right_side = split_FEN_into_tokens(rank_src_FEN[3:])  # "2kr(*****)"
+        return rank_src_idx, create_FEN_from_tokens(
+            LEFT_SIDE_TOKENS_AFTER_QUEEN_CASTLE + right_side
+        )
     else:
         RIGHT_SIDE_FEN_AFTER_KING_CASTLE = "1rk1" if turn == 1 else "1RK1"
-        RIGHT_SIDE_TOKENS_AFTER_KING_CASTLE = split_FEN_into_tokens(RIGHT_SIDE_FEN_AFTER_KING_CASTLE)
-        left_side = split_FEN_into_tokens(rank_src_FEN[:4]) # "(****)1rk"
-        return rank_src_idx, create_FEN_from_tokens(left_side + RIGHT_SIDE_TOKENS_AFTER_KING_CASTLE)
+        RIGHT_SIDE_TOKENS_AFTER_KING_CASTLE = split_FEN_into_tokens(
+            RIGHT_SIDE_FEN_AFTER_KING_CASTLE
+        )
+        left_side = split_FEN_into_tokens(rank_src_FEN[:4])  # "(****)1rk"
+        return rank_src_idx, create_FEN_from_tokens(
+            left_side + RIGHT_SIDE_TOKENS_AFTER_KING_CASTLE
+        )
 
 
 def recalculate_FEN(state: t.GameState, move: t.Move) -> t.FEN:
@@ -147,17 +157,16 @@ def recalculate_FEN(state: t.GameState, move: t.Move) -> t.FEN:
     updated_ranks = {}
     if move.castle is not None:
         rank_src_idx, updated_rank = get_updated_rank_FEN_after_castling(
-            turn=state.turn, 
-            castle_side=move.castle, 
-            ranks=ranks)
+            turn=state.turn, castle_side=move.castle, ranks=ranks
+        )
         updated_ranks[rank_src_idx] = updated_rank
     else:
         src_file, src_rank_string = move.src  # type: ignore
         src_file_idx = string.ascii_lowercase.index(src_file)
         src_rank = int(src_rank_string)
-        rank_origin_idx = src_rank - 1 # type: ignore
+        rank_origin_idx = src_rank - 1  # type: ignore
         rank_origin = ranks[rank_origin_idx]
-        
+
         dest_file, dest_rank_string = move.dest  # type: ignore
         dest_file_idx = string.ascii_lowercase.index(dest_file)
         dest_rank = int(dest_rank_string)
@@ -182,7 +191,7 @@ def recalculate_FEN(state: t.GameState, move: t.Move) -> t.FEN:
                     updated_rank.append(token)
             updated_ranks[rank_origin_idx] = create_FEN_from_tokens(updated_rank)
 
-            rank_dest_idx = dest_rank - 1 # type: ignore
+            rank_dest_idx = dest_rank - 1  # type: ignore
             rank_dest = ranks[rank_dest_idx]
             tokens_dest = split_FEN_into_tokens(rank_dest)
             updated_rank = []
