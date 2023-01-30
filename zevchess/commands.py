@@ -28,7 +28,7 @@ def create_game() -> t.Uid:
     return t.Uid(uid)
 
 
-def make_move(uid: t.Uid, move: t.Move) -> None:
+def make_move(uid: t.Uid, move: t.Move_) -> None:
     if move.castle is None and any(
         i is None for i in (move.piece, move.src, move.dest)
     ):
@@ -42,7 +42,7 @@ def make_move(uid: t.Uid, move: t.Move) -> None:
     store_state(uid, state)
 
 
-def get_new_state(state: t.GameState, move: t.Move) -> t.GameState:
+def get_new_state(state: t.GameState, move: t.Move_) -> t.GameState:
     if state.half_moves == 0:
         # first move of the game, impossible to capture
         state.half_moves_since_last_capture = 1
@@ -58,7 +58,7 @@ def get_new_state(state: t.GameState, move: t.Move) -> t.GameState:
     return state
 
 
-def recalculate_castling_state(state: t.GameState, move: t.Move) -> None:
+def recalculate_castling_state(state: t.GameState, move: t.Move_) -> None:
     if move.piece and move.piece not in "kr":
         return
 
@@ -90,7 +90,7 @@ def recalculate_castling_state(state: t.GameState, move: t.Move) -> None:
         cant_castle_anymore("q")
 
 
-def store_move(uid: t.Uid, move: t.Move) -> None:
+def store_move(uid: t.Uid, move: t.Move_) -> None:
     if move.castle is not None:
         move_string = "O-o" if move.castle == "k" else "O-o-o"
     else:
@@ -218,7 +218,7 @@ def get_updated_rank_FENs(state, move, ranks) -> dict[int, str]:
     return updated_ranks
 
 
-def recalculate_FEN(state: t.GameState, move: t.Move) -> str:
+def recalculate_FEN(state: t.GameState, move: t.Move_) -> str:
     updated_ranks = {}
     ranks = state.FEN.split("/")[::-1]
     if move.castle is not None:

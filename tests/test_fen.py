@@ -4,7 +4,7 @@ import zevchess.ztypes as t
 
 def test_recalculate_FEN():
     state = t.GameState()
-    move = t.Move(
+    move = t.Move_(
         uid=t.Uid(""),
         piece="p",
         src="b2",
@@ -17,7 +17,7 @@ def test_recalculate_FEN():
 
 def test_recalculate_FEN_same_rank():
     state = t.GameState(FEN="rnb1kbnr/pppppppp/8/8/1R3q2/8/PPPPPPPP/1NBQKBNR")
-    move = t.Move(
+    move = t.Move_(
         uid=t.Uid(""),
         piece="r",
         src="b4",
@@ -30,7 +30,7 @@ def test_recalculate_FEN_same_rank():
 
 def test_recalculate_FEN_castling_kingside():
     state = t.GameState(FEN="rnbqkbnr/pppppppp/8/8/5BN1/8/PPPPPPPP/RNBQK2R")
-    move = t.Move(
+    move = t.Move_(
         uid=t.Uid(""),
         castle="k",
     )
@@ -40,7 +40,7 @@ def test_recalculate_FEN_castling_kingside():
 
 def test_recalculate_FEN_castling_queenside():
     state = t.GameState(FEN="rnbqkbnr/pppppppp/8/2B5/3N4/4Q3/PPPPPPPP/R3KBNR")
-    move = t.Move(
+    move = t.Move_(
         uid=t.Uid(""),
         castle="q",
     )
@@ -50,7 +50,7 @@ def test_recalculate_FEN_castling_queenside():
 
 def test_recalculate_FEN_castling_queenside_only_rook_on_home_row():
     state = t.GameState(FEN="rnbqkbnr/pppppppp/8/4B3/1N2QBN1/8/PPPPPPPP/R3K2R")
-    move = t.Move(
+    move = t.Move_(
         uid=t.Uid(""),
         castle="q",
     )

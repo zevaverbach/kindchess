@@ -1,3 +1,4 @@
+import abc
 import dataclasses as dc
 import string
 import typing as t
@@ -8,7 +9,7 @@ FEN = t.NewType("FEN", bytes)
 
 Side = t.Literal[0, 1]
 Castle = t.Literal["k", "q"]
-Piece = t.Literal["q", "k", "b", "n", "r", "p"]
+# Piece = t.Literal["q", "k", "b", "n", "r", "p"]
 File = t.Literal["a", "b", "c", "d", "e", "f", "g", "h"]
 Rank = t.Literal[1, 2, 3, 4, 5, 6, 7, 8]
 Square = t.Literal[
@@ -80,9 +81,9 @@ Square = t.Literal[
 
 
 @dc.dataclass
-class Move:
+class Move_:
     uid: Uid
-    piece: Piece | None = None
+    piece: str | None = None
     src: Square | None = None
     dest: Square | None = None
     capture: bool = False
@@ -197,9 +198,134 @@ class Board:
                     continue
                 fl = string.ascii_lowercase[index]
                 key = f"{fl}{rank_num}"
-                board_dict[key] = char
+                piece = Piece.make(char=char, square=key)
+                board_dict[key] = piece
                 index += 1
         return cls(**board_dict)
 
+    def black_pieces(self):
+        return [square
+            for square in self.squares()
+            if square is not None and square.islower()
+        ]
+
+    def white_pieces(self):
+        return [square
+            for square in self.squares()
+            if square is not None and square.isupper()
+        ]
+
+    def squares(self):
+        return [
+            getattr(self, f"{fl}{rank}")
+            for rank in range(1, 9)
+            for fl in "abcdefgh"
+        ]
+
     def to_FEN(self) -> str:
         raise NotImplementedError
+
+
+# TODO: replace this with the ztypes.Move, maybe remove "uid"
+@dc.dataclass
+class Move:
+    piece: str
+    src: str
+    dest: str
+    capture: bool = False
+    castle: t.Literal["k", "q"] | None = None
+
+
+
+@dc.dataclass
+class Piece:
+    color: int
+    square: str
+
+    def move(self, dest: str, capture: bool = False):
+        return Move(piece=self.name(), src=self.square, dest=dest, capture=capture)
+
+    @abc.abstractmethod
+    def name(self) -> str:
+        raise NotImplementedError
+
+    @classmethod
+    def make(cls, square: str, char: str):
+        maker = None
+        match char.lower():
+            case "p":
+                maker = Pawn
+            case "r":
+                maker = Rook
+            case "b":
+                maker = Bishop
+            case "n":
+                maker = Knight
+            case "q":
+                maker = Queen
+            case "k":
+                maker = King
+            case _:
+                raise Exception("invalid piece type")
+        return maker(color=char.islower(), square=square)
+        
+
+def no_one_is_there(square: str, board: Board):
+    return getattr(board, square) is None
+
+
+def an_opponent_is_there(from_piece_perspective: Piece, square: str, board: Board):
+    piece = getattr(board, square)
+    return piece is not None and piece.color != from_piece_perspective.color
+
+
+@dc.dataclass
+class Pawn(Piece):
+    square: str
+    color: int
+
+    def name(self):
+        if self.color == 0:
+            return "P"
+        return "p"
+
+    def get_possible_moves(self, board: Board):
+        moves = []
+        fl, rank_str = self.square
+        rank = int(rank_str)
+        one_square_in_front = f"{fl}{rank + 1}"
+        if no_one_is_there(one_square_in_front, board):
+            moves.append(self.move(one_square_in_front))
+
+        if rank == 2:
+            two_squares_in_front = f"{fl}{rank + 2}"
+            if no_one_is_there(two_squares_in_front, board):
+                moves.append(self.move(two_squares_in_front))
+
+        diag_l = None
+        prev_fl = get_prev_fl(fl)
+        if prev_fl is not None:
+            diag_l = f"{prev_fl}{rank + 1}"
+            if an_opponent_is_there(from_piece_perspective=self, square=diag_l, board=board):
+                moves.append(self.move(diag_l, capture=True))
+
+        diag_r = None
+        next_fl = get_next_fl(fl)
+        if next_fl is not None:
+            diag_r = f"{next_fl}{rank + 1}"
+            if an_opponent_is_there(from_piece_perspective=self, square=diag_r, board=board):
+                moves.append(self.move(diag_r, capture=True))
+
+
+def get_prev_fl(f: str) -> str | None:
+    if f == "a":
+        return None
+    idx = string.ascii_lowercase.index(f)
+    return string.ascii_lowercase[idx - 1]
+
+
+def get_next_fl(f: str) -> str | None:
+    if f == "h":
+        return None
+    idx = string.ascii_lowercase.index(f)
+    return string.ascii_lowercase[idx + 1]
