@@ -9,8 +9,8 @@ def test_board_from_fen():
 
 
 def test_board_from_fen_starting():
-    print(STARTING_FEN.decode())
-    board = Board.from_FEN(STARTING_FEN.decode())
+    print(STARTING_FEN)
+    board = Board.from_FEN(STARTING_FEN)
     assert board.a1 == "R"
     assert board.b1 == "N"
     assert board.c1 == "B" 

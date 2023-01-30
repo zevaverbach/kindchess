@@ -89,7 +89,7 @@ class Move:
     castle: Castle | None = None
 
 
-STARTING_FEN = FEN(b"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
+STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
 
 
 @dc.dataclass
@@ -101,7 +101,7 @@ class GameState:
     white_can_castle_queenside: int = 1
     turn: int = 0
     half_moves_since_last_capture: int = -1
-    FEN: FEN = STARTING_FEN
+    FEN: str = STARTING_FEN
 
     @classmethod
     def from_redis(cls, redis_response: list[bytes]):
@@ -114,7 +114,7 @@ class GameState:
             int(rr[4]),
             int(rr[5]),
             int(rr[6]),
-            FEN(rr[7]),
+            rr[7].decode(),
         )
 
 

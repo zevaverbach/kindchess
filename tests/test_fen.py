@@ -16,7 +16,7 @@ def test_recalculate_FEN():
 
 
 def test_recalculate_FEN_same_rank():
-    state = t.GameState(FEN=t.FEN(b"rnb1kbnr/pppppppp/8/8/1R3q2/8/PPPPPPPP/1NBQKBNR"))
+    state = t.GameState(FEN="rnb1kbnr/pppppppp/8/8/1R3q2/8/PPPPPPPP/1NBQKBNR")
     move = t.Move(
         uid=t.Uid(""),
         piece="r",
@@ -25,37 +25,37 @@ def test_recalculate_FEN_same_rank():
         capture=True,
     )
     newFEN = recalculate_FEN(state, move)
-    assert newFEN == t.FEN(b"rnb1kbnr/pppppppp/8/8/5R2/8/PPPPPPPP/1NBQKBNR")
+    assert newFEN == "rnb1kbnr/pppppppp/8/8/5R2/8/PPPPPPPP/1NBQKBNR"
 
 
 def test_recalculate_FEN_castling_kingside():
-    state = t.GameState(FEN=t.FEN(b"rnbqkbnr/pppppppp/8/8/5BN1/8/PPPPPPPP/RNBQK2R"))
+    state = t.GameState(FEN="rnbqkbnr/pppppppp/8/8/5BN1/8/PPPPPPPP/RNBQK2R")
     move = t.Move(
         uid=t.Uid(""),
         castle="k",
     )
     newFEN = recalculate_FEN(state, move)
-    assert newFEN == t.FEN(b"rnbqkbnr/pppppppp/8/8/5BN1/8/PPPPPPPP/RNBQ1RK1")
+    assert newFEN == "rnbqkbnr/pppppppp/8/8/5BN1/8/PPPPPPPP/RNBQ1RK1"
 
 
 def test_recalculate_FEN_castling_queenside():
-    state = t.GameState(FEN=t.FEN(b"rnbqkbnr/pppppppp/8/2B5/3N4/4Q3/PPPPPPPP/R3KBNR"))
+    state = t.GameState(FEN="rnbqkbnr/pppppppp/8/2B5/3N4/4Q3/PPPPPPPP/R3KBNR")
     move = t.Move(
         uid=t.Uid(""),
         castle="q",
     )
     newFEN = recalculate_FEN(state, move)
-    assert newFEN == t.FEN(b"rnbqkbnr/pppppppp/8/2B5/3N4/4Q3/PPPPPPPP/2KR1BNR")
+    assert newFEN == "rnbqkbnr/pppppppp/8/2B5/3N4/4Q3/PPPPPPPP/2KR1BNR"
 
 
 def test_recalculate_FEN_castling_queenside_only_rook_on_home_row():
-    state = t.GameState(FEN=t.FEN(b"rnbqkbnr/pppppppp/8/4B3/1N2QBN1/8/PPPPPPPP/R3K2R"))
+    state = t.GameState(FEN="rnbqkbnr/pppppppp/8/4B3/1N2QBN1/8/PPPPPPPP/R3K2R")
     move = t.Move(
         uid=t.Uid(""),
         castle="q",
     )
     newFEN = recalculate_FEN(state, move)
-    assert newFEN == t.FEN(b"rnbqkbnr/pppppppp/8/4B3/1N2QBN1/8/PPPPPPPP/2KR3R")
+    assert newFEN == "rnbqkbnr/pppppppp/8/4B3/1N2QBN1/8/PPPPPPPP/2KR3R"
 
 
 def test_create_FEN_from_tokens():

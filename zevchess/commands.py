@@ -218,9 +218,9 @@ def get_updated_rank_FENs(state, move, ranks) -> dict[int, str]:
     return updated_ranks
 
 
-def recalculate_FEN(state: t.GameState, move: t.Move) -> t.FEN:
+def recalculate_FEN(state: t.GameState, move: t.Move) -> str:
     updated_ranks = {}
-    ranks = state.FEN.decode().split("/")[::-1]
+    ranks = state.FEN.split("/")[::-1]
     if move.castle is not None:
         rank_src_idx, updated_rank = get_updated_rank_FEN_after_castling(
             state=state, castle_side=move.castle, ranks=ranks
@@ -241,7 +241,7 @@ def recalculate_FEN(state: t.GameState, move: t.Move) -> t.FEN:
         updated_FEN += section
         if i > 0:
             updated_FEN += "/"
-    return t.FEN(updated_FEN.encode())
+    return updated_FEN
 
 
 def store_state(uid: t.Uid, state: t.GameState) -> None:

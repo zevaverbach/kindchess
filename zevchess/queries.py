@@ -21,6 +21,7 @@ def get_game_state(uid: t.Uid) -> t.GameState:
 def get_all_legal_moves(state: t.GameState) -> list[t.Move]:
     # move: .piece .src .dest 
     # other moves: .capture .castle
+    board = t.Board.from_FEN(state.FEN)
 
     # is the piece pinned?
     raise NotImplementedError
@@ -47,7 +48,7 @@ class Pawn:
             diag_l = f"{next_fl}{rank + 1}"
 
 
-def would_it_be_illegal_because_check(move: t.Move) -> bool:
+def would_it_be_illegal_because_check(move: t.Move, board: t.Board) -> bool:
     raise NotImplementedError
         
 
