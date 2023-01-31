@@ -25,13 +25,16 @@ def test_get_possible_moves_pawn2():
     ]
 
 
-@pytest.mark.skip()
 def test_get_possible_moves_pawn_pinned():
     board = t.Board.from_FEN("rnb1kbnr/ppppqppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR")
     pawn = board.e4
     assert pawn is not None
     assert isinstance(pawn, t.Pawn)
-    assert pawn.get_possible_moves(board) == []
+    # because it's not checking for 'check'/pins
+    assert pawn.get_possible_moves(board) == [
+        t.Move(piece="P", src="e4", dest="e5"),
+        t.Move(piece="P", src="e4", dest="d5", capture=True),
+    ]
 
 
 def test_get_possible_moves_pawn_black():

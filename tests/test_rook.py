@@ -19,7 +19,6 @@ def test_get_possible_moves_rook2():
     assert rook.get_possible_moves(board) == [t.Move(piece="R", src="a1", dest="a2")]
 
 
-@pytest.mark.skip()
 def test_get_possible_moves_rook_pinned():
     board = t.Board.from_FEN("rnb1kbnr/pppppppp/4q3/P7/2P5/4R3/PPP2PPP/1NBQKBNR")
     rook = board.e3

@@ -19,7 +19,6 @@ def test_get_possible_moves_queen2():
     assert queen.get_possible_moves(board) == [t.Move(piece="Q", src="d1", dest="d2")]
 
 
-@pytest.mark.skip()
 def test_get_possible_moves_queen_pinned():
     board = t.Board.from_FEN("rn1qkbnr/pppppppp/8/b7/8/5P2/PPPQ1PPP/RNB1KBNR")
     queen = board.d3
