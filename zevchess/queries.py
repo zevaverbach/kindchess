@@ -28,7 +28,7 @@ def get_all_legal_moves(state: t.GameState) -> list[t.Move]:
         move
         for piece in pieces
         for move in piece.get_possible_moves()
-        if not would_be_illegal_because_check(move, board)
+        if not t.it_would_be_check(piece, move, board)
     ]
 
 

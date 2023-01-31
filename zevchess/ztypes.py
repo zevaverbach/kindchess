@@ -164,6 +164,10 @@ class Piece:
                 maker = Pawn
         return maker(color=char.islower(), square=square)
 
+    def get_possible_moves(self, board: Board) -> list[Move]:
+        return _get_possible_moves(self, board)
+
+
 
 @dc.dataclass
 class Board:
@@ -326,6 +330,8 @@ class Pawn(Piece):
 class Obstacle(Exception):
     pass
 
+class NoMove(Exception):
+    pass
 
 class Edge(Exception):
     pass
@@ -359,6 +365,49 @@ class Bishop(Piece):
         if self.color == 0:
             return "B"
         return "b"
+
+@dc.dataclass
+class King(Piece):
+    directions = ["l", "ul", "u", "ur", "r", "dr", "d", "dl"]
+
+    def name(self) -> str:
+        if self.color == 0:
+            return "B"
+        return "b"
+
+    def get_possible_moves(self, board: Board) -> list[Move]:
+        moves = []
+        directions = self.__class__.directions
+        for direction in directions: # type: ignore
+            try:
+                possible_move = self.get_possible_move_in_direction(piece=piece, direction=direction, board=board)  # type: ignore
+            except (NoMove, Obstacle, Edge):
+                continue
+            else:
+                moves.append(possible_move)
+        return moves
+
+    def get_possible_move_in_direction(
+
+        self, direction: t.Literal["l", "ul", "u", "ur", "r", "dr", "d", "dl"], board: Board
+    ) -> Move:
+        fl, rank_str = self.square
+        rank = int(rank_str)
+
+        fl, rank = get_incr_func(direction)(fl, rank)
+        dest_square = f"{fl}{rank}"
+
+        if an_ally_is_there(self, dest_square, board):
+            raise Obstacle
+        if an_opponent_is_there(self, dest_square, board) and not it_would_be_check(self, dest_square, board):
+            return self.move(dest_square, capture=True)
+        if not it_would_be_check(self, dest_square, board):
+            return self.move(dest_square, capture=False)
+        raise NoMove
+
+
+def it_would_be_check(piece: Piece, dest_square: str, board: Board) -> bool:
+    raise NotImplementedError
 
 
 def get_up_rank(_: str, rank: int) -> tuple[str, int]:
@@ -443,16 +492,16 @@ def get_incr_func(direction: str) -> t.Callable[[str, int], tuple[str, int]]:
             raise Exception(f"no such direction as {direction}")
 
 
-def get_possible_moves(piece: Piece, board: Board) -> list[Move]:
+def _get_possible_moves(piece: Piece, board: Board) -> list[Move]:
     moves = []
     # if not piece.directions:
     #     raise Exception
     directions = piece.__class__.directions
     for direction in directions: # type: ignore
-        moves += get_possible_moves_in_direction(piece=piece, direction=direction, board=board)  # type: ignore
+        moves += _get_possible_moves_in_direction(piece=piece, direction=direction, board=board)  # type: ignore
     return moves
 
-def get_possible_moves_in_direction(
+def _get_possible_moves_in_direction(
 
     piece, direction: t.Literal["l", "ul", "u", "ur", "r", "dr", "d", "dl"], board: Board
 ) -> list[Move]:

@@ -24,16 +24,18 @@
         - [x] pawn
         - [x] rook
         - [ ] knight
-        - [ ] bishop
-        - [ ] queen
+        - [x] bishop
+        - [x] queen
         - [ ] king
     - [x] persist move
     - [x] update game state
         - see "make a hash for each game"
+    - [ ] is it check?
     - [ ] check if game is over
+        - [ ] is it stalemate?
+        - [ ] is it checkmate?
         - [ ] if it is, persist it to "completed_games" (sqlite)
     - [ ] pawn promotion
-    - [ ] is it check?
 - [ ] create a basic API
   - [ ] /game
     - [ ] GET

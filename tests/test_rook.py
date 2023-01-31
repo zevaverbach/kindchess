@@ -7,14 +7,16 @@ def test_get_possible_moves_rook():
     board = t.Board.from_FEN(t.STARTING_FEN)
     rook = board.a1
     assert rook is not None
-    assert t.get_possible_moves(rook, board) == []
+    assert isinstance(rook, t.Rook)
+    assert rook.get_possible_moves(board) == []
 
 
 def test_get_possible_moves_rook2():
     board = t.Board.from_FEN("rnbqkbnr/pppppppp/8/8/8/P7/1PPPPPPP/RNBQKBNR")
     rook = board.a1
     assert rook is not None
-    assert t.get_possible_moves(rook, board) == [t.Move(piece="R", src="a1", dest="a2")]
+    assert isinstance(rook, t.Rook)
+    assert rook.get_possible_moves(board) == [t.Move(piece="R", src="a1", dest="a2")]
 
 
 @pytest.mark.skip()
@@ -22,7 +24,8 @@ def test_get_possible_moves_rook_pinned():
     board = t.Board.from_FEN("rnb1kbnr/pppppppp/4q3/P7/2P5/4R3/PPP2PPP/1NBQKBNR")
     rook = board.e3
     assert rook is not None
-    possible_moves = t.get_possible_moves(rook, board)
+    assert isinstance(rook, t.Rook)
+    possible_moves = rook.get_possible_moves(board)
     assert len(possible_moves) == 4
     for pm in [
         t.Move(piece="R", src="e3", dest="e6", capture=True),
@@ -37,13 +40,15 @@ def test_get_possible_moves_rook_black():
     board = t.Board.from_FEN(t.STARTING_FEN)
     rook = board.a8
     assert rook is not None
-    assert t.get_possible_moves(rook, board) == []
+    assert isinstance(rook, t.Rook)
+    assert rook.get_possible_moves(board) == []
 
 
 def test_get_possible_moves_rook_black_2():
     board = t.Board.from_FEN("rnbqkbn1/pppppppp/8/6r1/8/8/PPPPPPPP/RNBQKBNR")
     rook = board.g5
     assert rook is not None
+    assert isinstance(rook, t.Rook)
     expect = [
         t.Move(piece="r", src="g5", dest="g2", capture=True),
         t.Move(piece="r", src="g5", dest="g3"),
@@ -57,7 +62,7 @@ def test_get_possible_moves_rook_black_2():
         t.Move(piece="r", src="g5", dest="f5"),
         t.Move(piece="r", src="g5", dest="h5"),
     ]
-    possible_moves = t.get_possible_moves(rook, board)
+    possible_moves = rook.get_possible_moves(board)
     assert len(possible_moves) == len(expect)
     for e in expect:
         assert e in possible_moves
