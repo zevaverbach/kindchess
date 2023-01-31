@@ -9,7 +9,6 @@ def test_get_possible_moves_bishop():
     assert bishop.get_possible_moves(board) == []
 
 
-
 def test_get_possible_moves_bishop2():
     board = t.Board.from_FEN("rnbqkbnr/pppppppp/8/8/8/3P4/PPP1PPPP/RNBQKBNR")
     bishop = board.c1

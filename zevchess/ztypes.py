@@ -168,7 +168,6 @@ class Piece:
         return _get_possible_moves(self, board)
 
 
-
 @dc.dataclass
 class Board:
     a1: Piece | None = None
@@ -283,30 +282,39 @@ class Pawn(Piece):
             return "P"
         return "p"
 
-    def get_possible_moves(self, board: Board) -> list[Move]:
-        moves = []
-        fl, rank_str = self.square
-        rank = int(rank_str)
+    def get_move_one_up(self, fl: str, rank: int, board: Board) -> Move | None:
         if self.color:
             one_square_in_front = f"{fl}{rank - 1}"
         else:
             one_square_in_front = f"{fl}{rank + 1}"
         if no_one_is_there(one_square_in_front, board):
-            moves.append(self.move(one_square_in_front))
+            return self.move(one_square_in_front)
 
-        if (self.color and rank == 7) or rank == 2:
+    def get_move_two_up(self, fl: str, rank: int, board: Board) -> Move | None:
+        if home_row(self.color, rank):
             if self.color:
                 two_squares_in_front = f"{fl}{rank - 2}"
             else:
                 two_squares_in_front = f"{fl}{rank + 2}"
             if no_one_is_there(two_squares_in_front, board):
-                moves.append(self.move(two_squares_in_front))
-            else:
-                print(f"someone is supposedly on {two_squares_in_front}?")
+                return self.move(two_squares_in_front)
+
+    def get_possible_moves(self, board: Board) -> list[Move]:
+        moves = []
+        fl, rank_str = self.square
+        rank = int(rank_str)
+
+        move_one_up = self.get_move_one_up(fl, rank, board)
+        if move_one_up is not None:
+            moves.append(move_one_up)
+
+        move_two_up = self.get_move_two_up(fl, rank, board)
+        if move_two_up is not None:
+            moves.append(move_two_up)
 
         diag_l = None
         try:
-            prev_fl, _ = get_prev_fl(fl, None)
+            prev_fl, _ = get_prev_fl(fl, -1)
         except Edge:
             pass
         else:
@@ -317,7 +325,7 @@ class Pawn(Piece):
                 moves.append(self.move(diag_l, capture=True))
 
         diag_r = None
-        next_fl, _ = get_next_fl(fl, None)
+        next_fl, _ = get_next_fl(fl, -1)
         if next_fl is not None:
             diag_r = f"{next_fl}{rank + 1}"
             if an_opponent_is_there(
@@ -327,11 +335,17 @@ class Pawn(Piece):
         return moves
 
 
+def home_row(color: int, rank: int) -> bool:
+    return (color == 1 and rank == 7) or rank == 2
+
+
 class Obstacle(Exception):
     pass
 
+
 class NoMove(Exception):
     pass
+
 
 class Edge(Exception):
     pass
@@ -366,6 +380,7 @@ class Bishop(Piece):
             return "B"
         return "b"
 
+
 @dc.dataclass
 class King(Piece):
     directions = ["l", "ul", "u", "ur", "r", "dr", "d", "dl"]
@@ -378,9 +393,9 @@ class King(Piece):
     def get_possible_moves(self, board: Board) -> list[Move]:
         moves = []
         directions = self.__class__.directions
-        for direction in directions: # type: ignore
+        for direction in directions:  # type: ignore
             try:
-                possible_move = self.get_possible_move_in_direction(piece=piece, direction=direction, board=board)  # type: ignore
+                possible_move = self.get_possible_move_in_direction(direction=direction, board=board)  # type: ignore
             except (NoMove, Obstacle, Edge):
                 continue
             else:
@@ -388,9 +403,10 @@ class King(Piece):
         return moves
 
     def get_possible_move_in_direction(
-
-        self, direction: t.Literal["l", "ul", "u", "ur", "r", "dr", "d", "dl"], board: Board
-    ) -> Move:
+            self,
+            direction: t.Literal["l", "ul", "u", "ur", "r", "dr", "d", "dl"],
+            board: Board,
+        ) -> Move:
         fl, rank_str = self.square
         rank = int(rank_str)
 
@@ -399,7 +415,9 @@ class King(Piece):
 
         if an_ally_is_there(self, dest_square, board):
             raise Obstacle
-        if an_opponent_is_there(self, dest_square, board) and not it_would_be_check(self, dest_square, board):
+        if an_opponent_is_there(self, dest_square, board) and not it_would_be_check(
+                self, dest_square, board
+            ):
             return self.move(dest_square, capture=True)
         if not it_would_be_check(self, dest_square, board):
             return self.move(dest_square, capture=False)
@@ -434,20 +452,24 @@ def get_ul(f: str, rank: int) -> tuple[str, int]:
     _, rank = get_up_rank(f, rank)
     return f, rank
 
+
 def get_ur(f: str, rank: int) -> tuple[str, int]:
     f, _ = get_next_fl(f, rank)
     _, rank = get_up_rank(f, rank)
     return f, rank
+
 
 def get_dr(f: str, rank: int) -> tuple[str, int]:
     f, _ = get_next_fl(f, rank)
     _, rank = get_down_rank(f, rank)
     return f, rank
 
+
 def get_dl(f: str, rank: int) -> tuple[str, int]:
     f, _ = get_prev_fl(f, rank)
     _, rank = get_down_rank(f, rank)
     return f, rank
+
 
 def get_next_fl(f: str, _: int) -> tuple[str, int]:
     if f == "h":
@@ -497,14 +519,16 @@ def _get_possible_moves(piece: Piece, board: Board) -> list[Move]:
     # if not piece.directions:
     #     raise Exception
     directions = piece.__class__.directions
-    for direction in directions: # type: ignore
+    for direction in directions:  # type: ignore
         moves += _get_possible_moves_in_direction(piece=piece, direction=direction, board=board)  # type: ignore
     return moves
 
-def _get_possible_moves_in_direction(
 
-    piece, direction: t.Literal["l", "ul", "u", "ur", "r", "dr", "d", "dl"], board: Board
-) -> list[Move]:
+def _get_possible_moves_in_direction(
+        piece,
+        direction: t.Literal["l", "ul", "u", "ur", "r", "dr", "d", "dl"],
+        board: Board,
+    ) -> list[Move]:
     fl, rank_str = piece.square
     rank = int(rank_str)
     incr_func = get_incr_func(direction)
@@ -524,4 +548,3 @@ def _get_possible_moves_in_direction(
             break
         moves.append(piece.move(dest_square, capture=False))
     return moves
-
