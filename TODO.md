@@ -68,3 +68,7 @@
 - [ ] persist/serialize the board differently
   - instead of FEN, maybe a hash
 - [ ] get_FEN_from_board, if it's more efficient than the other get_FEN (after a move), should replace it
+- [ ] find shortcuts to limit computation
+  - [ ] if a pawn, king, knight is sufficiently far away, no need to check whether it can put the opposing king in check
+  - [ ] cache possible moves, this may not change for a given piece in certain conditions
+  - [ ] bitpacking?
