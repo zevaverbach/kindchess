@@ -23,14 +23,14 @@
     - [ ] validate move
         - [x] pawn
         - [x] rook
-        - [ ] knight
         - [x] bishop
         - [x] queen
         - [ ] king
+        - [ ] knight
+        - [ ] is it check?
     - [x] persist move
     - [x] update game state
         - see "make a hash for each game"
-    - [ ] is it check?
     - [ ] check if game is over
         - [ ] is it stalemate?
         - [ ] is it checkmate?

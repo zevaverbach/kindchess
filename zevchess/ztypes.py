@@ -153,12 +153,12 @@ class Piece:
                 maker = Rook
             case "b":
                 maker = Bishop
-            # case "n":
-            #     maker = Knight
+            case "n":
+                maker = Knight
             case "q":
                 maker = Queen
-            # case "k":
-            #     maker = King
+            case "k":
+                maker = King
             case _:
                 # raise Exception("invalid piece type")
                 maker = Pawn
@@ -254,21 +254,27 @@ class Board:
 
     def black_pieces(self):
         return [
-            square
-            for square in self.squares()
-            if square is not None and square.islower()
+            piece
+            for piece in self.squares()
+            if piece is not None and piece.name().islower()
         ]
 
     def white_pieces(self):
         return [
-            square
-            for square in self.squares()
-            if square is not None and square.isupper()
+            piece
+            for piece in self.squares()
+            if piece is not None and piece.name().isupper()
         ]
 
-    def squares(self):
+    def squares(self) -> list[Piece | None]:
         return [
             getattr(self, f"{fl}{rank}") for rank in range(1, 9) for fl in "abcdefgh"
+        ]
+
+    def square_tups_in_FEN_order(self) -> list[tuple[str, Piece]]:
+        return [
+            (f"{fl}{rank}", getattr(self, f"{fl}{rank}"))
+            for rank in range(8, 0, -1) for fl in "abcdefgh"
         ]
 
     def to_FEN(self) -> str:
@@ -382,13 +388,22 @@ class Bishop(Piece):
 
 
 @dc.dataclass
+class Knight(Piece):
+
+    def name(self) -> str:
+        if self.color == 0:
+            return "N"
+        return "n"
+
+
+@dc.dataclass
 class King(Piece):
     directions = ["l", "ul", "u", "ur", "r", "dr", "d", "dl"]
 
     def name(self) -> str:
         if self.color == 0:
-            return "B"
-        return "b"
+            return "K"
+        return "k"
 
     def get_possible_moves(self, board: Board) -> list[Move]:
         moves = []
@@ -425,7 +440,7 @@ class King(Piece):
 
 
 def it_would_be_check(piece: Piece, dest_square: str, board: Board) -> bool:
-    raise NotImplementedError
+    board_after_move = Board.from_FEN(board.FEN)
 
 
 def get_up_rank(_: str, rank: int) -> tuple[str, int]:

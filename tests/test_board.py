@@ -1,5 +1,6 @@
 import pytest
 
+from zevchess import commands
 from zevchess.ztypes import Board, STARTING_FEN
 
 
@@ -47,3 +48,18 @@ def test_board_from_fen_starting():
     assert board.f8 == "b"
     assert board.g8 == "n"
     assert board.h8 == "r"
+
+
+def test_get_FEN_from_board():
+    board = Board.from_FEN(STARTING_FEN)
+    assert commands.get_FEN_from_board(board) == STARTING_FEN
+
+def test_get_FEN_from_board_2():
+    BLANK = "8/8/8/8/8/8/8/8"
+    board = Board.from_FEN(BLANK)
+    assert commands.get_FEN_from_board(board) == BLANK
+
+def test_get_FEN_from_board_3():
+    ENDGAME = "8/1k3q2/8/8/8/3K4/8/8"
+    board = Board.from_FEN(ENDGAME)
+    assert commands.get_FEN_from_board(board) == ENDGAME

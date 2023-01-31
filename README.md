@@ -27,3 +27,10 @@ I'm interested in this because a) I like chess and b) I want to learn more about
 # UI Principles
 - super minimal, fewer widgets than chess.com/lichess
 - emphasis on socializing, including voice
+
+# UX
+- stickers
+- in-person chess 'dating'
+
+# Resources Used
+- http://www.netreal.de/Forsyth-Edwards-Notation/index.php

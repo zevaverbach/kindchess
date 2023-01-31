@@ -218,6 +218,29 @@ def get_updated_rank_FENs(state, move, ranks) -> dict[int, str]:
     return updated_ranks
 
 
+def get_FEN_from_board(board: t.Board) -> str:
+    blank_count = 0
+    FEN = ""
+    rank = 8
+    for square, piece in board.square_tups_in_FEN_order():
+        if int(square[1]) != rank:
+            rank = int(square[1])
+            if blank_count:
+                FEN += str(blank_count)
+                blank_count = 0
+            FEN += "/"
+        if piece is None:
+            blank_count += 1
+        else:
+            if blank_count:
+                FEN += str(blank_count)
+                blank_count = 0
+            FEN += piece.name()
+    if blank_count:
+        FEN += str(blank_count)
+    return FEN
+
+
 def recalculate_FEN(state: t.GameState, move: t.Move_) -> str:
     updated_ranks = {}
     ranks = state.FEN.split("/")[::-1]
