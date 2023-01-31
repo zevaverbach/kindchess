@@ -403,10 +403,10 @@ class King(Piece):
         return moves
 
     def get_possible_move_in_direction(
-            self,
-            direction: t.Literal["l", "ul", "u", "ur", "r", "dr", "d", "dl"],
-            board: Board,
-        ) -> Move:
+        self,
+        direction: t.Literal["l", "ul", "u", "ur", "r", "dr", "d", "dl"],
+        board: Board,
+    ) -> Move:
         fl, rank_str = self.square
         rank = int(rank_str)
 
@@ -416,8 +416,8 @@ class King(Piece):
         if an_ally_is_there(self, dest_square, board):
             raise Obstacle
         if an_opponent_is_there(self, dest_square, board) and not it_would_be_check(
-                self, dest_square, board
-            ):
+            self, dest_square, board
+        ):
             return self.move(dest_square, capture=True)
         if not it_would_be_check(self, dest_square, board):
             return self.move(dest_square, capture=False)
@@ -525,10 +525,10 @@ def _get_possible_moves(piece: Piece, board: Board) -> list[Move]:
 
 
 def _get_possible_moves_in_direction(
-        piece,
-        direction: t.Literal["l", "ul", "u", "ur", "r", "dr", "d", "dl"],
-        board: Board,
-    ) -> list[Move]:
+    piece,
+    direction: t.Literal["l", "ul", "u", "ur", "r", "dr", "d", "dl"],
+    board: Board,
+) -> list[Move]:
     fl, rank_str = piece.square
     rank = int(rank_str)
     incr_func = get_incr_func(direction)
