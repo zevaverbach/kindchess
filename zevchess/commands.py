@@ -4,7 +4,6 @@ import string
 import typing
 from uuid import uuid4
 
-import zevchess.validate as v
 from zevchess.db import r
 import zevchess.queries as q
 import zevchess.ztypes as t

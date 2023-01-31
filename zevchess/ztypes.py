@@ -530,7 +530,6 @@ class Knight(Piece):
         if an_ally_is_there(self, dest_square, board):
             raise Obstacle
         if an_opponent_is_there(self, dest_square, board):
-            self, dest_square, board
             return self.move(dest_square, capture=True)
         return self.move(dest_square)
 
