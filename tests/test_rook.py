@@ -7,14 +7,14 @@ def test_get_possible_moves_rook():
     board = t.Board.from_FEN(t.STARTING_FEN)
     rook = board.a1
     assert rook is not None
-    assert rook.get_possible_moves(board) == []
+    assert t.get_possible_moves(rook, board) == []
 
 
 def test_get_possible_moves_rook2():
     board = t.Board.from_FEN("rnbqkbnr/pppppppp/8/8/8/P7/1PPPPPPP/RNBQKBNR")
     rook = board.a1
     assert rook is not None
-    assert rook.get_possible_moves(board) == [t.Move(piece="R", src="a1", dest="a2")]
+    assert t.get_possible_moves(rook, board) == [t.Move(piece="R", src="a1", dest="a2")]
 
 
 @pytest.mark.skip()
@@ -22,7 +22,7 @@ def test_get_possible_moves_rook_pinned():
     board = t.Board.from_FEN("rnb1kbnr/pppppppp/4q3/P7/2P5/4R3/PPP2PPP/1NBQKBNR")
     rook = board.e3
     assert rook is not None
-    possible_moves = rook.get_possible_moves(board)
+    possible_moves = t.get_possible_moves(rook, board)
     assert len(possible_moves) == 4
     for pm in [
         t.Move(piece="R", src="e3", dest="e6", capture=True),
@@ -37,7 +37,7 @@ def test_get_possible_moves_rook_black():
     board = t.Board.from_FEN(t.STARTING_FEN)
     rook = board.a8
     assert rook is not None
-    assert rook.get_possible_moves(board) == []
+    assert t.get_possible_moves(rook, board) == []
 
 
 def test_get_possible_moves_rook_black_2():
@@ -57,7 +57,7 @@ def test_get_possible_moves_rook_black_2():
         t.Move(piece="r", src="g5", dest="f5"),
         t.Move(piece="r", src="g5", dest="h5"),
     ]
-    possible_moves = rook.get_possible_moves(board)
+    possible_moves = t.get_possible_moves(rook, board)
     assert len(possible_moves) == len(expect)
     for e in expect:
         assert e in possible_moves

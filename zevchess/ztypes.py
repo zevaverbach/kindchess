@@ -1,3 +1,4 @@
+from __future__ import annotations
 import abc
 import dataclasses as dc
 import string
@@ -133,17 +134,13 @@ class Move:
 class Piece:
     color: int
     square: str
+    directions: list[str] | None = None
 
     def move(self, dest: str, capture: bool = False):
         return Move(piece=self.name(), src=self.square, dest=dest, capture=capture)
 
     @abc.abstractmethod
     def name(self) -> str:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def get_possible_moves(self, board: "Board"):
-        # we're not worried here about pins, that's taken care of by the caller
         raise NotImplementedError
 
     @classmethod
@@ -158,8 +155,8 @@ class Piece:
             #     maker = Bishop
             # case "n":
             #     maker = Knight
-            # case "q":
-            #     maker = Queen
+            case "q":
+                maker = Queen
             # case "k":
             #     maker = King
             case _:
@@ -277,16 +274,12 @@ class Board:
 
 @dc.dataclass
 class Pawn(Piece):
-    square: str
-    color: int
-
     def name(self) -> str:
         if self.color == 0:
             return "P"
         return "p"
 
     def get_possible_moves(self, board: Board) -> list[Move]:
-        # we're not worried here about pins, that's taken care of by the caller
         moves = []
         fl, rank_str = self.square
         rank = int(rank_str)
@@ -340,72 +333,63 @@ class Edge(Exception):
 
 @dc.dataclass
 class Rook(Piece):
-    square: str
-    color: int
+    directions = list("lurd")
 
     def name(self) -> str:
         if self.color == 0:
             return "R"
         return "r"
 
-    def get_possible_moves(self, board: Board) -> list[Move]:
-        moves = []
-        for direction in "lurd":
-            moves += self.get_possible_moves_in_direction(direction=direction, board=board)  # type: ignore
-        return moves
 
-    def get_possible_moves_in_direction(
-        self, direction: t.Literal["l", "u", "r", "d"], board: Board
-    ) -> list[Move]:
-        fl, rank_str = self.square
-        rank = int(rank_str)
-        match direction:
-            case "l":
-                incr_func = get_prev_fl
-            case "r":
-                incr_func = get_next_fl
-            case "u":
-                incr_func = get_up_rank
-            case "d":
-                incr_func = get_down_rank
-        moves = []
-        while True:
-            try:
-                fl, rank = incr_func(fl, rank)
-            except Edge:
-                break
-            else:
-                dest_square = f"{fl}{rank}"
+@dc.dataclass
+class Queen(Piece):
+    directions = ["l", "ul", "u", "ur", "r", "dr", "d", "dl"]
 
-            if an_ally_is_there(self, dest_square, board):
-                break
-            if an_opponent_is_there(self, dest_square, board):
-                moves.append(self.move(dest_square, capture=True))
-                break
-            moves.append(self.move(dest_square, capture=False))
-        return moves
+    def name(self) -> str:
+        if self.color == 0:
+            return "Q"
+        return "q"
 
-
-def get_up_rank(_, rank: int) -> tuple[str, int]:
+def get_up_rank(_: str, rank: int) -> tuple[str, int]:
     if rank == 8:
         raise Edge
     return _, rank + 1
 
 
-def get_down_rank(_, rank: int) -> tuple[str, int]:
+def get_down_rank(_: str, rank: int) -> tuple[str, int]:
     if rank == 1:
         raise Edge
     return _, rank - 1
 
 
-def get_prev_fl(f: str, _) -> tuple[str, int]:
+def get_prev_fl(f: str, _: int) -> tuple[str, int]:
     if f == "a":
         raise Edge
     idx = string.ascii_lowercase.index(f)
     return string.ascii_lowercase[idx - 1], _
 
 
-def get_next_fl(f: str, _) -> tuple[str, int]:
+def get_ul(f: str, rank: int) -> tuple[str, int]:
+    f, _ = get_prev_fl(f, rank)
+    _, rank = get_up_rank(f, rank)
+    return f, rank
+
+def get_ur(f: str, rank: int) -> tuple[str, int]:
+    f, _ = get_next_fl(f, rank)
+    _, rank = get_up_rank(f, rank)
+    return f, rank
+
+def get_dr(f: str, rank: int) -> tuple[str, int]:
+    f, _ = get_next_fl(f, rank)
+    _, rank = get_down_rank(f, rank)
+    return f, rank
+
+def get_dl(f: str, rank: int) -> tuple[str, int]:
+    f, _ = get_prev_fl(f, rank)
+    _, rank = get_down_rank(f, rank)
+    return f, rank
+
+def get_next_fl(f: str, _: int) -> tuple[str, int]:
     if f == "h":
         raise Edge
     idx = string.ascii_lowercase.index(f)
@@ -424,3 +408,59 @@ def an_opponent_is_there(from_piece_perspective: Piece, square: str, board: Boar
 def an_ally_is_there(from_piece_perspective: Piece, square: str, board: Board):
     piece = getattr(board, square)
     return piece is not None and piece.color == from_piece_perspective.color
+
+
+def get_incr_func(direction: str) -> t.Callable[[str, int], tuple[str, int]]:
+    match direction:
+        case "l":
+            return get_prev_fl
+        case "r":
+            return get_next_fl
+        case "u":
+            return get_up_rank
+        case "d":
+            return get_down_rank
+        case "ul":
+            return get_ul
+        case "ur":
+            return get_ur
+        case "dl":
+            return get_dl
+        case "dr":
+            return get_dr
+        case _:
+            raise Exception(f"no such direction as {direction}")
+
+
+def get_possible_moves(piece: Piece, board: Board) -> list[Move]:
+    moves = []
+    # if not piece.directions:
+    #     raise Exception
+    for direction in piece.__class__.directions:
+        moves += get_possible_moves_in_direction(piece=piece, direction=direction, board=board)  # type: ignore
+    return moves
+
+def get_possible_moves_in_direction(
+
+    piece, direction: t.Literal["l", "ul", "u", "ur", "r", "dr", "d", "dl"], board: Board
+) -> list[Move]:
+    fl, rank_str = piece.square
+    rank = int(rank_str)
+    incr_func = get_incr_func(direction)
+    moves = []
+    while True:
+        try:
+            fl, rank = incr_func(fl, rank)
+        except Edge:
+            break
+        else:
+            dest_square = f"{fl}{rank}"
+
+        if an_ally_is_there(piece, dest_square, board):
+            break
+        if an_opponent_is_there(piece, dest_square, board):
+            moves.append(piece.move(dest_square, capture=True))
+            break
+        moves.append(piece.move(dest_square, capture=False))
+    return moves
+

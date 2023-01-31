@@ -33,6 +33,7 @@
     - [ ] check if game is over
         - [ ] if it is, persist it to "completed_games" (sqlite)
     - [ ] pawn promotion
+    - [ ] is it check?
 - [ ] create a basic API
   - [ ] /game
     - [ ] GET
