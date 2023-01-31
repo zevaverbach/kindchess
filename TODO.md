@@ -1,4 +1,7 @@
 - [x] create a basic DB
+  - [x] use sqlite for completed games
+    - [x] fields: uid and moves
+    - [x] a function to store a completed game
   - [x] use Redis at first for the active games
     - [x] make a list for each active game
         - [x] key is "game_<uid>"
@@ -14,12 +17,11 @@
             - [x] black_can_castle_kingside
             - [x] half_moves_since_last_capture: null/moveNum
             - [x] board: probably a FEN
-  - [x] use sqlite for completed games
-    - [x] fields: uid and moves
-    - [x] a function to store a completed game
+    - [ ] cache for all possible moves
 - [ ] create logic for
   - [x] create game
   - [ ] make move
+    - [ ] get all possible moves from previous move (cache)
     - [ ] validate move
         - [ ] pawn
             - [ ] en passant
@@ -33,9 +35,10 @@
     - [x] persist move
     - [x] update game state
         - see "make a hash for each game"
+    - [ ] calculate and cache all possible moves
     - [ ] check if game is over
-        - [ ] is it stalemate?
-        - [ ] is it checkmate?
+        - [ ] is it stalemate? (no possible moves and check is False)
+        - [ ] is it checkmate? (no possible moves and check is True)
             - [ ] get all pieces putting king in check, not the current short-circuited way
         - [ ] if it is, persist it to "completed_games" (sqlite)
     - [ ] pawn promotion

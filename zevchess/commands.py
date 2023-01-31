@@ -28,6 +28,10 @@ def create_game() -> t.Uid:
     return t.Uid(uid)
 
 
+class InvalidMove(Exception):
+    pass
+
+
 def make_move(uid: t.Uid, move: t.Move_) -> None:
     if move.castle is None and any(
         i is None for i in (move.piece, move.src, move.dest)
@@ -35,7 +39,12 @@ def make_move(uid: t.Uid, move: t.Move_) -> None:
         raise InvalidArguments
 
     state = q.get_game_state(uid)
-    v.validate_move(uid, move, state)
+
+    all_possible_moves = q.get_all_legal_moves(state)
+
+    if move not in all_possible_moves:
+        raise InvalidMove
+
     store_move(uid, move)
 
     state = get_new_state(state, move)
