@@ -436,7 +436,8 @@ def get_possible_moves(piece: Piece, board: Board) -> list[Move]:
     moves = []
     # if not piece.directions:
     #     raise Exception
-    for direction in piece.__class__.directions:
+    directions = piece.__class__.directions
+    for direction in directions: # type: ignore
         moves += get_possible_moves_in_direction(piece=piece, direction=direction, board=board)  # type: ignore
     return moves
 
