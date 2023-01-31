@@ -103,6 +103,8 @@ class GameState:
     white_can_castle_queenside: int = 1
     turn: int = 0
     half_moves_since_last_capture: int = -1
+    king_square_white: str = "e1"
+    king_square_black: str = "e8"
     FEN: str = STARTING_FEN
 
     @classmethod
@@ -117,6 +119,8 @@ class GameState:
             int(rr[5]),
             int(rr[6]),
             rr[7].decode(),
+            rr[8].decode(),
+            rr[9].decode(),
         )
 
 
@@ -235,6 +239,9 @@ class Board:
     g8: Piece | None = None
     h8: Piece | None = None
 
+    def copy(self):
+        return self.from_FEN(self.to_FEN())
+
     @classmethod
     def from_FEN(cls, fen: str) -> t.Self:
         board_dict = {}
@@ -274,11 +281,36 @@ class Board:
     def square_tups_in_FEN_order(self) -> list[tuple[str, Piece]]:
         return [
             (f"{fl}{rank}", getattr(self, f"{fl}{rank}"))
-            for rank in range(8, 0, -1) for fl in "abcdefgh"
+            for rank in range(8, 0, -1)
+            for fl in "abcdefgh"
         ]
 
     def to_FEN(self) -> str:
-        raise NotImplementedError
+        return get_FEN_from_board(self)
+
+
+def get_FEN_from_board(board: Board) -> str:
+    blank_count = 0
+    FEN = ""
+    rank = 8
+    for square, piece in board.square_tups_in_FEN_order():
+        if int(square[1]) != rank:
+            rank = int(square[1])
+            if blank_count:
+                FEN += str(blank_count)
+                blank_count = 0
+            FEN += "/"
+        if piece is None:
+            blank_count += 1
+        else:
+            if blank_count:
+                FEN += str(blank_count)
+                blank_count = 0
+            FEN += piece.name()
+    if blank_count:
+        FEN += str(blank_count)
+    return FEN
+
 
 
 @dc.dataclass
@@ -331,8 +363,11 @@ class Pawn(Piece):
                 moves.append(self.move(diag_l, capture=True))
 
         diag_r = None
-        next_fl, _ = get_next_fl(fl, -1)
-        if next_fl is not None:
+        try:
+            next_fl, _ = get_next_fl(fl, -1)
+        except Edge:
+            pass
+        else:
             diag_r = f"{next_fl}{rank + 1}"
             if an_opponent_is_there(
                 from_piece_perspective=self, square=diag_r, board=board
@@ -389,7 +424,6 @@ class Bishop(Piece):
 
 @dc.dataclass
 class Knight(Piece):
-
     def name(self) -> str:
         if self.color == 0:
             return "N"
@@ -406,6 +440,7 @@ class King(Piece):
         return "k"
 
     def get_possible_moves(self, board: Board) -> list[Move]:
+        # IMPORTANT: we're delegating checking whether a move would result in self-check to the caller
         moves = []
         directions = self.__class__.directions
         for direction in directions:  # type: ignore
@@ -430,17 +465,31 @@ class King(Piece):
 
         if an_ally_is_there(self, dest_square, board):
             raise Obstacle
-        if an_opponent_is_there(self, dest_square, board) and not it_would_be_check(
+        if an_opponent_is_there(self, dest_square, board):
+            # IMPORTANT: we're delegating checking whether a move would result in self-check to the caller
             self, dest_square, board
-        ):
             return self.move(dest_square, capture=True)
-        if not it_would_be_check(self, dest_square, board):
-            return self.move(dest_square, capture=False)
         raise NoMove
 
 
-def it_would_be_check(piece: Piece, dest_square: str, board: Board) -> bool:
-    board_after_move = Board.from_FEN(board.FEN)
+def it_would_be_self_check(piece: Piece, move: Move, board: Board, king_square: str) -> bool:
+    board_after_move = board.copy()
+    setattr(board_after_move, move.src, None)
+    setattr(board_after_move, move.dest, piece)
+    side = piece.color
+    return its_check_for(side, board=board, king_square=king_square)
+
+
+def its_check_for(side: int, board: Board, king_square: str) -> bool:
+    if side:
+        opposing_pieces = board.white_pieces()
+    else:
+        opposing_pieces = board.black_pieces()
+    for piece in opposing_pieces:
+        for move in piece.get_possible_moves(board):
+            if move.dest == king_square:
+                return True
+    return False
 
 
 def get_up_rank(_: str, rank: int) -> tuple[str, int]:

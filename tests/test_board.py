@@ -54,10 +54,12 @@ def test_get_FEN_from_board():
     board = Board.from_FEN(STARTING_FEN)
     assert commands.get_FEN_from_board(board) == STARTING_FEN
 
+
 def test_get_FEN_from_board_2():
     BLANK = "8/8/8/8/8/8/8/8"
     board = Board.from_FEN(BLANK)
     assert commands.get_FEN_from_board(board) == BLANK
+
 
 def test_get_FEN_from_board_3():
     ENDGAME = "8/1k3q2/8/8/8/3K4/8/8"

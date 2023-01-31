@@ -21,14 +21,16 @@ def get_all_legal_moves(state: t.GameState) -> list[t.Move]:
     board = t.Board.from_FEN(state.FEN)
     if state.turn:
         pieces = board.black_pieces()
+        king_square = state.king_square_black
     else:
         pieces = board.white_pieces()
+        king_square = state.king_square_white
 
     return [
         move
         for piece in pieces
-        for move in piece.get_possible_moves()
-        if not t.it_would_be_check(piece, move, board)
+        for move in piece.get_possible_moves(board)
+        if not t.it_would_be_self_check(piece, move, board, king_square)
     ]
 
 

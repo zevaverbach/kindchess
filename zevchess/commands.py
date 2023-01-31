@@ -51,11 +51,32 @@ def get_new_state(state: t.GameState, move: t.Move_) -> t.GameState:
     else:
         state.half_moves_since_last_capture += 1
     recalculate_castling_state(state, move)
+    recalculate_king_position(state, move)
     state.FEN = recalculate_FEN(state, move)
     state.half_moves += 1
     state.turn = int(not state.turn)
 
     return state
+
+
+def recalculate_king_position(state: t.GameState, move: t.Move_) -> None:
+    if move.piece == "k":
+        if state.turn:
+            state.king_square_black = move.dest # type: ignore
+        else:
+            state.king_square_white = move.dest # type: ignore
+    elif move.castle:
+        if state.turn:
+            if move.castle == "k":
+                state.king_square_black = "g8"
+            else:
+                state.king_square_black = "c8"
+        else:
+            if move.castle == "k":
+                state.king_square_black = "g1"
+            else:
+                state.king_square_black = "c1"
+
 
 
 def recalculate_castling_state(state: t.GameState, move: t.Move_) -> None:
@@ -218,30 +239,8 @@ def get_updated_rank_FENs(state, move, ranks) -> dict[int, str]:
     return updated_ranks
 
 
-def get_FEN_from_board(board: t.Board) -> str:
-    blank_count = 0
-    FEN = ""
-    rank = 8
-    for square, piece in board.square_tups_in_FEN_order():
-        if int(square[1]) != rank:
-            rank = int(square[1])
-            if blank_count:
-                FEN += str(blank_count)
-                blank_count = 0
-            FEN += "/"
-        if piece is None:
-            blank_count += 1
-        else:
-            if blank_count:
-                FEN += str(blank_count)
-                blank_count = 0
-            FEN += piece.name()
-    if blank_count:
-        FEN += str(blank_count)
-    return FEN
-
-
 def recalculate_FEN(state: t.GameState, move: t.Move_) -> str:
+    # TODO: replace this with `do_move(move)` and `board.to_FEN()` 
     updated_ranks = {}
     ranks = state.FEN.split("/")[::-1]
     if move.castle is not None:

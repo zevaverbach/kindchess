@@ -28,6 +28,7 @@
         - [ ] king
         - [ ] knight
         - [ ] is it check?
+        - [ ] if castling, would it sweep through check?
     - [x] persist move
     - [x] update game state
         - see "make a hash for each game"
@@ -64,3 +65,4 @@
 - [ ] accounts/auth
 - [ ] persist/serialize the board differently
   - instead of FEN, maybe a hash
+- [ ] get_FEN_from_board, if it's more efficient than the other get_FEN (after a move), should replace it
