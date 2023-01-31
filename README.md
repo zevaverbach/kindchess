@@ -12,7 +12,7 @@ I'm interested in this because a) I like chess and b) I want to learn more about
 - sqlite3
 - Python 3.11
 - ./requirements.txt
-  - don't actually need in production
+  - don't actually need in production (maybe switch to a more modern packager)
     - pylint
     - ipython
     - pytest
@@ -33,4 +33,5 @@ I'm interested in this because a) I like chess and b) I want to learn more about
 - in-person chess 'dating'
 
 # Resources Used
-- http://www.netreal.de/Forsyth-Edwards-Notation/index.php
+- [generate FEN from board](http://www.netreal.de/Forsyth-Edwards-Notation/index.php)
+- [generate board from FEN](http://www.ee.unb.ca/cgi-bin/tervo/fen.pl)

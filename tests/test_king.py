@@ -1,5 +1,3 @@
-import pytest
-
 import zevchess.ztypes as t
 
 

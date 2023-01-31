@@ -21,20 +21,22 @@
   - [x] create game
   - [ ] make move
     - [ ] validate move
-        - [x] pawn
+        - [ ] pawn
+            - [ ] en passant
         - [x] rook
         - [x] bishop
         - [x] queen
-        - [ ] king
-        - [ ] knight
-        - [ ] is it check?
-        - [ ] if castling, would it sweep through check?
+        - [x] king
+        - [x] knight
+        - [x] is it check?
+        - [x] if castling, would it sweep through check?
     - [x] persist move
     - [x] update game state
         - see "make a hash for each game"
     - [ ] check if game is over
         - [ ] is it stalemate?
         - [ ] is it checkmate?
+            - [ ] get all pieces putting king in check, not the current short-circuited way
         - [ ] if it is, persist it to "completed_games" (sqlite)
     - [ ] pawn promotion
 - [ ] create a basic API

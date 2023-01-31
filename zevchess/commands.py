@@ -62,9 +62,9 @@ def get_new_state(state: t.GameState, move: t.Move_) -> t.GameState:
 def recalculate_king_position(state: t.GameState, move: t.Move_) -> None:
     if move.piece == "k":
         if state.turn:
-            state.king_square_black = move.dest # type: ignore
+            state.king_square_black = move.dest  # type: ignore
         else:
-            state.king_square_white = move.dest # type: ignore
+            state.king_square_white = move.dest  # type: ignore
     elif move.castle:
         if state.turn:
             if move.castle == "k":
@@ -76,7 +76,6 @@ def recalculate_king_position(state: t.GameState, move: t.Move_) -> None:
                 state.king_square_black = "g1"
             else:
                 state.king_square_black = "c1"
-
 
 
 def recalculate_castling_state(state: t.GameState, move: t.Move_) -> None:
@@ -240,7 +239,7 @@ def get_updated_rank_FENs(state, move, ranks) -> dict[int, str]:
 
 
 def recalculate_FEN(state: t.GameState, move: t.Move_) -> str:
-    # TODO: replace this with `do_move(move)` and `board.to_FEN()` 
+    # TODO: replace this with `do_move(move)` and `board.to_FEN()`
     updated_ranks = {}
     ranks = state.FEN.split("/")[::-1]
     if move.castle is not None:

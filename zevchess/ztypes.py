@@ -127,9 +127,9 @@ class GameState:
 # TODO: replace this with the ztypes.Move, maybe remove "uid"
 @dc.dataclass
 class Move:
-    piece: str
-    src: str
-    dest: str
+    piece: str | None = None
+    src: str | None = None
+    dest: str | None = None
     capture: bool = False
     castle: t.Literal["k", "q"] | None = None
 
@@ -291,26 +291,25 @@ class Board:
 
 def get_FEN_from_board(board: Board) -> str:
     blank_count = 0
-    FEN = ""
+    fen = ""
     rank = 8
     for square, piece in board.square_tups_in_FEN_order():
         if int(square[1]) != rank:
             rank = int(square[1])
             if blank_count:
-                FEN += str(blank_count)
+                fen += str(blank_count)
                 blank_count = 0
-            FEN += "/"
+            fen += "/"
         if piece is None:
             blank_count += 1
         else:
             if blank_count:
-                FEN += str(blank_count)
+                fen += str(blank_count)
                 blank_count = 0
-            FEN += piece.name()
+            fen += piece.name()
     if blank_count:
-        FEN += str(blank_count)
-    return FEN
-
+        fen += str(blank_count)
+    return fen
 
 
 @dc.dataclass
@@ -345,10 +344,9 @@ class Pawn(Piece):
         move_one_up = self.get_move_one_up(fl, rank, board)
         if move_one_up is not None:
             moves.append(move_one_up)
-
-        move_two_up = self.get_move_two_up(fl, rank, board)
-        if move_two_up is not None:
-            moves.append(move_two_up)
+            move_two_up = self.get_move_two_up(fl, rank, board)
+            if move_two_up is not None:
+                moves.append(move_two_up)
 
         diag_l = None
         try:
@@ -430,9 +428,7 @@ class Knight(Piece):
         return "n"
 
     def get_possible_moves(self, board: Board) -> list[Move]:
-        directions = [
-            "2u1l", "2u1r", "2d1l", "2d1r", "1u2l", "1u2r", "1d2l", "1d2r"
-        ]
+        directions = ["2u1l", "2u1r", "2d1l", "2d1r", "1u2l", "1u2r", "1d2l", "1d2r"]
         moves = []
         for direction in directions:
             try:
@@ -443,69 +439,92 @@ class Knight(Piece):
                 moves.append(possible_move)
         return moves
 
-
-    def get_incr_func(self, direction: t.Literal["2u1l", "2u1r", "2d1l", "2d1r", "1u2l", "1u2r", "1d2l", "1d2r"]) -> t.Callable[[str, int], tuple[str, int]]:
+    def get_incr_func(
+        self,
+        direction: t.Literal[
+            "2u1l", "2u1r", "2d1l", "2d1r", "1u2l", "1u2r", "1d2l", "1d2r"
+        ],
+    ) -> t.Callable[[str, int], tuple[str, int]]:
         match direction:
             case "2u1l":
-                def func(f: str, rank: int):
+
+                def do_2u1l(f: str, rank: int):
                     f, rank = get_prev_fl(f, rank)
                     f, rank = get_up_rank(f, rank)
                     return get_up_rank(f, rank)
-                return func
+
+                return do_2u1l
             case "2u1r":
-                def func(f: str, rank: int):
+
+                def do_2u1r(f: str, rank: int):
                     f, rank = get_next_fl(f, rank)
                     f, rank = get_up_rank(f, rank)
                     return get_up_rank(f, rank)
-                return func
+
+                return do_2u1r
             case "2d1l":
-                def func(f: str, rank: int):
+
+                def do_2d1l(f: str, rank: int):
                     f, rank = get_prev_fl(f, rank)
                     f, rank = get_down_rank(f, rank)
                     return get_down_rank(f, rank)
-                return func
+
+                return do_2d1l
             case "2d1r":
-                def func(f: str, rank: int):
+
+                def do_2d1r(f: str, rank: int):
                     f, rank = get_next_fl(f, rank)
                     f, rank = get_down_rank(f, rank)
                     return get_down_rank(f, rank)
-                return func
+
+                return do_2d1r
             case "1u2l":
-                def func(f: str, rank: int):
+
+                def do_1u2l(f: str, rank: int):
                     f, rank = get_prev_fl(f, rank)
                     f, rank = get_prev_fl(f, rank)
                     return get_up_rank(f, rank)
-                return func
+
+                return do_1u2l
             case "1u2r":
-                def func(f: str, rank: int):
+
+                def do_1u2r(f: str, rank: int):
                     f, rank = get_next_fl(f, rank)
                     f, rank = get_next_fl(f, rank)
                     return get_up_rank(f, rank)
-                return func
+
+                return do_1u2r
             case "1d2l":
-                def func(f: str, rank: int):
+
+                def do_1d2l(f: str, rank: int):
                     f, rank = get_prev_fl(f, rank)
                     f, rank = get_prev_fl(f, rank)
                     return get_down_rank(f, rank)
-                return func
+
+                return do_1d2l
             case "1d2r":
-                def func(f: str, rank: int):
+
+                def do_1d2r(f: str, rank: int):
                     f, rank = get_next_fl(f, rank)
                     f, rank = get_next_fl(f, rank)
                     return get_down_rank(f, rank)
-                return func
+
+                return do_1d2r
             case _:
                 raise Exception(f"no such direction as {direction}")
 
     def get_possible_move_in_direction(
         self,
-        direction: t.Literal["2u1l", "2u1r", "2d1l", "2d1r", "1u2l", "1u2r", "1d2l", "1d2r"],
+        direction: t.Literal[
+            "2u1l", "2u1r", "2d1l", "2d1r", "1u2l", "1u2r", "1d2l", "1d2r"
+        ],
         board: Board,
     ) -> Move:
         fl, rank_str = self.square
         rank = int(rank_str)
 
-        fl, rank = self.get_incr_func(direction)(fl, rank)
+        func = self.get_incr_func(direction)
+        fl, rank = func(fl, rank)
         dest_square = f"{fl}{rank}"
 
         if an_ally_is_there(self, dest_square, board):
@@ -513,8 +532,7 @@ class Knight(Piece):
         if an_opponent_is_there(self, dest_square, board):
             self, dest_square, board
             return self.move(dest_square, capture=True)
-        raise NoMove
-
+        return self.move(dest_square)
 
 
 @dc.dataclass
@@ -533,7 +551,7 @@ class King(Piece):
         for direction in directions:  # type: ignore
             try:
                 possible_move = self.get_possible_move_in_direction(direction=direction, board=board)  # type: ignore
-            except (NoMove, Obstacle, Edge) as e:
+            except (NoMove, Obstacle, Edge):
                 continue
             else:
                 moves.append(possible_move)
@@ -553,16 +571,16 @@ class King(Piece):
         if an_ally_is_there(self, dest_square, board):
             raise Obstacle
         if an_opponent_is_there(self, dest_square, board):
-            # IMPORTANT: we're delegating checking whether a move would result in self-check to the caller
-            self, dest_square, board
             return self.move(dest_square, capture=True)
         return self.move(dest_square)
 
 
-def it_would_be_self_check(piece: Piece, move: Move, board: Board, king_square: str) -> bool:
+def it_would_be_self_check(
+    piece: Piece, move: Move, board: Board, king_square: str
+) -> bool:
     board_after_move = board.copy()
-    setattr(board_after_move, move.src, None)
-    setattr(board_after_move, move.dest, piece)
+    setattr(board_after_move, move.src, None)  # type: ignore
+    setattr(board_after_move, move.dest, piece)  # type: ignore
     side = piece.color
     return its_check_for(side, board=board, king_square=king_square)
 

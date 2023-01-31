@@ -1,4 +1,3 @@
-from zevchess.db import r
 from zevchess.commands import update_existing_uids_cache
 from zevchess.queries import get_existing_uids_from_db
 
