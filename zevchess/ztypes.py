@@ -151,8 +151,8 @@ class Piece:
                 maker = Pawn
             case "r":
                 maker = Rook
-            # case "b":
-            #     maker = Bishop
+            case "b":
+                maker = Bishop
             # case "n":
             #     maker = Knight
             case "q":
@@ -349,6 +349,17 @@ class Queen(Piece):
         if self.color == 0:
             return "Q"
         return "q"
+
+
+@dc.dataclass
+class Bishop(Piece):
+    directions = ["ul", "ur", "dr", "dl"]
+
+    def name(self) -> str:
+        if self.color == 0:
+            return "B"
+        return "b"
+
 
 def get_up_rank(_: str, rank: int) -> tuple[str, int]:
     if rank == 8:
