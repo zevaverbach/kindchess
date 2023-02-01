@@ -21,8 +21,8 @@
   - [x] create game
   - [ ] make move
     - [ ] validate move
-        - [ ] pawn
-            - [ ] en passant
+        - [x] pawn
+            - [x] en passant
         - [x] rook
         - [x] bishop
         - [x] queen
