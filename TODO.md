@@ -20,21 +20,23 @@
 - [ ] create logic for
   - [x] create game
   - [ ] make move
-    - [ ] validate move
+    - [x] validate move
         - [x] pawn
             - [x] en passant
         - [x] rook
         - [x] bishop
         - [x] queen
-        - [ ] king
-            - [ ] write more tests, especially for check
-        - [ ] knight
-            - [ ] write tests
+        - [x] king
+        - [x] knight
+            - [x] write tests
         - [x] is it check?
         - [x] if castling, would it sweep through check?
     - [x] persist move
     - [x] update game state
         - see "make a hash for each game"
+    - [ ] test "get all legal moves"
+        - [ ] en passant results in the captured piece actually disappearing
+        - [ ] king is prohibited from putting himself into check, especially with another king
     - [ ] check if game is over
         - [ ] is it stalemate? (no possible moves and check is False)
         - [ ] is it checkmate? (no possible moves and check is True)
