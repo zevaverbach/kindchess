@@ -17,11 +17,9 @@
             - [x] black_can_castle_kingside
             - [x] half_moves_since_last_capture: null/moveNum
             - [x] board: probably a FEN
-    - [ ] cache for all possible moves
 - [ ] create logic for
   - [x] create game
   - [ ] make move
-    - [ ] get all possible moves from previous move (cache)
     - [ ] validate move
         - [ ] pawn
             - [ ] en passant
@@ -37,7 +35,6 @@
     - [x] persist move
     - [x] update game state
         - see "make a hash for each game"
-    - [ ] calculate and cache all possible moves
     - [ ] check if game is over
         - [ ] is it stalemate? (no possible moves and check is False)
         - [ ] is it checkmate? (no possible moves and check is True)
@@ -68,12 +65,15 @@
 - [ ] game clock
 - [ ] enforce move limit (draw)
 - [ ] material tracking - points, pieces
-- [ ] detect cheating
-- [ ] accounts/auth
 - [ ] persist/serialize the board differently
   - instead of FEN, maybe a hash
+- [ ] cache possible moves, this may not change for a given piece in certain conditions
+  - [ ] build up a permanent cache of possible moves for a given board/FEN
+      - [ ] look in this cache before trying to calculate
+- [ ] detect cheating
+- [ ] accounts/auth
 - [ ] get_FEN_from_board, if it's more efficient than the other get_FEN (after a move), should replace it
 - [ ] find shortcuts to limit computation
   - [ ] if a pawn, king, knight is sufficiently far away, no need to check whether it can put the opposing king in check
-  - [ ] cache possible moves, this may not change for a given piece in certain conditions
   - [ ] bitpacking?
+
