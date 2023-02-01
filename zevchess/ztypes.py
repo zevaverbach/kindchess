@@ -602,6 +602,10 @@ def it_would_be_self_check(
     setattr(board_after_move, move.dest, piece)  # type: ignore
     side = piece.color
     its_check = its_check_for(side, board=board_after_move, king_square=king_square)
+    if its_check and side == 0 and piece.name() == "K" and move.src == "c4":
+        print_board_from_FEN(board_after_move.to_FEN())
+        print(f"{its_check=}")
+        print(f"{king_square=}")
     return its_check
 
 

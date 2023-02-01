@@ -34,15 +34,16 @@
     - [x] persist move
     - [x] update game state
         - see "make a hash for each game"
-    - [ ] test "get all legal moves"
+    - [x] test "get all legal moves"
         - [x] en passant results in the captured piece actually disappearing
-        - [ ] king is prohibited from putting himself into check, especially with another king
+        - [x] king is prohibited from putting himself into check, especially with another king
     - [ ] check if game is over
         - [ ] is it stalemate? (no possible moves and check is False)
         - [ ] is it checkmate? (no possible moves and check is True)
             - [ ] get all pieces putting king in check, not the current short-circuited way
         - [ ] if it is, persist it to "completed_games" (sqlite)
     - [ ] pawn promotion
+    - [ ] make or find more tests
 - [ ] create a basic API
   - [ ] /game
     - [ ] GET

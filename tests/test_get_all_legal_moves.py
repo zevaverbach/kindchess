@@ -85,7 +85,6 @@ def test_get_moves_castling_is_blocked():
         t.Move(piece="N", src="b1", dest="c3"),
         t.Move(piece="N", src="b1", dest="a3"),
         t.Move(piece="K", src="e1", dest="f1"),
-        t.Move(piece="K", src="e1", dest="f2"),
         t.Move(piece="R", src="h1", dest="f1"),
         t.Move(piece="R", src="h1", dest="g1"),
     ]
@@ -117,7 +116,6 @@ def test_get_moves_castling_is_blocked_by_a_knight():
         t.Move(piece="P", src="h2", dest="g3", capture=True),
         t.Move(piece="N", src="b1", dest="c3"),
         t.Move(piece="N", src="b1", dest="a3"),
-        t.Move(piece="K", src="e1", dest="f1"),
         t.Move(piece="K", src="e1", dest="f2"),
         t.Move(piece="R", src="h1", dest="f1"),
         t.Move(piece="R", src="h1", dest="g1"),
@@ -255,3 +253,31 @@ def test_get_all_legal_moves_including_en_passant():
     got = q.get_all_legal_moves(state)
     for e in expect:
         assert e in got
+
+
+def test_that_king_wont_move_next_to_king():
+    state = t.GameState(
+        FEN="rnbq1bnr/pppppppp/8/4k3/2K5/8/PPPPPPPP/RNBQ1BNR",
+        king_square_white="c4",
+        king_square_black="e5",
+        half_moves=20,
+        white_can_castle_kingside=0,
+        white_can_castle_queenside=0,
+    )
+    got = q.get_all_legal_moves(state)
+    expect = [
+        t.Move(piece="K", src="c4", dest="b3"),
+        t.Move(piece="K", src="c4", dest="b4"),
+        t.Move(piece="K", src="c4", dest="b5"),
+        t.Move(piece="K", src="c4", dest="c5"),
+        t.Move(piece="K", src="c4", dest="c3"),
+        t.Move(piece="K", src="c4", dest="d3"),
+    ]
+    not_expect = [
+        t.Move(piece="K", src="c4", dest="d4"),
+        t.Move(piece="K", src="c4", dest="d5"),
+    ]
+    for e in expect:
+        assert e in got
+    for ne in not_expect:
+        assert ne not in got

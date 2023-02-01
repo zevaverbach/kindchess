@@ -10,7 +10,8 @@ def test_recalculate_FEN():
         dest="b4",
     )
     oldFEN = state.FEN
-    newFEN = recalculate_FEN(state, move)
+    board = t.Board.from_FEN(state.FEN)
+    newFEN = recalculate_FEN(state, move, board)
     assert newFEN != oldFEN
 
 
@@ -22,7 +23,8 @@ def test_recalculate_FEN_same_rank():
         dest="f4",
         capture=True,
     )
-    newFEN = recalculate_FEN(state, move)
+    board = t.Board.from_FEN(state.FEN)
+    newFEN = recalculate_FEN(state, move, board)
     assert newFEN == "rnb1kbnr/pppppppp/8/8/5R2/8/PPPPPPPP/1NBQKBNR"
 
 
@@ -31,7 +33,8 @@ def test_recalculate_FEN_castling_kingside():
     move = t.Move(
         castle="k",
     )
-    newFEN = recalculate_FEN(state, move)
+    board = t.Board.from_FEN(state.FEN)
+    newFEN = recalculate_FEN(state, move, board)
     assert newFEN == "rnbqkbnr/pppppppp/8/8/5BN1/8/PPPPPPPP/RNBQ1RK1"
 
 
@@ -40,16 +43,18 @@ def test_recalculate_FEN_castling_queenside():
     move = t.Move(
         castle="q",
     )
-    newFEN = recalculate_FEN(state, move)
+    board = t.Board.from_FEN(state.FEN)
+    newFEN = recalculate_FEN(state, move, board)
     assert newFEN == "rnbqkbnr/pppppppp/8/2B5/3N4/4Q3/PPPPPPPP/2KR1BNR"
 
 
 def test_recalculate_FEN_castling_queenside_only_rook_on_home_row():
     state = t.GameState(FEN="rnbqkbnr/pppppppp/8/4B3/1N2QBN1/8/PPPPPPPP/R3K2R")
+    board = t.Board.from_FEN(state.FEN)
     move = t.Move(
         castle="q",
     )
-    newFEN = recalculate_FEN(state, move)
+    newFEN = recalculate_FEN(state, move, board)
     assert newFEN == "rnbqkbnr/pppppppp/8/4B3/1N2QBN1/8/PPPPPPPP/2KR3R"
 
 

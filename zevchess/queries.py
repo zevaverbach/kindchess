@@ -24,15 +24,17 @@ def get_all_legal_moves(
     if state.turn:
         pieces = board.black_pieces()
         king_square = state.king_square_black
+        K = "k"
     else:
         pieces = board.white_pieces()
         king_square = state.king_square_white
+        K = "K"
 
     return [
         move
         for piece in pieces
         for move in piece.get_possible_moves(board, state.en_passant_square)
-        if not t.it_would_be_self_check(piece, move, board, king_square)
+        if not t.it_would_be_self_check(piece, move, board, king_square if move.piece != K else move.dest)  # type: ignore
     ] + get_castling_moves(state, board)
 
 
