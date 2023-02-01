@@ -199,16 +199,26 @@ def test_get_moves_includes_castling_both_sides():
 
 
 def test_get_possible_moves_rook_pinned():
-    board = t.Board.from_FEN("rnb1kbnr/pppppppp/4q3/P7/2P5/4R3/PPP2PPP/1NBQKBNR")
-    raise NotImplementedError
-    # assert len(possible_moves) == 4
-    # for pm in [
-    #     t.Move(piece="R", src="e3", dest="e6", capture=True),
-    #     t.Move(piece="R", src="e3", dest="e5"),
-    #     t.Move(piece="R", src="e3", dest="e6"),
-    #     t.Move(piece="R", src="e3", dest="e2"),
-    # ]:
-    #     assert pm in possible_moves
+    state = t.GameState(FEN="rnb1kbnr/pppppppp/4q3/P7/2P5/4R3/PPP2PPP/1NBQKBNR")
+    expect = [
+        t.Move(piece="R", src="e3", dest="e6", capture=True),
+        t.Move(piece="R", src="e3", dest="e2"),
+        t.Move(piece="R", src="e3", dest="e4"),
+        t.Move(piece="R", src="e3", dest="e5"),
+    ]
+    got = q.get_all_legal_moves(state)
+    for e in expect:
+        assert e in got
+    for dont_expect in [
+        t.Move(piece="R", src="e3", dest="a3"),
+        t.Move(piece="R", src="e3", dest="b3"),
+        t.Move(piece="R", src="e3", dest="c3"),
+        t.Move(piece="R", src="e3", dest="d3"),
+        t.Move(piece="R", src="e3", dest="f3"),
+        t.Move(piece="R", src="e3", dest="g3"),
+        t.Move(piece="R", src="e3", dest="h3"),
+    ]:
+        assert dont_expect not in got
 
 
 def test_get_possible_moves_queen_pinned():
