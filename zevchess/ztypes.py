@@ -4,6 +4,8 @@ import dataclasses as dc
 import string
 import typing as t
 
+from zevchess.print_board import print_board_from_FEN
+
 Uid = t.NewType("Uid", str)
 # not really a FEN, just the positions part
 FEN = t.NewType("FEN", bytes)
@@ -587,16 +589,11 @@ def it_would_be_self_check(
     piece: Piece, move: Move, board: Board, king_square: str
 ) -> bool:
     board_after_move = board.copy()
-    if piece.name().lower() == "r" and move.src == "e3":
-        print(board_after_move)
     setattr(board_after_move, move.src, None)  # type: ignore
-    if piece.name().lower() == "r" and move.src == "e3":
-        print(board_after_move)
     setattr(board_after_move, move.dest, piece)  # type: ignore
-    if piece.name().lower() == "r" and move.src == "e3":
-        print(board_after_move)
     side = piece.color
-    return its_check_for(side, board=board, king_square=king_square)
+    its_check = its_check_for(side, board=board_after_move, king_square=king_square)
+    return its_check
 
 
 def its_check_for(side: int, board: Board, king_square: str) -> bool:
@@ -606,8 +603,6 @@ def its_check_for(side: int, board: Board, king_square: str) -> bool:
         opposing_pieces = board.black_pieces()
     for piece in opposing_pieces:
         for move in piece.get_possible_moves(board):
-            if piece.name() == "q" and board.d3 is not None and board.d3.name().lower() == "r":
-                print(f"{move=}, {king_square=}")
             if move.dest == king_square:
                 return True
     return False
