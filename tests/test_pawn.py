@@ -22,6 +22,7 @@ def test_get_possible_moves_pawn2():
         t.Move(piece="P", src="e4", dest="d5", capture=True),
     ]
 
+
 def test_get_possible_moves_pawn_en_passant():
     board = t.Board.from_FEN("rnbqkbnr/ppp1pppp/8/2Pp4/8/8/PP1PPPPP/RNBQKBNR")
     pawn = board.c5

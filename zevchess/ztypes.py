@@ -330,7 +330,9 @@ class Pawn(Piece):
             if no_one_is_there(two_squares_in_front, board):
                 return self.move(two_squares_in_front)
 
-    def get_possible_moves(self, board: Board, en_passant_square: str = "") -> list[Move]:
+    def get_possible_moves(
+        self, board: Board, en_passant_square: str = ""
+    ) -> list[Move]:
         possible_moves = []
         fl, rank_str = self.square
         rank = int(rank_str)
@@ -371,15 +373,22 @@ class Pawn(Piece):
             file_to_right_of_en_passant_square = None
             fl = en_passant_square[0]
             if not fl.startswith("a"):
-                file_to_left_of_en_passant_square = string.ascii_lowercase[string.ascii_lowercase.index(fl) - 1]
+                file_to_left_of_en_passant_square = string.ascii_lowercase[
+                    string.ascii_lowercase.index(fl) - 1
+                ]
             if not fl.startswith("h"):
-                file_to_right_of_en_passant_square = string.ascii_lowercase[string.ascii_lowercase.index(fl) + 1]
+                file_to_right_of_en_passant_square = string.ascii_lowercase[
+                    string.ascii_lowercase.index(fl) + 1
+                ]
             rank = 4 if self.color else 5
             rank_behind = 3 if self.color else 6
             behind_en_passant_square = f"{fl}{rank_behind}"
             if (
-                (file_to_left_of_en_passant_square is not None and self.square == f"{file_to_left_of_en_passant_square}{rank}")
-                or (file_to_right_of_en_passant_square is not None and self.square == f"{file_to_right_of_en_passant_square}{rank}")
+                file_to_left_of_en_passant_square is not None
+                and self.square == f"{file_to_left_of_en_passant_square}{rank}"
+            ) or (
+                file_to_right_of_en_passant_square is not None
+                and self.square == f"{file_to_right_of_en_passant_square}{rank}"
             ):
                 possible_moves.append(self.move(behind_en_passant_square, capture=True))
 

@@ -36,7 +36,9 @@ def validate_move_arg(move) -> None:
         i is None for i in (move.piece, move.src, move.dest)
     ):
         raise InvalidArguments
-    if move.castle is not None and any(i is not None for i in (move.piece, move.src, move.dest)):
+    if move.castle is not None and any(
+        i is not None for i in (move.piece, move.src, move.dest)
+    ):
         raise InvalidArguments
 
 
@@ -87,7 +89,6 @@ def recalculate_en_passant(state, move) -> None:
         state.en_passant_square = state.dest
     elif state.en_passant_square != "":
         state.en_passant_square = ""
-
 
 
 def recalculate_king_position(state: t.GameState, move: t.Move) -> None:
@@ -274,7 +275,9 @@ def get_updated_rank_FENs(state, move, ranks, board) -> dict[int, str]:
         dest_rank_FEN = ranks[dest_rank_idx]
 
         updated_ranks[src_rank_idx] = get_updated_FEN_src_rank(
-            fen=src_rank_FEN, src_file_idx=src_file_idx, en_passant=en_passant,
+            fen=src_rank_FEN,
+            src_file_idx=src_file_idx,
+            en_passant=en_passant,
         )
         updated_ranks[dest_rank_idx] = get_updated_FEN_dest_rank(fen=dest_rank_FEN, dest_file_idx=dest_file_idx, turn=state.turn, piece=move.piece)  # type: ignore
     return updated_ranks
