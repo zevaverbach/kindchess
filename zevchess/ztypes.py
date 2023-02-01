@@ -363,6 +363,24 @@ class Pawn(Piece):
                 from_piece_perspective=self, square=diag_r, board=board
             ):
                 possible_moves.append(self.move(diag_r, capture=True))
+
+        if en_passant_square != "":
+            file_to_left_of_en_passant_square = None
+            file_to_right_of_en_passant_square = None
+            fl = en_passant_square[0]
+            if not fl.startswith("a"):
+                file_to_left_of_en_passant_square = string.ascii_lowercase[string.ascii_lowercase.index(fl) - 1]
+            if not fl.startswith("h"):
+                file_to_right_of_en_passant_square = string.ascii_lowercase[string.ascii_lowercase.index(fl) + 1]
+            rank = 4 if self.color else 5
+            rank_behind = 3 if self.color else 6
+            behind_en_passant_square = f"{fl}{rank_behind}"
+            if (
+                (file_to_left_of_en_passant_square is not None and self.square == f"{file_to_left_of_en_passant_square}{rank}")
+                or (file_to_right_of_en_passant_square is not None and self.square == f"{file_to_right_of_en_passant_square}{rank}")
+            ):
+                possible_moves.append(self.move(behind_en_passant_square, capture=True))
+
         return possible_moves
 
 

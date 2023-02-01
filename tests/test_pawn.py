@@ -38,7 +38,6 @@ def test_get_possible_moves_pawn_pinned():
     pawn = board.e4
     assert pawn is not None
     assert isinstance(pawn, t.Pawn)
-    # because it's not checking for 'check'/pins
     assert pawn.get_possible_moves(board) == [
         t.Move(piece="P", src="e4", dest="e5"),
         t.Move(piece="P", src="e4", dest="d5", capture=True),
