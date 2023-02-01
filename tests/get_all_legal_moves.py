@@ -196,3 +196,30 @@ def test_get_moves_includes_castling_both_sides():
     for e in expect:
         assert e in got
     assert len(got) == len(expect)
+
+
+def test_get_possible_moves_rook_pinned():
+    board = t.Board.from_FEN("rnb1kbnr/pppppppp/4q3/P7/2P5/4R3/PPP2PPP/1NBQKBNR")
+    raise NotImplementedError
+    # assert len(possible_moves) == 4
+    # for pm in [
+    #     t.Move(piece="R", src="e3", dest="e6", capture=True),
+    #     t.Move(piece="R", src="e3", dest="e5"),
+    #     t.Move(piece="R", src="e3", dest="e6"),
+    #     t.Move(piece="R", src="e3", dest="e2"),
+    # ]:
+    #     assert pm in possible_moves
+
+
+def test_get_possible_moves_queen_pinned():
+    board = t.Board.from_FEN("rn1qkbnr/pppppppp/8/b7/8/5P2/PPPQ1PPP/RNB1KBNR")
+    raise NotImplementedError
+    assert len(possible_moves) == 3
+    for pm in [
+        t.Move(piece="Q", src="d2", dest="c3"),
+        t.Move(piece="Q", src="d2", dest="b4"),
+        t.Move(piece="Q", src="d2", dest="a5", capture=True),
+    ]:
+        assert pm in possible_moves
+
+

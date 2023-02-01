@@ -29,7 +29,7 @@ def get_all_legal_moves(state: t.GameState) -> list[t.Move]:
     return [
         move
         for piece in pieces
-        for move in piece.get_possible_moves(board)
+        for move in piece.get_possible_moves(board, state.en_passant_square)
         if not t.it_would_be_self_check(piece, move, board, king_square)
     ] + get_castling_moves(state, board)
 
@@ -102,4 +102,4 @@ def get_castling_moves(state: t.GameState, board: t.Board) -> list[t.Move]:
         )
     ):
         moves.append(t.Move(castle="q"))
-        return moves
+    return moves

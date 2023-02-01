@@ -28,8 +28,10 @@
         - [x] rook
         - [x] bishop
         - [x] queen
-        - [x] king
-        - [x] knight
+        - [ ] king
+            - [ ] write more tests, especially for check
+        - [ ] knight
+            - [ ] write tests
         - [x] is it check?
         - [x] if castling, would it sweep through check?
     - [x] persist move

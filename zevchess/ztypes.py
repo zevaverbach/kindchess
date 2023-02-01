@@ -81,16 +81,6 @@ Square = t.Literal[
 ]
 
 
-@dc.dataclass
-class Move_:
-    uid: Uid
-    piece: str | None = None
-    src: Square | None = None
-    dest: Square | None = None
-    capture: bool = False
-    castle: Castle | None = None
-
-
 STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
 
 
@@ -105,6 +95,7 @@ class GameState:
     half_moves_since_last_capture: int = -1
     king_square_white: str = "e1"
     king_square_black: str = "e8"
+    en_passant_square: str = ""
     FEN: str = STARTING_FEN
 
     @classmethod
@@ -120,6 +111,7 @@ class GameState:
             int(rr[6]),
             rr[7].decode(),
             rr[8].decode(),
+            rr[9].decode(),
             rr[9].decode(),
         )
 
@@ -168,7 +160,7 @@ class Piece:
                 maker = Pawn
         return maker(color=char.islower(), square=square)
 
-    def get_possible_moves(self, board: Board) -> list[Move]:
+    def get_possible_moves(self, board: Board, _: str = "") -> list[Move]:
         return _get_possible_moves(self, board)
 
 
@@ -336,17 +328,17 @@ class Pawn(Piece):
             if no_one_is_there(two_squares_in_front, board):
                 return self.move(two_squares_in_front)
 
-    def get_possible_moves(self, board: Board) -> list[Move]:
-        moves = []
+    def get_possible_moves(self, board: Board, en_passant_square: str = "") -> list[Move]:
+        possible_moves = []
         fl, rank_str = self.square
         rank = int(rank_str)
 
         move_one_up = self.get_move_one_up(fl, rank, board)
         if move_one_up is not None:
-            moves.append(move_one_up)
+            possible_moves.append(move_one_up)
             move_two_up = self.get_move_two_up(fl, rank, board)
             if move_two_up is not None:
-                moves.append(move_two_up)
+                possible_moves.append(move_two_up)
 
         diag_l = None
         try:
@@ -358,7 +350,7 @@ class Pawn(Piece):
             if an_opponent_is_there(
                 from_piece_perspective=self, square=diag_l, board=board
             ):
-                moves.append(self.move(diag_l, capture=True))
+                possible_moves.append(self.move(diag_l, capture=True))
 
         diag_r = None
         try:
@@ -370,8 +362,8 @@ class Pawn(Piece):
             if an_opponent_is_there(
                 from_piece_perspective=self, square=diag_r, board=board
             ):
-                moves.append(self.move(diag_r, capture=True))
-        return moves
+                possible_moves.append(self.move(diag_r, capture=True))
+        return possible_moves
 
 
 def home_row(color: int, rank: int) -> bool:
@@ -427,7 +419,7 @@ class Knight(Piece):
             return "N"
         return "n"
 
-    def get_possible_moves(self, board: Board) -> list[Move]:
+    def get_possible_moves(self, board: Board, _: str = "") -> list[Move]:
         directions = ["2u1l", "2u1r", "2d1l", "2d1r", "1u2l", "1u2r", "1d2l", "1d2r"]
         moves = []
         for direction in directions:
@@ -543,8 +535,7 @@ class King(Piece):
             return "K"
         return "k"
 
-    def get_possible_moves(self, board: Board) -> list[Move]:
-        # IMPORTANT: we're delegating checking whether a move would result in self-check to the caller
+    def get_possible_moves(self, board: Board, _: str = "") -> list[Move]:
         moves = []
         directions = self.__class__.directions
         for direction in directions:  # type: ignore
@@ -682,10 +673,8 @@ def get_incr_func(direction: str) -> t.Callable[[str, int], tuple[str, int]]:
             raise Exception(f"no such direction as {direction}")
 
 
-def _get_possible_moves(piece: Piece, board: Board) -> list[Move]:
+def _get_possible_moves(piece: Piece, board: Board, _: str = "") -> list[Move]:
     moves = []
-    # if not piece.directions:
-    #     raise Exception
     directions = piece.__class__.directions
     for direction in directions:  # type: ignore
         moves += _get_possible_moves_in_direction(piece=piece, direction=direction, board=board)  # type: ignore
@@ -711,8 +700,12 @@ def _get_possible_moves_in_direction(
 
         if an_ally_is_there(piece, dest_square, board):
             break
+
         if an_opponent_is_there(piece, dest_square, board):
-            moves.append(piece.move(dest_square, capture=True))
+            move = piece.move(dest_square, capture=True)
+            moves.append(move)
             break
-        moves.append(piece.move(dest_square, capture=False))
+
+        move = piece.move(dest_square, capture=False)
+        moves.append(move)
     return moves

@@ -31,7 +31,7 @@ class InvalidMove(Exception):
     pass
 
 
-def make_move(uid: t.Uid, move: t.Move_) -> None:
+def make_move(uid: t.Uid, move: t.Move) -> None:
     if move.castle is None and any(
         i is None for i in (move.piece, move.src, move.dest)
     ):
@@ -50,7 +50,7 @@ def make_move(uid: t.Uid, move: t.Move_) -> None:
     store_state(uid, state)
 
 
-def get_new_state(state: t.GameState, move: t.Move_) -> t.GameState:
+def get_new_state(state: t.GameState, move: t.Move) -> t.GameState:
     if state.half_moves == 0:
         # first move of the game, impossible to capture
         state.half_moves_since_last_capture = 1
@@ -67,7 +67,7 @@ def get_new_state(state: t.GameState, move: t.Move_) -> t.GameState:
     return state
 
 
-def recalculate_king_position(state: t.GameState, move: t.Move_) -> None:
+def recalculate_king_position(state: t.GameState, move: t.Move) -> None:
     if move.piece == "k":
         if state.turn:
             state.king_square_black = move.dest  # type: ignore
@@ -86,7 +86,7 @@ def recalculate_king_position(state: t.GameState, move: t.Move_) -> None:
                 state.king_square_black = "c1"
 
 
-def recalculate_castling_state(state: t.GameState, move: t.Move_) -> None:
+def recalculate_castling_state(state: t.GameState, move: t.Move) -> None:
     if move.piece and move.piece not in "kr":
         return
 
@@ -118,7 +118,8 @@ def recalculate_castling_state(state: t.GameState, move: t.Move_) -> None:
         cant_castle_anymore("q")
 
 
-def store_move(uid: t.Uid, move: t.Move_) -> None:
+def store_move(uid: t.Uid, move: t.Move) -> None:
+    # TODO: store moves as a hash maybe?
     if move.castle is not None:
         move_string = "O-o" if move.castle == "k" else "O-o-o"
     else:
@@ -246,7 +247,7 @@ def get_updated_rank_FENs(state, move, ranks) -> dict[int, str]:
     return updated_ranks
 
 
-def recalculate_FEN(state: t.GameState, move: t.Move_) -> str:
+def recalculate_FEN(state: t.GameState, move: t.Move) -> str:
     # TODO: replace this with `do_move(move)` and `board.to_FEN()`
     updated_ranks = {}
     ranks = state.FEN.split("/")[::-1]

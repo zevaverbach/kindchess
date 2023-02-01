@@ -17,21 +17,6 @@ def test_get_possible_moves_queen2():
     assert queen.get_possible_moves(board) == [t.Move(piece="Q", src="d1", dest="d2")]
 
 
-def test_get_possible_moves_queen_pinned():
-    board = t.Board.from_FEN("rn1qkbnr/pppppppp/8/b7/8/5P2/PPPQ1PPP/RNB1KBNR")
-    queen = board.d3
-    assert queen is not None
-    assert isinstance(queen, t.Queen)
-    possible_moves = queen.get_possible_moves(board)
-    assert len(possible_moves) == 3
-    for pm in [
-        t.Move(piece="Q", src="d3", dest="c3"),
-        t.Move(piece="Q", src="d3", dest="b4"),
-        t.Move(piece="Q", src="d3", dest="a5", capture=True),
-    ]:
-        assert pm in possible_moves
-
-
 def test_get_possible_moves_queen_black():
     board = t.Board.from_FEN("rnb1kbnr/pppppppp/8/8/2P2q2/4P3/PPP1P1PP/RNBQKBNR")
     queen = board.f4
