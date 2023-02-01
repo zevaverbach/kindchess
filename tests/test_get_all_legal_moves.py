@@ -222,14 +222,22 @@ def test_get_possible_moves_rook_pinned():
 
 
 def test_get_possible_moves_queen_pinned():
-    board = t.Board.from_FEN("rn1qkbnr/pppppppp/8/b7/8/5P2/PPPQ1PPP/RNB1KBNR")
-    raise NotImplementedError
-    assert len(possible_moves) == 3
-    for pm in [
+    state = t.GameState(FEN="rn1qkbnr/pppppppp/8/b7/8/5P2/PPPQ1PPP/RNB1KBNR")
+    expect = [
         t.Move(piece="Q", src="d2", dest="c3"),
         t.Move(piece="Q", src="d2", dest="b4"),
         t.Move(piece="Q", src="d2", dest="a5", capture=True),
+    ]
+    got = q.get_all_legal_moves(state)
+    for e in expect:
+        assert e in got
+    for dont_expect in [
+        t.Move(piece="Q", src="d2", dest="d1"),
+        t.Move(piece="Q", src="d2", dest="d3"),
+        t.Move(piece="Q", src="d2", dest="d4"),
+        t.Move(piece="Q", src="d2", dest="d5"),
+        t.Move(piece="Q", src="d2", dest="d6"),
     ]:
-        assert pm in possible_moves
+        assert dont_expect not in got
 
 
