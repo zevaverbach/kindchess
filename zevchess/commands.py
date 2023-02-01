@@ -31,26 +31,33 @@ class InvalidMove(Exception):
     pass
 
 
-def make_move(uid: t.Uid, move: t.Move) -> None:
+def validate_move_arg(move) -> None:
     if move.castle is None and any(
         i is None for i in (move.piece, move.src, move.dest)
     ):
         raise InvalidArguments
+    if move.castle is not None and any(i is not None for i in (move.piece, move.src, move.dest)):
+        raise InvalidArguments
+
+
+def make_move_and_persist(uid: t.Uid, move: t.Move) -> None:
+    validate_move_arg(move)
 
     state = q.get_game_state(uid)
 
-    all_possible_moves = q.get_all_legal_moves(state)
+    board = t.Board.from_FEN(state.FEN)
+    all_possible_moves = q.get_all_legal_moves(state, board)
 
     if move not in all_possible_moves:
         raise InvalidMove
 
     store_move(uid, move)
 
-    state = get_new_state(state, move)
+    state = get_new_state(state, move, board)
     store_state(uid, state)
 
 
-def get_new_state(state: t.GameState, move: t.Move) -> t.GameState:
+def get_new_state(state: t.GameState, move: t.Move, board: t.Board) -> t.GameState:
     if state.half_moves == 0:
         # first move of the game, impossible to capture
         state.half_moves_since_last_capture = 1
@@ -63,7 +70,7 @@ def get_new_state(state: t.GameState, move: t.Move) -> t.GameState:
         recalculate_king_position(state, move)
 
     recalculate_en_passant(state, move)
-    state.FEN = recalculate_FEN(state, move)
+    state.FEN = recalculate_FEN(state, move, board)
     state.half_moves += 1
     state.turn = int(not state.turn)
 
@@ -74,7 +81,7 @@ def recalculate_en_passant(state, move) -> None:
     if move.piece.lower() != "p":
         return
     file, rank_str = move.src
-    dest_f, dest_rank_str = state.dest
+    dest_f, dest_rank_str = move.dest
     rank, dest_rank = int(rank_str), int(dest_rank_str)
     if file == dest_f and (dest_rank - rank == 2):
         state.en_passant_square = state.dest
@@ -196,14 +203,20 @@ def get_updated_rank_FEN_after_castling(
     )
 
 
-def get_updated_FEN_src_rank(fen: str, src_file_idx: int) -> str:
+def get_updated_FEN_src_rank(fen: str, src_file_idx: int, en_passant: str = "") -> str:
     updated_rank = []
     tokens_src = split_FEN_into_tokens(fen)
+    en_passant_idx = -1
+    if en_passant:
+        en_passant_idx = string.ascii_lowercase.index(en_passant)
     for idx, token in enumerate(tokens_src):
         if idx == src_file_idx:
             updated_rank.append(BLANK)
         else:
-            updated_rank.append(token)
+            if en_passant and en_passant_idx == idx:
+                updated_rank.append(BLANK)
+            else:
+                updated_rank.append(token)
     return create_FEN_from_tokens(updated_rank)
 
 
@@ -235,7 +248,7 @@ def get_updated_FEN_same_rank(
     return create_FEN_from_tokens(updated_rank)
 
 
-def get_updated_rank_FENs(state, move, ranks) -> dict[int, str]:
+def get_updated_rank_FENs(state, move, ranks, board) -> dict[int, str]:
     updated_ranks = {}
     src_file_idx = string.ascii_lowercase.index(move.src[0])
     src_rank_idx = int(move.src[1]) - 1
@@ -244,6 +257,10 @@ def get_updated_rank_FENs(state, move, ranks) -> dict[int, str]:
     dest_file, dest_rank_string = move.dest  # type: ignore
     dest_file_idx = string.ascii_lowercase.index(dest_file)
     dest_rank_idx = int(dest_rank_string) - 1
+
+    en_passant = ""
+    if move.capture and move.piece.lower() == "p" and getattr(board, move.dest) is None:
+        en_passant = move.dest[0]
 
     if dest_rank_idx == src_rank_idx:
         updated_ranks[src_rank_idx] = get_updated_FEN_same_rank(
@@ -257,13 +274,13 @@ def get_updated_rank_FENs(state, move, ranks) -> dict[int, str]:
         dest_rank_FEN = ranks[dest_rank_idx]
 
         updated_ranks[src_rank_idx] = get_updated_FEN_src_rank(
-            fen=src_rank_FEN, src_file_idx=src_file_idx
+            fen=src_rank_FEN, src_file_idx=src_file_idx, en_passant=en_passant,
         )
         updated_ranks[dest_rank_idx] = get_updated_FEN_dest_rank(fen=dest_rank_FEN, dest_file_idx=dest_file_idx, turn=state.turn, piece=move.piece)  # type: ignore
     return updated_ranks
 
 
-def recalculate_FEN(state: t.GameState, move: t.Move) -> str:
+def recalculate_FEN(state: t.GameState, move: t.Move, board: t.Board) -> str:
     # TODO: replace this with `do_move(move)` and `board.to_FEN()`
     updated_ranks = {}
     ranks = state.FEN.split("/")[::-1]
@@ -274,7 +291,7 @@ def recalculate_FEN(state: t.GameState, move: t.Move) -> str:
         updated_ranks[rank_src_idx] = updated_rank
     else:
         for rank_idx, updated_FEN in get_updated_rank_FENs(
-            move=move, state=state, ranks=ranks
+            move=move, state=state, ranks=ranks, board=board
         ).items():
             updated_ranks[rank_idx] = updated_FEN
 

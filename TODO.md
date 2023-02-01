@@ -35,7 +35,7 @@
     - [x] update game state
         - see "make a hash for each game"
     - [ ] test "get all legal moves"
-        - [ ] en passant results in the captured piece actually disappearing
+        - [x] en passant results in the captured piece actually disappearing
         - [ ] king is prohibited from putting himself into check, especially with another king
     - [ ] check if game is over
         - [ ] is it stalemate? (no possible moves and check is False)

@@ -17,8 +17,8 @@ def get_game_state(uid: t.Uid) -> t.GameState:
     return t.GameState.from_redis(r.hmget(uid, fields))  # type: ignore
 
 
-def get_all_legal_moves(state: t.GameState) -> list[t.Move]:
-    board = t.Board.from_FEN(state.FEN)
+def get_all_legal_moves(state: t.GameState, board: t.Board | None = None) -> list[t.Move]:
+    board = board or t.Board.from_FEN(state.FEN)
     if state.turn:
         pieces = board.black_pieces()
         king_square = state.king_square_black
