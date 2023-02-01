@@ -40,6 +40,8 @@ def get_castling_moves(state: t.GameState, board: t.Board) -> list[t.Move]:
         king = board.e8
         if (
             state.black_can_castle_kingside
+            and king is not None
+            and isinstance(king, t.King)
             and board.f8 is None
             and board.g8 is None
             and not any(
@@ -55,6 +57,8 @@ def get_castling_moves(state: t.GameState, board: t.Board) -> list[t.Move]:
             moves.append(t.Move(castle="k"))
         if (
             state.black_can_castle_queenside
+            and king is not None
+            and isinstance(king, t.King)
             and board.b8 is None
             and board.c8 is None
             and board.d8 is None
@@ -73,6 +77,8 @@ def get_castling_moves(state: t.GameState, board: t.Board) -> list[t.Move]:
     king = board.e1
     if (
         state.black_can_castle_kingside
+        and king is not None
+        and isinstance(king, t.King)
         and board.f1 is None
         and board.g1 is None
         and not any(
@@ -88,6 +94,8 @@ def get_castling_moves(state: t.GameState, board: t.Board) -> list[t.Move]:
         moves.append(t.Move(castle="k"))
     if (
         state.black_can_castle_queenside
+        and king is not None
+        and isinstance(king, t.King)
         and board.b1 is None
         and board.c1 is None
         and board.d1 is None

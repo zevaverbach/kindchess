@@ -241,3 +241,14 @@ def test_get_possible_moves_queen_pinned():
         assert dont_expect not in got
 
 
+def test_get_all_legal_moves_including_en_passant():
+    state = t.GameState(FEN="8/8/1K6/3pP3/8/8/5k2/8", en_passant_square="d5", king_square_white="b6", king_square_black="f2")
+    expect = [
+        t.Move(piece="P", src="e5", dest="e6"),
+        t.Move(piece="P", src="e5", dest="d6", capture=True),
+    ]
+    got = q.get_all_legal_moves(state)
+    for e in expect:
+        assert e in got
+
+
