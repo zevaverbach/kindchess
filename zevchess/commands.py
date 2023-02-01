@@ -54,17 +54,33 @@ def get_new_state(state: t.GameState, move: t.Move) -> t.GameState:
     if state.half_moves == 0:
         # first move of the game, impossible to capture
         state.half_moves_since_last_capture = 1
-    elif move.capture:
-        state.half_moves_since_last_capture = 0
     else:
-        state.half_moves_since_last_capture += 1
-    recalculate_castling_state(state, move)
-    recalculate_king_position(state, move)
+        if move.capture:
+            state.half_moves_since_last_capture = 0
+        else:
+            state.half_moves_since_last_capture += 1
+        recalculate_castling_state(state, move)
+        recalculate_king_position(state, move)
+
+    recalculate_en_passant(state, move)
     state.FEN = recalculate_FEN(state, move)
     state.half_moves += 1
     state.turn = int(not state.turn)
 
     return state
+
+
+def recalculate_en_passant(state, move) -> None:
+    if move.piece.lower() != "p":
+        return
+    file, rank_str = move.src
+    dest_f, dest_rank_str = state.dest
+    rank, dest_rank = int(rank_str), int(dest_rank_str)
+    if file == dest_f and (dest_rank - rank == 2):
+        state.en_passant_square = state.dest
+    elif state.en_passant_square != "":
+        state.en_passant_square = ""
+
 
 
 def recalculate_king_position(state: t.GameState, move: t.Move) -> None:
