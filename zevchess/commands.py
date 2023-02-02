@@ -5,13 +5,13 @@ import typing
 from uuid import uuid4
 
 from zevchess.db import r
-from zevchess.print_board import print_board_from_FEN
 import zevchess.queries as q
 import zevchess.ztypes as t
 
 
 class InvalidArguments(Exception):
     pass
+
 
 class InvalidState(Exception):
     pass
@@ -49,14 +49,21 @@ def validate_move_arg(move) -> None:
 class Checkmate(Exception):
     pass
 
+
 class Stalemate(Exception):
     pass
+
 
 class NoPendingPawnPromotion(Exception):
     pass
 
 
-def choose_promotion_piece(uid: t.Uid, piece_type: typing.Literal["r", "q", "n", "b"], state: t.GameState | None = None, testing: bool = False) -> t.GameState:
+def choose_promotion_piece(
+    uid: t.Uid,
+    piece_type: typing.Literal["r", "q", "n", "b"],
+    state: t.GameState | None = None,
+    testing: bool = False,
+) -> t.GameState:
     state = state or q.get_game_state(uid)
     if state.need_to_choose_pawn_promotion_piece == "":
         raise NoPendingPawnPromotion
@@ -64,10 +71,18 @@ def choose_promotion_piece(uid: t.Uid, piece_type: typing.Literal["r", "q", "n",
     capture = int(capture_str)
     piece = piece_type if state.turn else piece_type.upper()
     move = t.Move(piece, src=src, dest=dest, capture=capture)
-    return make_move_and_persist(uid, move, pawn_promotion=piece, testing=testing, state=state)
+    return make_move_and_persist(
+        uid, move, pawn_promotion=piece, testing=testing, state=state
+    )
 
 
-def make_move_and_persist(uid: t.Uid, move: t.Move, pawn_promotion: str = "", state: t.GameState | None = None, testing: bool = False) -> t.GameState:
+def make_move_and_persist(
+    uid: t.Uid,
+    move: t.Move,
+    pawn_promotion: str = "",
+    state: t.GameState | None = None,
+    testing: bool = False,
+) -> t.GameState:
     validate_move_arg(move)
 
     state = state or q.get_game_state(uid)
@@ -81,7 +96,9 @@ def make_move_and_persist(uid: t.Uid, move: t.Move, pawn_promotion: str = "", st
         state.need_to_choose_pawn_promotion_piece = ""
         # put the new piece where the pawn had been before its promotion
         # TODO: this is really awkward
-        state.FEN = recalculate_FEN(state, t.Move(piece=pawn_promotion, src=move.src, dest=move.src), board)
+        state.FEN = recalculate_FEN(
+            state, t.Move(piece=pawn_promotion, src=move.src, dest=move.src), board
+        )
         board = t.Board.from_FEN(state.FEN)
 
     # TODO: can this move be illegal if it came from a pawn promotion?
@@ -97,33 +114,35 @@ def make_move_and_persist(uid: t.Uid, move: t.Move, pawn_promotion: str = "", st
         # TODO: save to completed_games
         # TODO: delete/set to expire from Redis
         raise Checkmate
-    elif stalemate:
+    if stalemate:
         # TODO: save to completed_games
         # TODO: delete/set to expire from Redis
         raise Stalemate
-    else:
-        if not testing:
-            store_state(uid, state)
+    if not testing:
+        store_state(uid, state)
     return state
 
 
 def is_pawn_promotion(move: t.Move) -> bool:
-    if move.piece.lower() != "p": # type: ignore
+    if move.piece.lower() != "p":  # type: ignore
         return False
     last_rank = 1 if move.piece == "p" else 8
-    return int(move.dest[1]) == last_rank # type: ignore
+    return int(move.dest[1]) == last_rank  # type: ignore
 
 
-def get_new_state(state: t.GameState, move: t.Move, board: t.Board) -> tuple[t.GameState, bool, bool]:
+def get_new_state(
+    state: t.GameState, move: t.Move, board: t.Board
+) -> tuple[t.GameState, bool, bool]:
     if is_pawn_promotion(move):
-        state.need_to_choose_pawn_promotion_piece = f"{move.src} {move.dest} {move.capture}"
+        state.need_to_choose_pawn_promotion_piece = (
+            f"{move.src} {move.dest} {move.capture}"
+        )
         return state, False, False
 
     checkmate = q.its_checkmate(state)
     stalemate = False
     if not checkmate:
         stalemate = q.its_stalemate(state)
-
 
     if not checkmate and not stalemate:
         if state.half_moves == 0:
@@ -213,7 +232,7 @@ def store_move(uid: t.Uid, move: t.Move, pawn_promotion: str = "") -> None:
     if move.castle is not None:
         move_string = "O-o" if move.castle == "k" else "O-o-o"
     elif pawn_promotion:
-        up = pawn_promotion.isupper() # type: ignore
+        up = pawn_promotion.isupper()  # type: ignore
         move_string = f"{'P' if up else 'p'}{move.src}{'x' if move.capture else ''}{move.dest}{pawn_promotion}"
     else:
         move_string = f"{move.piece}{move.src}{'x' if move.capture else ''}{move.dest}"

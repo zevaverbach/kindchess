@@ -22,18 +22,24 @@ def test_make_move_en_passant():
     assert new_board.d5 == None
 
 
-@pytest.mark.skip()
 def test_make_move_its_checkmate():
     state = t.GameState(
-        ...
+        FEN="r2qkbnr/p1pppQpp/8/8/2Q5/8/P1PPPPPP/RNB1KBNR",
+        half_moves=20,
+        king_square_white="e1",
+        king_square_black="e8",
+        turn=1,
     )
     assert q.its_checkmate(state)
 
 
-@pytest.mark.skip()
 def test_make_move_its_stalemate():
     state = t.GameState(
-        ...
+        FEN="7k/5Q2/6K1/8/8/8/8/8",
+        half_moves=20,
+        king_square_white="e1",
+        king_square_black="e8",
+        turn=1,
     )
     assert q.its_stalemate(state)
 
@@ -51,7 +57,10 @@ def test_pawn_promotion_with_capture():
     new_state, _, _ = c.get_new_state(state, move, board)
     assert new_state.turn == state.turn
     assert new_state.need_to_choose_pawn_promotion_piece
-    assert new_state.need_to_choose_pawn_promotion_piece == f"{move.src} {move.dest} {move.capture}"
+    assert (
+        new_state.need_to_choose_pawn_promotion_piece
+        == f"{move.src} {move.dest} {move.capture}"
+    )
     assert new_state.half_moves == 20
     assert new_state.FEN == state.FEN
 
@@ -69,7 +78,10 @@ def test_pawn_promotion_no_capture():
     new_state, _, _ = c.get_new_state(state, move, board)
     assert new_state.turn == state.turn
     assert new_state.need_to_choose_pawn_promotion_piece
-    assert new_state.need_to_choose_pawn_promotion_piece == f"{move.src} {move.dest} {move.capture}"
+    assert (
+        new_state.need_to_choose_pawn_promotion_piece
+        == f"{move.src} {move.dest} {move.capture}"
+    )
     assert new_state.half_moves == 20
     assert new_state.FEN == state.FEN
 
@@ -85,10 +97,11 @@ def test_after_pawn_promotion_piece_is_chosen():
     move = t.Move(piece="P", src="b7", dest="b8")
     board = t.Board.from_FEN(state.FEN)
     new_state, _, _ = c.get_new_state(state, move, board)
-    newer_state = c.choose_promotion_piece(uid=t.Uid("hi"), piece_type="q", state=new_state, testing=True)
+    newer_state = c.choose_promotion_piece(
+        uid=t.Uid("hi"), piece_type="q", state=new_state, testing=True
+    )
     assert newer_state.FEN == "rQ1qkbnr/p1pppppp/8/8/8/8/P1PPPPPP/RNBQKBNR"
     assert not newer_state.need_to_choose_pawn_promotion_piece
-
 
 
 def test_before_pawn_promotion_piece_is_chosen():
@@ -98,7 +111,7 @@ def test_before_pawn_promotion_piece_is_chosen():
         king_square_white="e1",
         king_square_black="e8",
         turn=0,
-        need_to_choose_pawn_promotion_piece="yes"
+        need_to_choose_pawn_promotion_piece="yes",
     )
     move = t.Move(piece="P", src="c2", dest="c3")
     with pytest.raises(c.InvalidState):

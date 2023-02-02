@@ -98,7 +98,7 @@ class GameState:
     king_square_white: str = "e1"
     king_square_black: str = "e8"
     en_passant_square: str = ""
-    need_to_choose_pawn_promotion_piece: str = "" # f"{src} {target} {capture: int}"
+    need_to_choose_pawn_promotion_piece: str = ""  # f"{src} {target} {capture: int}"
     FEN: str = STARTING_FEN
 
     @classmethod

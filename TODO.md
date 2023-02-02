@@ -38,9 +38,8 @@
         - [x] en passant results in the captured piece actually disappearing
         - [x] king is prohibited from putting himself into check, especially with another king
     - [ ] check if game is over
-        - [ ] is it stalemate? (no possible moves and check is False)
-        - [ ] is it checkmate? (no possible moves and check is True)
-            - [ ] get all pieces putting king in check, not the current short-circuited way
+        - [x] is it stalemate? (no possible moves and check is False)
+        - [x] is it checkmate? (no possible moves and check is True)
         - [ ] if it is, persist it to "completed_games" (sqlite)
     - [ ] pawn promotion
         - [x] implement it
