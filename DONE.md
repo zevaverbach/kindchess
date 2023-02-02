@@ -1,0 +1,46 @@
+
+- [x] create a basic DB
+  - [x] use sqlite for completed games
+    - [x] fields: uid and moves
+    - [x] a function to store a completed game
+  - [x] use Redis at first for the active games
+    - [x] make a list for each active game
+        - [x] key is "game_<uid>"
+        - [x] value is list of verbose moves (originating square, pieces, destination square)
+    - [x] make a hash for each game
+        - [x] key is "game_<uid>"
+        - [x] values are key/values
+            - [x] half_moves: int
+            - [x] turn: 0/1
+            - [x] white_can_castle_queenside
+            - [x] black_can_castle_queenside
+            - [x] white_can_castle_kingside
+            - [x] black_can_castle_kingside
+            - [x] half_moves_since_last_capture: null/moveNum
+            - [x] board: probably a FEN
+- [x] create logic for
+  - [x] create game
+  - [x] make move
+    - [x] validate move
+        - [x] pawn
+            - [x] en passant
+        - [x] rook
+        - [x] bishop
+        - [x] queen
+        - [x] king
+        - [x] knight
+            - [x] write tests
+        - [x] is it check?
+        - [x] if castling, would it sweep through check?
+    - [x] persist move
+    - [x] update game state
+        - see "make a hash for each game"
+    - [x] test "get all legal moves"
+        - [x] en passant results in the captured piece actually disappearing
+        - [x] king is prohibited from putting himself into check, especially with another king
+    - [x] check if game is over
+        - [x] is it stalemate? (no possible moves and check is False)
+        - [x] is it checkmate? (no possible moves and check is True)
+        - [x] if it is, persist it to "completed_games" (sqlite)
+    - [x] pawn promotion
+        - [x] implement it
