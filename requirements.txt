@@ -42,5 +42,6 @@ stack-data==0.6.2
 tomlkit==0.11.6
 traitlets==5.8.1
 wcwidth==0.2.6
+websockets==10.4
 Werkzeug==2.2.2
 wrapt==1.14.1
