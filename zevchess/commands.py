@@ -5,11 +5,15 @@ import typing
 from uuid import uuid4
 
 from zevchess.db import r
+from zevchess.print_board import print_board_from_FEN
 import zevchess.queries as q
 import zevchess.ztypes as t
 
 
 class InvalidArguments(Exception):
+    pass
+
+class InvalidState(Exception):
     pass
 
 
@@ -52,33 +56,40 @@ class NoPendingPawnPromotion(Exception):
     pass
 
 
-def choose_promotion_piece(uid: t.Uid, piece_type: typing.Literal["r", "q", "n", "b"]) -> None:
-    state = q.get_game_state(uid)
+def choose_promotion_piece(uid: t.Uid, piece_type: typing.Literal["r", "q", "n", "b"], state: t.GameState | None = None, testing: bool = False) -> t.GameState:
+    state = state or q.get_game_state(uid)
     if state.need_to_choose_pawn_promotion_piece == "":
         raise NoPendingPawnPromotion
     src, dest, capture_str = state.need_to_choose_pawn_promotion_piece.split(" ")
     capture = int(capture_str)
     piece = piece_type if state.turn else piece_type.upper()
     move = t.Move(piece, src=src, dest=dest, capture=capture)
-    make_move_and_persist(uid, move, pawn_promotion=piece)
+    return make_move_and_persist(uid, move, pawn_promotion=piece, testing=testing, state=state)
 
 
-def make_move_and_persist(uid: t.Uid, move: t.Move, pawn_promotion: str = "") -> None:
+def make_move_and_persist(uid: t.Uid, move: t.Move, pawn_promotion: str = "", state: t.GameState | None = None, testing: bool = False) -> t.GameState:
     validate_move_arg(move)
 
-    state = q.get_game_state(uid)
+    state = state or q.get_game_state(uid)
+    if not pawn_promotion and state.need_to_choose_pawn_promotion_piece:
+        raise InvalidState("need to choose promotion piece before doing a new move")
 
     board = t.Board.from_FEN(state.FEN)
+    if not testing:
+        store_move(uid, move, pawn_promotion=pawn_promotion)
+    if pawn_promotion:
+        state.need_to_choose_pawn_promotion_piece = ""
+        # put the new piece where the pawn had been before its promotion
+        # TODO: this is really awkward
+        state.FEN = recalculate_FEN(state, t.Move(piece=pawn_promotion, src=move.src, dest=move.src), board)
+        board = t.Board.from_FEN(state.FEN)
+
     # TODO: can this move be illegal if it came from a pawn promotion?
     #    if so, use `pawn_promotion as an input here and use it in the calculation`
     all_possible_moves = q.get_all_legal_moves(state, board)
 
     if move not in all_possible_moves:
-        raise InvalidMove
-
-    store_move(uid, move, pawn_promotion=pawn_promotion)
-    if pawn_promotion:
-        state.need_to_choose_pawn_promotion_piece = ""
+        raise InvalidMove(f"{move=}")
 
     state, checkmate, stalemate = get_new_state(state, move, board)
 
@@ -91,7 +102,9 @@ def make_move_and_persist(uid: t.Uid, move: t.Move, pawn_promotion: str = "") ->
         # TODO: delete/set to expire from Redis
         raise Stalemate
     else:
-        store_state(uid, state)
+        if not testing:
+            store_state(uid, state)
+    return state
 
 
 def is_pawn_promotion(move: t.Move) -> bool:

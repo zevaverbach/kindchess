@@ -737,6 +737,6 @@ def _get_possible_moves_in_direction(
             moves.append(move)
             break
 
-        move = piece.move(dest_square, capture=1)
+        move = piece.move(dest_square)
         moves.append(move)
     return moves
