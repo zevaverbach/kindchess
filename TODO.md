@@ -5,13 +5,14 @@
       - [x] POST
          - [x] /create
   - [ ] websockets
-     - [ ] use the [websockets][1] library, at first without concerning yourself with authentication
+     - [x] use the [websockets][1] library, at first without concerning yourself with authentication
      - [ ] events
+         - [ ] handle abandoned games
+           - [ ] remove from redis, (maybe) add to db
+         - [x] join
          - [ ] resign
          - [ ] draw
-         - [ ] abandon
          - [ ] move
-         - [ ] subscribe
 
 - [ ] create a basic web interface
   - [ ] no user registration or chat

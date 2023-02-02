@@ -1,6 +1,5 @@
 - [ ] load testing
 - [ ] consider [socketify][1] for performance if you're going to stay with Python
-- [ ] switch to socketify for "create_game" if that worked out
 - [ ] make or find more tests
     - [ ] could it ever be illegal to make the same move as a pawn when it's promoting with another piece?
         - this is how the pawn promotion move is tested once the promotion piece type is chosen
@@ -14,11 +13,11 @@
     - instead of FEN, maybe a hash
     - [bitboard](https://blog.devgenius.io/improve-as-a-software-engineer-by-writing-a-chess-engine-c360109371aa)
 - [ ] game clock
+- [ ] allow disconnect/reconnect within X seconds
 - [ ] enforce move limit (draw)
 - [ ] material tracking - points, pieces
-- [ ] handle abandoned games
-  - [ ] remove from redis, (maybe) add to db
-- [ ] detect cheating
 - [ ] accounts/auth
+- [ ] detect cheating
+- [ ] switch to socketify for "create_game" if that worked out
 
 [1]: https://docs.socketify.dev/websockets-backpressure.html
