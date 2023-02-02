@@ -43,8 +43,6 @@
         - [x] if it is, persist it to "completed_games" (sqlite)
     - [x] pawn promotion
         - [x] implement it
-- [ ] cache possible moves for every board
-  - [ ] look in this cache before trying to calculate
 
 - [ ] create a basic API
   - [ ] /game
@@ -71,17 +69,18 @@
 - [ ] make or find more tests
     - [ ] could it ever be illegal to make the same move as a pawn when it's promoting with another piece?
         - this is how the pawn promotion move is tested once the promotion piece type is chosen
+- [ ] find shortcuts to limit computation and storage
+  - [ ] cache possible moves for every board
+    - [ ] look in this cache before trying to calculate
+  - [ ] if a pawn, king, knight is sufficiently far away, no need to check whether it can put the opposing king in check
+  - [ ] bitpacking?
+  - [ ] persist/serialize the board differently
+    - instead of FEN, maybe a hash
+    - [bitboard](https://blog.devgenius.io/improve-as-a-software-engineer-by-writing-a-chess-engine-c360109371aa)
 - [ ] game clock
 - [ ] enforce move limit (draw)
 - [ ] material tracking - points, pieces
-- [ ] persist/serialize the board differently
-  - instead of FEN, maybe a hash
 - [ ] handle abandoned games
   - [ ] remove from redis, (maybe) add to db
 - [ ] detect cheating
 - [ ] accounts/auth
-- [ ] get_FEN_from_board, if it's more efficient than the other get_FEN (after a move), should replace it
-- [ ] find shortcuts to limit computation
-  - [ ] if a pawn, king, knight is sufficiently far away, no need to check whether it can put the opposing king in check
-  - [ ] bitpacking?
-
