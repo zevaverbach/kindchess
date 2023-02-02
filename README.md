@@ -39,3 +39,7 @@ I'm interested in this because a) I like chess and b) I want to learn more about
 # Resources Used
 - [generate FEN from board](http://www.netreal.de/Forsyth-Edwards-Notation/index.php)
 - [generate board from FEN](http://www.ee.unb.ca/cgi-bin/tervo/fen.pl)
+
+# Prior Art
+- [glee](https://github.com/tonyOreglia/glee)
+  - check out the "bitboard" idea as a possible optimization

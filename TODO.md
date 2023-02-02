@@ -41,12 +41,11 @@
         - [x] is it stalemate? (no possible moves and check is False)
         - [x] is it checkmate? (no possible moves and check is True)
         - [ ] if it is, persist it to "completed_games" (sqlite)
-    - [ ] pawn promotion
+    - [x] pawn promotion
         - [x] implement it
-        - [ ] make a game loop that checks for whether it's time for next move or pawn promotion choice
-        - [ ] could it ever be illegal to make the same move as a pawn when it's promoting with another piece?
-            - this is how the pawn promotion move is tested once the promotion piece type is chosen
-    - [ ] make or find more tests
+- [ ] cache possible moves for every board
+  - [ ] look in this cache before trying to calculate
+
 - [ ] create a basic API
   - [ ] /game
     - [ ] GET
@@ -58,6 +57,7 @@
             - [ ] draw
             - [ ] abandon
             - [ ] move
+
 - [ ] create a basic web interface
   - [ ] no user registration or chat
   - [ ] whoever creates the game is player 1
@@ -68,14 +68,14 @@
 
 # Later
 
+- [ ] make or find more tests
+    - [ ] could it ever be illegal to make the same move as a pawn when it's promoting with another piece?
+        - this is how the pawn promotion move is tested once the promotion piece type is chosen
 - [ ] game clock
 - [ ] enforce move limit (draw)
 - [ ] material tracking - points, pieces
 - [ ] persist/serialize the board differently
   - instead of FEN, maybe a hash
-- [ ] cache possible moves, this may not change for a given piece in certain conditions
-  - [ ] build up a permanent cache of possible moves for a given board/FEN
-      - [ ] look in this cache before trying to calculate
 - [ ] detect cheating
 - [ ] accounts/auth
 - [ ] get_FEN_from_board, if it's more efficient than the other get_FEN (after a move), should replace it
