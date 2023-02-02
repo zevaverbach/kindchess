@@ -98,7 +98,7 @@ def test_after_pawn_promotion_piece_is_chosen():
     board = t.Board.from_FEN(state.FEN)
     new_state = c.get_new_state(state, move, board)
     newer_state = c.choose_promotion_piece(
-        uid=t.Uid("hi"), piece_type="q", state=new_state, testing=True
+        uid="hi", piece_type="q", state=new_state, testing=True
     )
     assert newer_state.FEN == "rQ1qkbnr/p1pppppp/8/8/8/8/P1PPPPPP/RNBQKBNR"
     assert not newer_state.need_to_choose_pawn_promotion_piece
@@ -115,4 +115,4 @@ def test_before_pawn_promotion_piece_is_chosen():
     )
     move = t.Move(piece="P", src="c2", dest="c3")
     with pytest.raises(c.InvalidState):
-        c.make_move_and_persist(uid=t.Uid("hi"), move=move, state=state)
+        c.make_move_and_persist(uid="hi", move=move, state=state)

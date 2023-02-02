@@ -11,7 +11,7 @@ def get_existing_uids_from_db() -> list[str]:
         return c.fetchall()
 
 
-def get_game_state(uid: t.Uid) -> t.GameState:
+def get_game_state(uid: str) -> t.GameState:
     fields = [f.name for f in dc.fields(t.GameState)]
     print(fields)
     return t.GameState.from_redis(r.hmget(uid, fields))  # type: ignore

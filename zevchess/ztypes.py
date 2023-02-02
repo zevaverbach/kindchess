@@ -4,12 +4,6 @@ import dataclasses as dc
 import string
 import typing as t
 
-Uid = t.NewType("Uid", str)
-# not really a FEN, just the positions part
-FEN = t.NewType("FEN", str)
-
-# TODO: use these types for a new serialization implementation?
-
 Side = t.Literal[0, 1]
 Castle = t.Literal["k", "q"]
 # Piece = t.Literal["q", "k", "b", "n", "r", "p"]

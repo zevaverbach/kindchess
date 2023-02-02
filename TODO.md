@@ -69,6 +69,7 @@
 - [ ] make or find more tests
     - [ ] could it ever be illegal to make the same move as a pawn when it's promoting with another piece?
         - this is how the pawn promotion move is tested once the promotion piece type is chosen
+- [ ] reorganize code into smaller modules
 - [ ] find shortcuts to limit computation and storage
   - [ ] cache possible moves for every board
     - [ ] look in this cache before trying to calculate

@@ -23,13 +23,13 @@ NUM_MOVES = "num_moves"
 BLANK = "BLANK"
 
 
-def create_game() -> t.Uid:
+def create_game() -> str:
     uid = None
     while uid is None or r.sismember(name=EXISTING_UIDS, value=uid):
         uid = str(uuid4())
     r.hset(uid, mapping=dc.asdict(t.GameState()))  # type: ignore
     update_existing_uids_cache(uid)
-    return t.Uid(uid)
+    return uid
 
 
 def validate_move_arg(move) -> None:
@@ -63,7 +63,7 @@ class NoPendingPawnPromotion(Exception):
 
 
 def choose_promotion_piece(
-    uid: t.Uid,
+    uid: str,
     piece_type: typing.Literal["r", "q", "n", "b"],
     state: t.GameState | None = None,
     testing: bool = False,
@@ -85,7 +85,7 @@ class InvalidMove(Exception):
 
 
 def make_move_and_persist(
-    uid: t.Uid,
+    uid: str,
     move: t.Move,
     pawn_promotion: str = "",
     state: t.GameState | None = None,
@@ -129,12 +129,12 @@ def make_move_and_persist(
     return state
 
 
-def save_game_to_db(uid: t.Uid, state: t.GameState) -> None:
+def save_game_to_db(uid: str, state: t.GameState) -> None:
     moves = r.lrange(f"game-{uid}", 0, -1)
     store_completed_game(uid, moves, state)
 
 
-def store_completed_game(uid: t.Uid, moves: list[str], state: t.GameState) -> None:
+def store_completed_game(uid: str, moves: list[str], state: t.GameState) -> None:
     db_dict = state.to_db_dict()
     db_dict_num_entries = len(db_dict)
     with sqlite3.connect("completed_games.db") as s:
@@ -144,7 +144,7 @@ def store_completed_game(uid: t.Uid, moves: list[str], state: t.GameState) -> No
         )
 
 
-def remove_game_from_cache(uid: t.Uid) -> None:
+def remove_game_from_cache(uid: str) -> None:
     delete_game_from_redis(uid)
 
 
@@ -254,7 +254,7 @@ def recalculate_castling_state(state: t.GameState, move: t.Move) -> None:
         cant_castle_anymore("q")
 
 
-def store_move(uid: t.Uid, move: t.Move, pawn_promotion: str = "") -> None:
+def store_move(uid: str, move: t.Move, pawn_promotion: str = "") -> None:
     # TODO: store moves as a hash maybe?
     if move.castle is not None:
         move_string = "O-o" if move.castle == "k" else "O-o-o"
@@ -425,7 +425,7 @@ def recalculate_FEN(state: t.GameState, move: t.Move, board: t.Board) -> str:
     return updated_FEN
 
 
-def store_state(uid: t.Uid, state: t.GameState) -> None:
+def store_state(uid: str, state: t.GameState) -> None:
     r.hset(uid, mapping=dc.asdict(state))  # type: ignore
 
 
