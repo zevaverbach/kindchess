@@ -55,6 +55,7 @@ async def error(ws, msg: str):
 async def handler(ws):
     # TODO: broadcast moves to everyone
     # TODO: end game when a player closes connection
+    #           ws.wait_closed()
     async for message in ws:
         event = json.loads(message)
         print(event)
@@ -64,9 +65,25 @@ async def handler(ws):
                     await join(ws, event["uid"])
                 except InvalidUid:
                     await error(ws, "game not found")
-             # - [ ] resign
-             # - [ ] draw
-             # - [ ] move
+            case "move":
+                await move(ws, event) 
+            case "resign":
+                await resign(ws, event) 
+            case "draw":
+                await draw(ws, event) 
+
+
+async def move(ws, uid: str):
+    # TODO: return all possible moves
+    raise NotImplementedError
+
+
+async def resign(ws, uid: str):
+    raise NotImplementedError
+
+
+async def draw(ws, uid: str):
+    raise NotImplementedError
 
 
 async def main():
