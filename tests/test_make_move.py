@@ -38,7 +38,7 @@ def test_make_move_its_stalemate():
         FEN="7k/5Q2/6K1/8/8/8/8/8",
         half_moves=20,
         king_square_white="e1",
-        king_square_black="e8",
+        king_square_black="h8",
         turn=1,
     )
     assert q.its_stalemate(state)
