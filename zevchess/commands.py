@@ -28,11 +28,8 @@ def create_game() -> t.Uid:
     while uid is None or r.sismember(name=EXISTING_UIDS, value=uid):
         uid = str(uuid4())
     r.hset(uid, mapping=dc.asdict(t.GameState()))  # type: ignore
+    update_existing_uids_cache(uid)
     return t.Uid(uid)
-
-
-class InvalidMove(Exception):
-    pass
 
 
 def validate_move_arg(move) -> None:
@@ -44,6 +41,13 @@ def validate_move_arg(move) -> None:
         i is not None for i in (move.piece, move.src, move.dest)
     ):
         raise InvalidArguments
+
+
+def delete_game_from_redis(uid: str) -> None:
+    # delete moves
+    r.delete(f"game-{uid}")
+    # delete state
+    r.delete(uid)
 
 
 class Checkmate(Exception):
@@ -76,6 +80,10 @@ def choose_promotion_piece(
     )
 
 
+class InvalidMove(Exception):
+    pass
+
+
 def make_move_and_persist(
     uid: t.Uid,
     move: t.Move,
@@ -101,26 +109,43 @@ def make_move_and_persist(
         )
         board = t.Board.from_FEN(state.FEN)
 
-    # TODO: can this move be illegal if it came from a pawn promotion?
-    #    if so, use `pawn_promotion as an input here and use it in the calculation`
     all_possible_moves = q.get_all_legal_moves(state, board)
 
     if move not in all_possible_moves:
         raise InvalidMove(f"{move=}")
 
-    state, checkmate, stalemate = get_new_state(state, move, board)
+    state = get_new_state(state, move, board)
 
-    if checkmate:
-        # TODO: save to completed_games
-        # TODO: delete/set to expire from Redis
+    if state.checkmate:
+        save_game_to_db(uid, state)
+        remove_game_from_cache(uid)
         raise Checkmate
-    if stalemate:
-        # TODO: save to completed_games
-        # TODO: delete/set to expire from Redis
+    if state.stalemate:
+        save_game_to_db(uid, state)
+        remove_game_from_cache(uid)
         raise Stalemate
     if not testing:
         store_state(uid, state)
     return state
+
+
+def save_game_to_db(uid: t.Uid, state: t.GameState) -> None:
+    moves = r.lrange(f"game-{uid}", 0, -1)
+    store_completed_game(uid, moves, state)
+
+
+def store_completed_game(uid: t.Uid, moves: list[str], state: t.GameState) -> None:
+    db_dict = state.to_db_dict()
+    db_dict_num_entries = len(db_dict)
+    with sqlite3.connect("completed_games.db") as s:
+        s.execute(
+            f"insert into games (uid, moves) values(?,?,{','.join(['?' for _ in range(db_dict_num_entries)])})",
+            (uid, " ".join(moves), *db_dict),
+        )
+
+
+def remove_game_from_cache(uid: t.Uid) -> None:
+    delete_game_from_redis(uid)
 
 
 def is_pawn_promotion(move: t.Move) -> bool:
@@ -130,38 +155,40 @@ def is_pawn_promotion(move: t.Move) -> bool:
     return int(move.dest[1]) == last_rank  # type: ignore
 
 
-def get_new_state(
-    state: t.GameState, move: t.Move, board: t.Board
-) -> tuple[t.GameState, bool, bool]:
+def get_new_state(state: t.GameState, move: t.Move, board: t.Board) -> t.GameState:
     if is_pawn_promotion(move):
         state.need_to_choose_pawn_promotion_piece = (
             f"{move.src} {move.dest} {move.capture}"
         )
-        return state, False, False
+        return state
 
     checkmate = q.its_checkmate(state)
     stalemate = False
     if not checkmate:
         stalemate = q.its_stalemate(state)
 
-    if not checkmate and not stalemate:
+    if checkmate:
+        state.checkmate = 1
+    elif stalemate:
+        state.stalemate = 1
+    else:
         if state.half_moves == 0:
             # first move of the game, impossible to capture
             state.half_moves_since_last_capture = 1
         else:
-            if move.capture:
-                state.half_moves_since_last_capture = 0
-            else:
-                state.half_moves_since_last_capture += 1
             recalculate_castling_state(state, move)
             recalculate_king_position(state, move)
 
+    if move.capture:
+        state.half_moves_since_last_capture = 0
+    else:
+        state.half_moves_since_last_capture += 1
     recalculate_en_passant(state, move)
     state.turn = int(not state.turn)
     state.FEN = recalculate_FEN(state, move, board)
     state.half_moves += 1
 
-    return state, checkmate, stalemate
+    return state
 
 
 def recalculate_en_passant(state, move) -> None:
@@ -400,12 +427,6 @@ def recalculate_FEN(state: t.GameState, move: t.Move, board: t.Board) -> str:
 
 def store_state(uid: t.Uid, state: t.GameState) -> None:
     r.hset(uid, mapping=dc.asdict(state))  # type: ignore
-
-
-def store_completed_game(uid: t.Uid, moves: list[str]) -> None:
-    with sqlite3.connect("completed_games.db") as s:
-        s.execute("insert into games (uid, moves) values(?,?)", (uid, " ".join(moves)))
-    update_existing_uids_cache(uid)
 
 
 def update_existing_uids_cache(uid: str | list[str]) -> None:

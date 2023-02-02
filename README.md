@@ -42,4 +42,5 @@ I'm interested in this because a) I like chess and b) I want to learn more about
 
 # Prior Art
 - [glee](https://github.com/tonyOreglia/glee)
-  - check out the "bitboard" idea as a possible optimization
+  - check out [the "bitboard" idea](https://blog.devgenius.io/improve-as-a-software-engineer-by-writing-a-chess-engine-c360109371aa) as a possible optimization
+- [FEN validation](https://chess.stackexchange.com/a/1483/34173)

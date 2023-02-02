@@ -6,7 +6,7 @@ import typing as t
 
 Uid = t.NewType("Uid", str)
 # not really a FEN, just the positions part
-FEN = t.NewType("FEN", bytes)
+FEN = t.NewType("FEN", str)
 
 # TODO: use these types for a new serialization implementation?
 
@@ -99,10 +99,26 @@ class GameState:
     king_square_black: str = "e8"
     en_passant_square: str = ""
     need_to_choose_pawn_promotion_piece: str = ""  # f"{src} {target} {capture: int}"
+    checkmate: int = 0
+    stalemate: int = 0
     FEN: str = STARTING_FEN
 
+    def to_db_dict(self) -> dict:
+        return dict(
+            half_moves=self.half_moves,
+            white_can_castle_queenside=self.white_can_castle_queenside,
+            white_can_castle_kingside=self.white_can_castle_kingside,
+            black_can_castle_queenside=self.black_can_castle_queenside,
+            black_can_castle_kingside=self.black_can_castle_kingside,
+            turn=self.turn,
+            half_moves_since_last_capture=self.half_moves_since_last_capture,
+            en_passant_square=self.en_passant_square,
+            checkmate=self.checkmate,
+            stalemate=self.stalemate,
+        )
+
     @classmethod
-    def from_redis(cls, redis_response: list[bytes]):
+    def from_redis(cls, redis_response: list[str]):
         rr = redis_response
         return cls(
             int(rr[0]),
@@ -112,11 +128,13 @@ class GameState:
             int(rr[4]),
             int(rr[5]),
             int(rr[6]),
-            rr[7].decode(),
-            rr[8].decode(),
-            rr[9].decode(),
-            rr[10].decode(),
-            rr[11].decode(),
+            rr[7],
+            rr[8],
+            rr[9],
+            rr[10],
+            int(rr[11]),
+            int(rr[12]),
+            rr[13],
         )
 
 

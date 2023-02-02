@@ -17,9 +17,9 @@
             - [x] black_can_castle_kingside
             - [x] half_moves_since_last_capture: null/moveNum
             - [x] board: probably a FEN
-- [ ] create logic for
+- [x] create logic for
   - [x] create game
-  - [ ] make move
+  - [x] make move
     - [x] validate move
         - [x] pawn
             - [x] en passant
@@ -37,10 +37,10 @@
     - [x] test "get all legal moves"
         - [x] en passant results in the captured piece actually disappearing
         - [x] king is prohibited from putting himself into check, especially with another king
-    - [ ] check if game is over
+    - [x] check if game is over
         - [x] is it stalemate? (no possible moves and check is False)
         - [x] is it checkmate? (no possible moves and check is True)
-        - [ ] if it is, persist it to "completed_games" (sqlite)
+        - [x] if it is, persist it to "completed_games" (sqlite)
     - [x] pawn promotion
         - [x] implement it
 - [ ] cache possible moves for every board
@@ -76,6 +76,8 @@
 - [ ] material tracking - points, pieces
 - [ ] persist/serialize the board differently
   - instead of FEN, maybe a hash
+- [ ] handle abandoned games
+  - [ ] remove from redis, (maybe) add to db
 - [ ] detect cheating
 - [ ] accounts/auth
 - [ ] get_FEN_from_board, if it's more efficient than the other get_FEN (after a move), should replace it

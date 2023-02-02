@@ -15,11 +15,11 @@ def test_make_move_en_passant():
     )
     board = t.Board.from_FEN(state.FEN)
     move = t.Move(piece="P", src="e5", dest="d6", capture=1)
-    new_state, _, _ = c.get_new_state(state, move, board)
+    new_state = c.get_new_state(state, move, board)
     new_board = t.Board.from_FEN(new_state.FEN)
     assert new_state.en_passant_square == ""
     assert new_board.d6 == t.Pawn(color=False, square="d6")
-    assert new_board.d5 == None
+    assert new_board.d5 is None
 
 
 def test_make_move_its_checkmate():
@@ -54,7 +54,7 @@ def test_pawn_promotion_with_capture():
     )
     move = t.Move(piece="P", src="b7", dest="a8", capture=1)
     board = t.Board.from_FEN(state.FEN)
-    new_state, _, _ = c.get_new_state(state, move, board)
+    new_state = c.get_new_state(state, move, board)
     assert new_state.turn == state.turn
     assert new_state.need_to_choose_pawn_promotion_piece
     assert (
@@ -75,7 +75,7 @@ def test_pawn_promotion_no_capture():
     )
     move = t.Move(piece="P", src="b7", dest="b8")
     board = t.Board.from_FEN(state.FEN)
-    new_state, _, _ = c.get_new_state(state, move, board)
+    new_state = c.get_new_state(state, move, board)
     assert new_state.turn == state.turn
     assert new_state.need_to_choose_pawn_promotion_piece
     assert (
@@ -96,7 +96,7 @@ def test_after_pawn_promotion_piece_is_chosen():
     )
     move = t.Move(piece="P", src="b7", dest="b8")
     board = t.Board.from_FEN(state.FEN)
-    new_state, _, _ = c.get_new_state(state, move, board)
+    new_state = c.get_new_state(state, move, board)
     newer_state = c.choose_promotion_piece(
         uid=t.Uid("hi"), piece_type="q", state=new_state, testing=True
     )
