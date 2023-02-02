@@ -4,11 +4,11 @@ import dataclasses as dc
 import string
 import typing as t
 
-from zevchess.print_board import print_board_from_FEN
-
 Uid = t.NewType("Uid", str)
 # not really a FEN, just the positions part
 FEN = t.NewType("FEN", bytes)
+
+# TODO: use these types for a new serialization implementation?
 
 Side = t.Literal[0, 1]
 Castle = t.Literal["k", "q"]
@@ -98,6 +98,7 @@ class GameState:
     king_square_white: str = "e1"
     king_square_black: str = "e8"
     en_passant_square: str = ""
+    need_to_choose_pawn_promotion_piece: str = "" # f"{src} {target} {capture: int}"
     FEN: str = STARTING_FEN
 
     @classmethod
@@ -114,17 +115,17 @@ class GameState:
             rr[7].decode(),
             rr[8].decode(),
             rr[9].decode(),
-            rr[9].decode(),
+            rr[10].decode(),
+            rr[11].decode(),
         )
 
 
-# TODO: replace this with the ztypes.Move, maybe remove "uid"
 @dc.dataclass
 class Move:
     piece: str | None = None
     src: str | None = None
     dest: str | None = None
-    capture: bool = False
+    capture: int = 0
     castle: t.Literal["k", "q"] | None = None
 
 
@@ -134,7 +135,7 @@ class Piece:
     square: str
     directions: list[str] | None = None
 
-    def move(self, dest: str, capture: bool = False):
+    def move(self, dest: str, capture: int = 0):
         return Move(piece=self.name(), src=self.square, dest=dest, capture=capture)
 
     @abc.abstractmethod
@@ -354,7 +355,7 @@ class Pawn(Piece):
             if an_opponent_is_there(
                 from_piece_perspective=self, square=diag_l, board=board
             ):
-                possible_moves.append(self.move(diag_l, capture=True))
+                possible_moves.append(self.move(diag_l, capture=1))
 
         diag_r = None
         try:
@@ -366,7 +367,7 @@ class Pawn(Piece):
             if an_opponent_is_there(
                 from_piece_perspective=self, square=diag_r, board=board
             ):
-                possible_moves.append(self.move(diag_r, capture=True))
+                possible_moves.append(self.move(diag_r, capture=1))
 
         if en_passant_square != "":
             file_to_left_of_en_passant_square = None
@@ -390,7 +391,7 @@ class Pawn(Piece):
                 file_to_right_of_en_passant_square is not None
                 and self.square == f"{file_to_right_of_en_passant_square}{rank}"
             ):
-                possible_moves.append(self.move(behind_en_passant_square, capture=True))
+                possible_moves.append(self.move(behind_en_passant_square, capture=1))
 
         return possible_moves
 
@@ -551,7 +552,7 @@ class Knight(Piece):
         if an_ally_is_there(self, dest_square, board):
             raise Obstacle
         if an_opponent_is_there(self, dest_square, board):
-            return self.move(dest_square, capture=True)
+            return self.move(dest_square, capture=1)
         return self.move(dest_square)
 
 
@@ -590,7 +591,7 @@ class King(Piece):
         if an_ally_is_there(self, dest_square, board):
             raise Obstacle
         if an_opponent_is_there(self, dest_square, board):
-            return self.move(dest_square, capture=True)
+            return self.move(dest_square, capture=1)
         return self.move(dest_square)
 
 
@@ -602,10 +603,6 @@ def it_would_be_self_check(
     setattr(board_after_move, move.dest, piece)  # type: ignore
     side = piece.color
     its_check = its_check_for(side, board=board_after_move, king_square=king_square)
-    if its_check and side == 0 and piece.name() == "K" and move.src == "c4":
-        print_board_from_FEN(board_after_move.to_FEN())
-        print(f"{its_check=}")
-        print(f"{king_square=}")
     return its_check
 
 
@@ -736,10 +733,10 @@ def _get_possible_moves_in_direction(
             break
 
         if an_opponent_is_there(piece, dest_square, board):
-            move = piece.move(dest_square, capture=True)
+            move = piece.move(dest_square, capture=1)
             moves.append(move)
             break
 
-        move = piece.move(dest_square, capture=False)
+        move = piece.move(dest_square, capture=1)
         moves.append(move)
     return moves

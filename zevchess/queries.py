@@ -38,6 +38,20 @@ def get_all_legal_moves(
     ] + get_castling_moves(state, board)
 
 
+def its_checkmate(state: t.GameState) -> bool:
+    board = t.Board.from_FEN(state.FEN)
+    if not t.its_check_for(state.turn, board, state.king_square_black if state.turn else state.king_square_white):
+        return False
+    return get_all_legal_moves(state, board) == []
+
+
+def its_stalemate(state: t.GameState) -> bool:
+    board = t.Board.from_FEN(state.FEN)
+    if t.its_check_for(state.turn, board, state.king_square_black if state.turn else state.king_square_white):
+        return False
+    return get_all_legal_moves(state, board) == []
+
+
 def get_castling_moves(state: t.GameState, board: t.Board) -> list[t.Move]:
     moves = []
     if state.turn:

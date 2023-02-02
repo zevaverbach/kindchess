@@ -31,6 +31,10 @@ I'm interested in this because a) I like chess and b) I want to learn more about
 # UX
 - stickers
 - in-person chess 'dating'
+- ability to flag moves in real-time or in retrospect
+  - not sure it was good
+  - this was probably good
+  - blunder (retrospect only)
 
 # Resources Used
 - [generate FEN from board](http://www.netreal.de/Forsyth-Edwards-Notation/index.php)

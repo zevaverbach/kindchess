@@ -31,7 +31,7 @@ def test_get_possible_moves_rook_black_2():
     assert rook is not None
     assert isinstance(rook, t.Rook)
     expect = [
-        t.Move(piece="r", src="g5", dest="g2", capture=True),
+        t.Move(piece="r", src="g5", dest="g2", capture=1),
         t.Move(piece="r", src="g5", dest="g3"),
         t.Move(piece="r", src="g5", dest="g4"),
         t.Move(piece="r", src="g5", dest="g6"),

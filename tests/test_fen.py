@@ -21,7 +21,7 @@ def test_recalculate_FEN_same_rank():
         piece="r",
         src="b4",
         dest="f4",
-        capture=True,
+        capture=0,
     )
     board = t.Board.from_FEN(state.FEN)
     newFEN = recalculate_FEN(state, move, board)

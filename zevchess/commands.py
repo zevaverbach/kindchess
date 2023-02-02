@@ -42,41 +42,94 @@ def validate_move_arg(move) -> None:
         raise InvalidArguments
 
 
-def make_move_and_persist(uid: t.Uid, move: t.Move) -> None:
+class Checkmate(Exception):
+    pass
+
+class Stalemate(Exception):
+    pass
+
+class NoPendingPawnPromotion(Exception):
+    pass
+
+
+def choose_promotion_piece(uid: t.Uid, piece_type: typing.Literal["r", "q", "n", "b"]) -> None:
+    state = q.get_game_state(uid)
+    if state.need_to_choose_pawn_promotion_piece == "":
+        raise NoPendingPawnPromotion
+    src, dest, capture_str = state.need_to_choose_pawn_promotion_piece.split(" ")
+    capture = int(capture_str)
+    piece = piece_type if state.turn else piece_type.upper()
+    move = t.Move(piece, src=src, dest=dest, capture=capture)
+    make_move_and_persist(uid, move, pawn_promotion=piece)
+
+
+def make_move_and_persist(uid: t.Uid, move: t.Move, pawn_promotion: str = "") -> None:
     validate_move_arg(move)
 
     state = q.get_game_state(uid)
 
     board = t.Board.from_FEN(state.FEN)
+    # TODO: can this move be illegal if it came from a pawn promotion?
+    #    if so, use `pawn_promotion as an input here and use it in the calculation`
     all_possible_moves = q.get_all_legal_moves(state, board)
 
     if move not in all_possible_moves:
         raise InvalidMove
 
-    store_move(uid, move)
+    store_move(uid, move, pawn_promotion=pawn_promotion)
+    if pawn_promotion:
+        state.need_to_choose_pawn_promotion_piece = ""
 
-    state = get_new_state(state, move, board)
-    store_state(uid, state)
+    state, checkmate, stalemate = get_new_state(state, move, board)
 
-
-def get_new_state(state: t.GameState, move: t.Move, board: t.Board) -> t.GameState:
-    if state.half_moves == 0:
-        # first move of the game, impossible to capture
-        state.half_moves_since_last_capture = 1
+    if checkmate:
+        # TODO: save to completed_games
+        # TODO: delete/set to expire from Redis
+        raise Checkmate
+    elif stalemate:
+        # TODO: save to completed_games
+        # TODO: delete/set to expire from Redis
+        raise Stalemate
     else:
-        if move.capture:
-            state.half_moves_since_last_capture = 0
+        store_state(uid, state)
+
+
+def is_pawn_promotion(move: t.Move) -> bool:
+    if move.piece.lower() != "p": # type: ignore
+        return False
+    last_rank = 1 if move.piece == "p" else 8
+    return int(move.dest[1]) == last_rank # type: ignore
+
+
+def get_new_state(state: t.GameState, move: t.Move, board: t.Board) -> tuple[t.GameState, bool, bool]:
+    if is_pawn_promotion(move):
+        state.need_to_choose_pawn_promotion_piece = f"{move.src} {move.dest} {move.capture}"
+        return state, False, False
+
+    checkmate = q.its_checkmate(state)
+    stalemate = False
+    if not checkmate:
+        stalemate = q.its_stalemate(state)
+
+
+    if not checkmate and not stalemate:
+        if state.half_moves == 0:
+            # first move of the game, impossible to capture
+            state.half_moves_since_last_capture = 1
         else:
-            state.half_moves_since_last_capture += 1
-        recalculate_castling_state(state, move)
-        recalculate_king_position(state, move)
+            if move.capture:
+                state.half_moves_since_last_capture = 0
+            else:
+                state.half_moves_since_last_capture += 1
+            recalculate_castling_state(state, move)
+            recalculate_king_position(state, move)
 
     recalculate_en_passant(state, move)
+    state.turn = int(not state.turn)
     state.FEN = recalculate_FEN(state, move, board)
     state.half_moves += 1
-    state.turn = int(not state.turn)
 
-    return state
+    return state, checkmate, stalemate
 
 
 def recalculate_en_passant(state, move) -> None:
@@ -142,10 +195,13 @@ def recalculate_castling_state(state: t.GameState, move: t.Move) -> None:
         cant_castle_anymore("q")
 
 
-def store_move(uid: t.Uid, move: t.Move) -> None:
+def store_move(uid: t.Uid, move: t.Move, pawn_promotion: str = "") -> None:
     # TODO: store moves as a hash maybe?
     if move.castle is not None:
         move_string = "O-o" if move.castle == "k" else "O-o-o"
+    elif pawn_promotion:
+        up = pawn_promotion.isupper() # type: ignore
+        move_string = f"{'P' if up else 'p'}{move.src}{'x' if move.capture else ''}{move.dest}{pawn_promotion}"
     else:
         move_string = f"{move.piece}{move.src}{'x' if move.capture else ''}{move.dest}"
 

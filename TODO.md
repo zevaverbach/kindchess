@@ -43,6 +43,10 @@
             - [ ] get all pieces putting king in check, not the current short-circuited way
         - [ ] if it is, persist it to "completed_games" (sqlite)
     - [ ] pawn promotion
+        - [x] implement it
+        - [ ] make a game loop that checks for whether it's time for next move or pawn promotion choice
+        - [ ] could it ever be illegal to make the same move as a pawn when it's promoting with another piece?
+            - this is how the pawn promotion move is tested once the promotion piece type is chosen
     - [ ] make or find more tests
 - [ ] create a basic API
   - [ ] /game

@@ -113,7 +113,7 @@ def test_get_moves_castling_is_blocked_by_a_knight():
         t.Move(piece="P", src="e2", dest="e4"),
         t.Move(piece="P", src="f3", dest="f4"),
         t.Move(piece="P", src="h2", dest="h4"),
-        t.Move(piece="P", src="h2", dest="g3", capture=True),
+        t.Move(piece="P", src="h2", dest="g3", capture=1),
         t.Move(piece="N", src="b1", dest="c3"),
         t.Move(piece="N", src="b1", dest="a3"),
         t.Move(piece="K", src="e1", dest="f2"),
@@ -199,7 +199,7 @@ def test_get_moves_includes_castling_both_sides():
 def test_get_possible_moves_rook_pinned():
     state = t.GameState(FEN="rnb1kbnr/pppppppp/4q3/P7/2P5/4R3/PPP2PPP/1NBQKBNR")
     expect = [
-        t.Move(piece="R", src="e3", dest="e6", capture=True),
+        t.Move(piece="R", src="e3", dest="e6", capture=1),
         t.Move(piece="R", src="e3", dest="e2"),
         t.Move(piece="R", src="e3", dest="e4"),
         t.Move(piece="R", src="e3", dest="e5"),
@@ -224,7 +224,7 @@ def test_get_possible_moves_queen_pinned():
     expect = [
         t.Move(piece="Q", src="d2", dest="c3"),
         t.Move(piece="Q", src="d2", dest="b4"),
-        t.Move(piece="Q", src="d2", dest="a5", capture=True),
+        t.Move(piece="Q", src="d2", dest="a5", capture=1),
     ]
     got = q.get_all_legal_moves(state)
     for e in expect:
@@ -248,7 +248,7 @@ def test_get_all_legal_moves_including_en_passant():
     )
     expect = [
         t.Move(piece="P", src="e5", dest="e6"),
-        t.Move(piece="P", src="e5", dest="d6", capture=True),
+        t.Move(piece="P", src="e5", dest="d6", capture=1),
     ]
     got = q.get_all_legal_moves(state)
     for e in expect:

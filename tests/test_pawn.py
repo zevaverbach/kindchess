@@ -19,7 +19,7 @@ def test_get_possible_moves_pawn2():
     assert isinstance(pawn, t.Pawn)
     assert pawn.get_possible_moves(board) == [
         t.Move(piece="P", src="e4", dest="e5"),
-        t.Move(piece="P", src="e4", dest="d5", capture=True),
+        t.Move(piece="P", src="e4", dest="d5", capture=1),
     ]
 
 
@@ -30,7 +30,7 @@ def test_get_possible_moves_pawn_en_passant():
     assert isinstance(pawn, t.Pawn)
     assert pawn.get_possible_moves(board, en_passant_square="d5") == [
         t.Move(piece="P", src="c5", dest="c6"),
-        t.Move(piece="P", src="c5", dest="d6", capture=True),
+        t.Move(piece="P", src="c5", dest="d6", capture=1),
     ]
 
 
@@ -41,7 +41,7 @@ def test_get_possible_moves_pawn_pinned():
     assert isinstance(pawn, t.Pawn)
     assert pawn.get_possible_moves(board) == [
         t.Move(piece="P", src="e4", dest="e5"),
-        t.Move(piece="P", src="e4", dest="d5", capture=True),
+        t.Move(piece="P", src="e4", dest="d5", capture=1),
     ]
 
 

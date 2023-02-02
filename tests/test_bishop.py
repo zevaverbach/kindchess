@@ -34,7 +34,7 @@ def test_get_possible_moves_bishop_3():
         t.Move(piece="B", src="f4", dest="e3"),
         t.Move(piece="B", src="f4", dest="g5"),
         t.Move(piece="B", src="f4", dest="h6"),
-        t.Move(piece="B", src="f4", dest="d6", capture=True),
+        t.Move(piece="B", src="f4", dest="d6", capture=1),
     ]
     possible_moves = bishop.get_possible_moves(board)
     for e in expect:
