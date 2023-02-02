@@ -3,7 +3,7 @@
   - [ ] HTTP
     - [ ] /game
       - [ ] POST
-          - [ ] /create
+         - [ ] /create
   - [ ] websockets
      - [ ] resign
      - [ ] draw
