@@ -28,6 +28,17 @@ I'm interested in this because a) I like chess and b) I want to learn more about
 - super minimal, fewer widgets than chess.com/lichess
 - emphasis on socializing, including voice
 
+# Roadmap
+Once there's a functional, not-too-buggy web API and web client, I'll load test and profile it to see what might be optimized. When nearing the "end of the road" of optimizations in Python, I'll explore porting to another language.
+
+My initial thought has been to port it to Go, but it looks like for websockets there are some better-performing choices:
+
+Node, [Bun](https://twitter.com/jarredsumner/status/1562121275945803776?lang=en) or even [socketify](https://raw.githubusercontent.com/cirospaciari/socketify.py/main/misc/ws-bar-graph.png) seem like great choices as they're able to send hundreds of thousands of messages per second.
+
+I'm excited about writing it in a language other than Python, though, and I'm wondering if the gains in websocket performance will be offset by the slowness of the engine. 
+
+The point here is "the journey", as I want to learn to measure and improve performance, including strategies beyond code.
+
 # UX
 - stickers
 - in-person chess 'dating'
