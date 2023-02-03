@@ -71,9 +71,6 @@ async def error(ws, msg: str):
 
 
 async def handler(ws):
-    # TODO: broadcast moves to everyone
-    # TODO: end game when a player closes connection
-    #           ws.wait_closed()
     async for message in ws:
         try:
             event = json.loads(message)
@@ -127,6 +124,9 @@ async def move(ws, event: dict) -> None:
         print(f"{state=}")
         print(str(e))
         await error(ws, "invalid move")
+    except c.NotYourTurn:
+        print("someone tried to make a move when it wasn't their turn")
+        await error(ws, "not your turn!")
     except c.InvalidState:
         await error(ws, "haven't chosen promotion piece")
     else:

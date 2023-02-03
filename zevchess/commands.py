@@ -15,6 +15,10 @@ class InvalidArguments(Exception):
     pass
 
 
+class NotYourTurn(Exception):
+    pass
+
+
 class InvalidState(Exception):
     pass
 
@@ -43,10 +47,8 @@ def validate_move_arg(move, turn: int) -> None:
         i is not None for i in (move.piece, move.src, move.dest)
     ):
         raise InvalidArguments
-    if turn and move.piece.isupper():
-        raise InvalidArguments
-    elif not turn and move.piece.islower():
-        raise InvalidArguments
+    if (turn and move.piece.isupper()) or (not turn and move.piece.islower()):
+        raise NotYourTurn
 
 
 def delete_game_from_redis(uid: str) -> None:
@@ -104,6 +106,7 @@ def make_move_and_persist(
       - InvalidMove
       - InvalidState
       - InvalidArguments
+      - NotYourTurn
     """
     state = state or q.get_game_state(uid)
 
@@ -185,8 +188,8 @@ def get_new_state(state: t.GameState, move: t.Move, board: t.Board) -> t.GameSta
         state.half_moves_since_last_capture = 0
     else:
         state.half_moves_since_last_capture += 1
-    recalculate_en_passant(state, move)
-    state.turn = int(not state.turn)
+    recalculate_en_passant(state, move, board)
+    state.turn = abs(state.turn - 1)
     state.FEN = recalculate_FEN(state, move, board)
     state.half_moves += 1
 
@@ -208,23 +211,21 @@ def get_new_state(state: t.GameState, move: t.Move, board: t.Board) -> t.GameSta
     return state
 
 
-def recalculate_en_passant(state, move) -> None:
-    if move.piece.lower() != "p":
+def recalculate_en_passant(state: t.GameState, move: t.Move, board: t.Board) -> None:
+    if move.piece.lower() != "p": # type: ignore
         return
-    file, rank_str = move.src
+    file, rank_str = move.src # type: ignore
 
     if move.capture:
         state.half_moves_since_last_capture = 0
     else:
         state.half_moves_since_last_capture += 1
-    recalculate_en_passant(state, move)
-    state.turn = int(not state.turn)
     state.FEN = recalculate_FEN(state, move, board)
     state.half_moves += 1
-    dest_f, dest_rank_str = move.dest
+    dest_f, dest_rank_str = move.dest # type: ignore
     rank, dest_rank = int(rank_str), int(dest_rank_str)
     if file == dest_f and (dest_rank - rank == 2):
-        state.en_passant_square = move.dest
+        state.en_passant_square = move.dest # type: ignore
     elif state.en_passant_square != "":
         state.en_passant_square = ""
 

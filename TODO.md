@@ -6,9 +6,13 @@
          - [x] /create
   - [ ] websockets
      - [x] use the [websockets][1] library, at first without concerning yourself with authentication
+     - [ ] set up a test framework
+        - [ ] create a game, get UID
+        - [ ] do moves 'til it's checkmate, make sure that happens
      - [ ] events
          - [ ] handle abandoned games
            - [ ] remove from redis, (maybe) add to db
+            - [ ] end game when a player closes connection: `ws.wait_closed()`
          - [x] join
          - [ ] resign
          - [ ] draw
@@ -18,6 +22,8 @@
             - [ ] don't allow if there's only one player
             - [ ] don't allow if the game is over
             - [ ] don't allow a player to move out of turn
+            - [ ] don't allow a spectator to make a move
+            - [ ] don't allow someone to make a move who isn't attached to a game! (different UID)
 
 - [ ] create a basic web interface
   - [ ] no user registration or chat
