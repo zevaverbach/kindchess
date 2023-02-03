@@ -4,6 +4,8 @@ import string
 import typing
 from uuid import uuid4
 
+from rich.pretty import pprint
+
 from zevchess.db import r
 import zevchess.queries as q
 import zevchess.ztypes as t
@@ -32,7 +34,7 @@ def create_game() -> str:
     return uid
 
 
-def validate_move_arg(move) -> None:
+def validate_move_arg(move, turn: int) -> None:
     if move.castle is None and any(
         i is None for i in (move.piece, move.src, move.dest)
     ):
@@ -40,6 +42,10 @@ def validate_move_arg(move) -> None:
     if move.castle is not None and any(
         i is not None for i in (move.piece, move.src, move.dest)
     ):
+        raise InvalidArguments
+    if turn and move.piece.isupper():
+        raise InvalidArguments
+    elif not turn and move.piece.islower():
         raise InvalidArguments
 
 
@@ -91,15 +97,26 @@ def make_move_and_persist(
     state: t.GameState | None = None,
     testing: bool = False,
 ) -> t.GameState:
-    validate_move_arg(move)
-
+    """
+    could raise
+      - Checkmate
+      - Stalemate
+      - InvalidMove
+      - InvalidState
+      - InvalidArguments
+    """
     state = state or q.get_game_state(uid)
+
     if not pawn_promotion and state.need_to_choose_pawn_promotion_piece:
         raise InvalidState("need to choose promotion piece before doing a new move")
 
+    validate_move_arg(move, state.turn)
+
     board = t.Board.from_FEN(state.FEN)
+
     if not testing:
         store_move(uid, move, pawn_promotion=pawn_promotion)
+
     if pawn_promotion:
         state.need_to_choose_pawn_promotion_piece = ""
         # put the new piece where the pawn had been before its promotion
@@ -112,21 +129,23 @@ def make_move_and_persist(
     all_possible_moves = q.get_all_legal_moves(state, board)
 
     if move not in all_possible_moves:
+        pprint(all_possible_moves)
         raise InvalidMove(f"{move=}")
 
-    state = get_new_state(state, move, board)
-
-    if state.checkmate:
-        save_game_to_db(uid, state)
-        remove_game_from_cache(uid)
-        raise Checkmate
+    new_state = get_new_state(state, move, board)
+    if new_state.checkmate:
+        if not testing:
+            save_game_to_db(uid, new_state)
+            remove_game_from_cache(uid)
+        raise Checkmate(not new_state.turn)
     if state.stalemate:
-        save_game_to_db(uid, state)
-        remove_game_from_cache(uid)
-        raise Stalemate
+        if not testing:
+            save_game_to_db(uid, new_state)
+            remove_game_from_cache(uid)
+        raise Stalemate(not new_state.turn)
     if not testing:
-        store_state(uid, state)
-    return state
+        store_state(uid, new_state)
+    return new_state
 
 
 def save_game_to_db(uid: str, state: t.GameState) -> None:
@@ -162,6 +181,15 @@ def get_new_state(state: t.GameState, move: t.Move, board: t.Board) -> t.GameSta
         )
         return state
 
+    if move.capture:
+        state.half_moves_since_last_capture = 0
+    else:
+        state.half_moves_since_last_capture += 1
+    recalculate_en_passant(state, move)
+    state.turn = int(not state.turn)
+    state.FEN = recalculate_FEN(state, move, board)
+    state.half_moves += 1
+
     checkmate = q.its_checkmate(state)
     stalemate = False
     if not checkmate:
@@ -172,12 +200,18 @@ def get_new_state(state: t.GameState, move: t.Move, board: t.Board) -> t.GameSta
     elif stalemate:
         state.stalemate = 1
     else:
-        if state.half_moves == 0:
-            # first move of the game, impossible to capture
-            state.half_moves_since_last_capture = 1
-        else:
+        if state.half_moves >= 6:
+            # first three moves of the game, impossible to castle
             recalculate_castling_state(state, move)
             recalculate_king_position(state, move)
+
+    return state
+
+
+def recalculate_en_passant(state, move) -> None:
+    if move.piece.lower() != "p":
+        return
+    file, rank_str = move.src
 
     if move.capture:
         state.half_moves_since_last_capture = 0
@@ -187,18 +221,10 @@ def get_new_state(state: t.GameState, move: t.Move, board: t.Board) -> t.GameSta
     state.turn = int(not state.turn)
     state.FEN = recalculate_FEN(state, move, board)
     state.half_moves += 1
-
-    return state
-
-
-def recalculate_en_passant(state, move) -> None:
-    if move.piece.lower() != "p":
-        return
-    file, rank_str = move.src
     dest_f, dest_rank_str = move.dest
     rank, dest_rank = int(rank_str), int(dest_rank_str)
     if file == dest_f and (dest_rank - rank == 2):
-        state.en_passant_square = state.dest
+        state.en_passant_square = move.dest
     elif state.en_passant_square != "":
         state.en_passant_square = ""
 
@@ -342,7 +368,7 @@ def get_updated_FEN_dest_rank(fen, dest_file_idx, turn: int, piece: str) -> str:
 
     for idx, token in enumerate(tokens_dest):
         if idx == dest_file_idx:
-            updated_rank.append(piece if turn == 1 else piece.upper())  # type: ignore
+            updated_rank.append(piece)
         else:
             updated_rank.append(token)
     return create_FEN_from_tokens(updated_rank)

@@ -16,6 +16,7 @@ I'm interested in this because a) I like chess and b) I want to learn more about
     - pylint
     - ipython
     - pytest
+    - rich (well, actually it is sort of hardcoded as a req at the moment Feb 3, 2023)
 
 # Testing
 - load testing (TODO)

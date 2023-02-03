@@ -281,3 +281,26 @@ def test_that_king_wont_move_next_to_king():
         assert e in got
     for ne in not_expect:
         assert ne not in got
+
+
+def test_get_all_legal_moves_for_specific_bug():
+    state = t.GameState(
+        FEN="rnb1kbnr/ppp1pppp/8/3p4/3P1q2/5N2/PPPKPPPP/RNBQ1B1R",
+        king_square_white="d2",
+        king_square_black="e8",
+        half_moves=6,
+        turn=0,
+    )
+    assert t.Move(
+        piece="P", src="h2", dest="h3", capture=0, castle=None
+    ) not in q.get_all_legal_moves(state)
+
+
+def test_get_all_legal_moves_for_specific_bug_2_but_only_checking_state_after_move():
+    state = t.GameState(
+        FEN="rnbqkbnr/ppppp2p/5p2/6pQ/3P4/4P3/PPP2PPP/RNB1KBNR",
+        turn=1,
+        king_square_white="e1",
+        king_square_black="e8",
+    )
+    assert q.get_all_legal_moves(state) == []

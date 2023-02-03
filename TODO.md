@@ -13,6 +13,11 @@
          - [ ] resign
          - [ ] draw
          - [ ] move
+            - [ ] don't just send new game state, send 'move' so it can be animated
+            - [ ] return all possible moves
+            - [ ] don't allow if there's only one player
+            - [ ] don't allow if the game is over
+            - [ ] don't allow a player to move out of turn
 
 - [ ] create a basic web interface
   - [ ] no user registration or chat

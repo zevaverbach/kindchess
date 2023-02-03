@@ -88,7 +88,7 @@ class GameState:
     black_can_castle_queenside: int = 1
     white_can_castle_queenside: int = 1
     turn: int = 0
-    half_moves_since_last_capture: int = -1
+    half_moves_since_last_capture: int = 0
     king_square_white: str = "e1"
     king_square_black: str = "e8"
     en_passant_square: str = ""
@@ -112,24 +112,20 @@ class GameState:
         )
 
     @classmethod
-    def from_redis(cls, redis_response: list[str]):
+    def from_redis(cls, redis_response: dict):
         rr = redis_response
-        return cls(
-            int(rr[0]),
-            int(rr[1]),
-            int(rr[2]),
-            int(rr[3]),
-            int(rr[4]),
-            int(rr[5]),
-            int(rr[6]),
-            rr[7],
-            rr[8],
-            rr[9],
-            rr[10],
-            int(rr[11]),
-            int(rr[12]),
-            rr[13],
-        )
+        state_dict = {}
+        for key, value in rr.items():
+            if key not in (
+                "king_square_white",
+                "king_square_black",
+                "FEN",
+                "en_passant_square",
+                "need_to_choose_pawn_promotion_piece",
+            ):
+                value = int(value)
+            state_dict[key] = value
+        return cls(**state_dict)
 
 
 @dc.dataclass

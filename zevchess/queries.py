@@ -1,4 +1,3 @@
-import dataclasses as dc
 import sqlite3
 
 from zevchess.db import r
@@ -12,12 +11,12 @@ def get_existing_uids_from_db() -> list[str]:
 
 
 def get_game_state(uid: str) -> t.GameState:
-    fields = [f.name for f in dc.fields(t.GameState)]
-    return t.GameState.from_redis(r.hmget(uid, fields))  # type: ignore
+    state_dict = r.hgetall(uid)
+    return t.GameState.from_redis(state_dict)  # type: ignore
 
 
 def uid_exists_and_is_an_active_game(uid: str) -> bool:
-    return r.hmget(uid, 'turn') != [None]
+    return r.hmget(uid, "turn") != [None]
 
 
 def get_all_legal_moves(
@@ -44,6 +43,8 @@ def get_all_legal_moves(
 def its_checkmate(state: t.GameState) -> bool:
     board = t.Board.from_FEN(state.FEN)
     if not t.its_check_for(
+        # TODO: why does this make the `test_make_move_its_checkmate` test fail??
+        # int(not state.turn),
         state.turn,
         board,
         state.king_square_black if state.turn else state.king_square_white,
@@ -55,7 +56,7 @@ def its_checkmate(state: t.GameState) -> bool:
 def its_stalemate(state: t.GameState) -> bool:
     board = t.Board.from_FEN(state.FEN)
     if t.its_check_for(
-        state.turn,
+        not state.turn,
         board,
         state.king_square_black if state.turn else state.king_square_white,
     ):
