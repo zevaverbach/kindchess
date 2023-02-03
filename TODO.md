@@ -11,6 +11,7 @@
         - [ ] do moves 'til it's checkmate, make sure that happens
      - [ ] events
          - [ ] handle abandoned games
+           - [ ] uncomment `wait_closed()` calls, maybe there's a way to use them without blocking messages
            - [ ] remove from redis, (maybe) add to db
             - [ ] end game when a player closes connection: `ws.wait_closed()`
          - [x] join

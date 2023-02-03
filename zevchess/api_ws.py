@@ -12,9 +12,11 @@ from zevchess import queries as q
 from zevchess import ztypes as t
 
 
-class ConnectionStore(typing.NamedTuple):
-    players: set[websockets.ServerConnection] = set()  # type: ignore
-    watchers: set[websockets.ServerConnection] = set()  # type: ignore
+@dc.dataclass
+class ConnectionStore:
+    white: websockets.ServerConnection | None = None # type: ignore
+    black: websockets.ServerConnection | None = None # type: ignore
+    watchers: set[websockets.ServerConnection] | None = None  # type: ignore
 
 
 CONNECTIONS = {}
@@ -27,8 +29,11 @@ class InvalidUid(Exception):
 async def join(ws, uid: str):
     if uid in CONNECTIONS:
         store = CONNECTIONS[uid]
-        if len(store.players) == 2:
-            store.watchers.add(ws)
+        if store.white and store.black:
+            if store.watchers is None:
+                store.watchers = {ws}
+            else:
+                store.watchers.add(ws)
             print(f"watcher #{len(store.watchers)} has joined")
             await ws.send(
                 json.dumps(
@@ -39,7 +44,7 @@ async def join(ws, uid: str):
                 )
             )
         else:
-            store.players.add(ws)
+            store.black = ws
             print("second player has joined the game")
             await ws.send(
                 json.dumps(
@@ -54,7 +59,7 @@ async def join(ws, uid: str):
             raise InvalidUid
         CONNECTIONS[uid] = ConnectionStore()
         store = CONNECTIONS[uid]
-        store.players.add(ws)
+        store.white = ws
         print("first player has joined the game")
         await ws.send(
             json.dumps(
@@ -76,12 +81,13 @@ async def handler(ws):
             event = json.loads(message)
         except json.decoder.JSONDecodeError:
             print(message)
-            raise
+            continue
         print(event)
+        uid = event["uid"]
         match event["type"]:
             case "join":
                 try:
-                    await join(ws, event["uid"])
+                    await join(ws, uid)
                 except InvalidUid:
                     await error(ws, "game not found")
             case "move":
@@ -94,26 +100,29 @@ async def handler(ws):
 
 
 async def game_over(ws, msg: str, uid: str) -> None:
-    recipients = CONNECTIONS[uid].watchers | CONNECTIONS[uid].players
+    store = CONNECTIONS[uid]
+    recipients = {store.white, store.black} | (store.watchers or set())
     websockets.broadcast(recipients, json.dumps({"type": "game_over", "message": msg}))  # type: ignore
 
 
 async def move(ws, event: dict) -> None:
-    # uid: str,
-    # piece: str
-    # src: str
-    # dest: str
-    # capture: int = 0
-    # castle: str = ""
-    # pawn_promotion: str = "",
     uid = event.pop("uid")
+    store = CONNECTIONS[uid]
+    if store.watchers and ws in store.watchers:
+        await error(ws, "you're not a player, can't send moves!")
+        return
+    if store.white is None or store.black is None:
+        await error(ws, "we don't have two players, can't make a move!")
+        return
     state = q.get_game_state(uid)
+    if (state.turn and ws == store.white) or (state.turn == 0 and ws == store.black):
+        await error(ws, "not your turn!")
+        return
+    if (state.turn and event['piece'].isupper()) or (state.turn == 0 and event['piece'].islower()):
+        await error(ws, "that's not your piece!")
+        return
     try:
-        # TODO: determine whether this was a bug in the engine or something else:
-        # rnb1kbnr/ppp1pppp/8/3p4/3P1q2/5N2/PPPKPPPP/RNBQ1B1R
-        # Move(piece='P', src='h2', dest='h3', capture=0, castle=None)
         move = t.Move(**event)
-        pprint(move)
         new_state = c.make_move_and_persist(uid=uid, move=move, state=state)
     except c.Stalemate:
         await game_over(ws, uid=uid, msg=f"stalemate!")
@@ -133,7 +142,7 @@ async def move(ws, event: dict) -> None:
         response = dc.asdict(new_state)
         pprint(f"{new_state=}")
         print_board.print_board_from_FEN(new_state.FEN)
-        recipients = CONNECTIONS[uid].watchers | CONNECTIONS[uid].players
+        recipients = {store.white, store.black} | (store.watchers or set())
         websockets.broadcast(recipients, json.dumps(response))  # type: ignore
 
 
