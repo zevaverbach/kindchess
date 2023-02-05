@@ -8,9 +8,6 @@
      - [x] use the [websockets][1] library, at first without concerning yourself with authentication
      - [ ] move the extra move validation out of websockets and into core
         - [ ] "can't move for another player", "can't move when you're a spectator", etc.
-     - [ ] set up a test framework
-        - [ ] create a game, get UID
-        - [ ] do moves 'til it's checkmate, make sure that happens
      - [ ] events
          - [x] handle abandoned games
            - [x] remove from redis, (maybe) add to db
@@ -19,11 +16,16 @@
          - [ ] draw
             - [ ] this has to be implemented similarly to pawn promotion in core
          - [ ] move
-            - [ ] on success, return 
-                - [ ] all possible moves
-                - [ ] new game state
-            - [ ] don't allow someone to make a move who isn't attached to a game! (different UID)
-            - [ ] say "it's your turn" to whoever's turn it is, i guess as a separate message
+            - [ ] try stalemate
+            - [x] try the fool's mate, make sure it goes
+                - f2-f3, e7-e5, g2-g4, Qd8-Qh4
+            - [x] on success, return to whoever's turn it is
+                - [x] all possible moves
+                - [x] new game state
+                - [x] from/to of prev move
+            - [x] don't allow someone to make a move who isn't attached to a game! (different UID)
+            - [x] say "it's your turn" to whoever's turn it is, i guess as a separate message
+            - [x] provide the game state to new watchers
             - [x] don't allow a websocket connection to 'join' a game if it already has joined one
             - [x] don't allow if there's only one player
             - [x] don't allow if the game is over

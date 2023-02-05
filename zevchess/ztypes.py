@@ -138,6 +138,14 @@ class Move:
     capture: int = 0
     castle: t.Literal["k", "q"] | None = None
 
+    def to_json(self):
+        d = {'piece': self.piece, 'src': self.src, 'dest': self.dest}
+        if self.capture:
+            d['capture'] = 1 # type: ignore
+        if self.castle is not None:
+            d['castle'] = self.castle
+        return d
+
 
 @dc.dataclass
 class Piece:

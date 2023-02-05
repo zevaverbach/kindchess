@@ -1,3 +1,4 @@
+- [ ] move history
 - [ ] load testing
 - [ ] consider [socketify][1] for performance if you're going to stay with Python
 - [ ] make or find more tests
@@ -15,6 +16,7 @@
 - [ ] game clock
 - [ ] allow disconnect/reconnect within X seconds
 - [ ] enforce move limit (draw)
+- [ ] threefold repetition
 - [ ] material tracking - points, pieces
 - [ ] accounts/auth
 - [ ] detect cheating

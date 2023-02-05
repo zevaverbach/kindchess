@@ -1,3 +1,4 @@
+import copy
 import dataclasses as dc
 import sqlite3
 import string
@@ -140,12 +141,12 @@ def make_move_and_persist(
         if not testing:
             save_game_to_db(uid, new_state)
             remove_game_from_cache(uid)
-        raise Checkmate(not new_state.turn)
+        raise Checkmate(new_state.turn)
     if state.stalemate:
         if not testing:
             save_game_to_db(uid, new_state)
             remove_game_from_cache(uid)
-        raise Stalemate(not new_state.turn)
+        raise Stalemate(new_state.turn)
     if not testing:
         store_state(uid, new_state)
     return new_state
@@ -181,37 +182,38 @@ def is_pawn_promotion(move: t.Move) -> bool:
 
 
 def get_new_state(state: t.GameState, move: t.Move, board: t.Board) -> t.GameState:
+    new_state = copy.deepcopy(state)
     if is_pawn_promotion(move):
-        state.need_to_choose_pawn_promotion_piece = (
+        new_state.need_to_choose_pawn_promotion_piece = (
             f"{move.src} {move.dest} {move.capture}"
         )
-        return state
+        return new_state
 
     if move.capture:
-        state.half_moves_since_last_capture = 0
+        new_state.half_moves_since_last_capture = 0
     else:
-        state.half_moves_since_last_capture += 1
-    recalculate_en_passant(state, move, board)
-    state.turn = abs(state.turn - 1)
-    state.FEN = recalculate_FEN(state, move, board)
-    state.half_moves += 1
+        new_state.half_moves_since_last_capture += 1
+    recalculate_en_passant(new_state, move, board)
+    new_state.turn = abs(new_state.turn - 1)
+    new_state.FEN = recalculate_FEN(new_state, move, board)
+    new_state.half_moves += 1
 
-    checkmate = q.its_checkmate(state)
+    checkmate = q.its_checkmate(new_state)
     stalemate = False
     if not checkmate:
-        stalemate = q.its_stalemate(state)
+        stalemate = q.its_stalemate(new_state)
 
     if checkmate:
-        state.checkmate = 1
+        new_state.checkmate = 1
     elif stalemate:
-        state.stalemate = 1
+        new_state.stalemate = 1
     else:
-        if state.half_moves >= 6:
+        if new_state.half_moves >= 6:
             # first three moves of the game, impossible to castle
-            recalculate_castling_state(state, move)
-            recalculate_king_position(state, move)
+            recalculate_castling_state(new_state, move)
+            recalculate_king_position(new_state, move)
 
-    return state
+    return new_state
 
 
 def recalculate_en_passant(state: t.GameState, move: t.Move, board: t.Board) -> None:
@@ -219,12 +221,8 @@ def recalculate_en_passant(state: t.GameState, move: t.Move, board: t.Board) -> 
         return
     file, rank_str = move.src # type: ignore
 
-    if move.capture:
-        state.half_moves_since_last_capture = 0
-    else:
-        state.half_moves_since_last_capture += 1
+    # TODO: is this necessary? it's epxnesive, and might have been accidentally pasted in
     state.FEN = recalculate_FEN(state, move, board)
-    state.half_moves += 1
     dest_f, dest_rank_str = move.dest # type: ignore
     rank, dest_rank = int(rank_str), int(dest_rank_str)
     if file == dest_f and (dest_rank - rank == 2):
