@@ -159,11 +159,14 @@ def save_game_to_db(uid: str, state: t.GameState) -> None:
 def store_completed_game(uid: str, moves: list[str], state: t.GameState) -> None:
     db_dict = state.to_db_dict()
     db_dict_num_entries = len(db_dict)
+    field_names = db_dict.keys()
+    query = f"insert into games (uid, moves, {', '.join(field_names)}) values(?,?,{','.join(['?' for _ in range(db_dict_num_entries)])})"
     with sqlite3.connect("completed_games.db") as s:
-        s.execute(
-            f"insert into games (uid, moves) values(?,?,{','.join(['?' for _ in range(db_dict_num_entries)])})",
-            (uid, " ".join(moves), *db_dict),
-        )
+        try:
+            s.execute(query, (uid, " ".join(moves), *db_dict.values()))
+        except (sqlite3.ProgrammingError, sqlite3.OperationalError):
+            print(query, uid, db_dict.values())
+            raise
 
 
 def remove_game_from_cache(uid: str) -> None:

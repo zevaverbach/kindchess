@@ -95,6 +95,7 @@ class GameState:
     need_to_choose_pawn_promotion_piece: str = ""  # f"{src} {target} {capture: int}"
     checkmate: int = 0
     stalemate: int = 0
+    abandoned: int = 0
     FEN: str = STARTING_FEN
 
     def to_db_dict(self) -> dict:
@@ -109,6 +110,7 @@ class GameState:
             en_passant_square=self.en_passant_square,
             checkmate=self.checkmate,
             stalemate=self.stalemate,
+            abandoned=self.abandoned,
         )
 
     @classmethod
