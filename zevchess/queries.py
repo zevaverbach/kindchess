@@ -91,7 +91,7 @@ def get_black_castling_moves(state, board):
 
 def get_white_castling_moves(state, board):
     moves = []
-    king = board.e8
+    king = board.e1
     if king is None or not isinstance(king, t.King):
         return []
     for attr, spaces, letter in (
