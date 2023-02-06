@@ -117,9 +117,7 @@ def make_move_and_persist(
     validate_move_arg(move, state.turn)
 
     board = t.Board.from_FEN(state.FEN)
-
-    if not testing:
-        store_move(uid, move, pawn_promotion=pawn_promotion)
+    store_move(uid, move, pawn_promotion=pawn_promotion)
 
     if pawn_promotion:
         state.need_to_choose_pawn_promotion_piece = ""
@@ -133,6 +131,7 @@ def make_move_and_persist(
     all_possible_moves = q.get_all_legal_moves(state, board)
 
     if move not in all_possible_moves:
+        pprint(state)
         pprint(all_possible_moves)
         raise InvalidMove(f"{move=}")
 
@@ -142,13 +141,12 @@ def make_move_and_persist(
             save_game_to_db(uid, new_state)
             remove_game_from_cache(uid)
         raise Checkmate(new_state.turn)
-    if state.stalemate:
+    if new_state.stalemate:
         if not testing:
             save_game_to_db(uid, new_state)
             remove_game_from_cache(uid)
         raise Stalemate(new_state.turn)
-    if not testing:
-        store_state(uid, new_state)
+    store_state(uid, new_state)
     return new_state
 
 
@@ -194,10 +192,15 @@ def get_new_state(state: t.GameState, move: t.Move, board: t.Board) -> t.GameSta
     else:
         new_state.half_moves_since_last_capture += 1
     recalculate_en_passant(new_state, move, board)
-    new_state.turn = abs(new_state.turn - 1)
     new_state.FEN = recalculate_FEN(new_state, move, board)
     new_state.half_moves += 1
 
+    if new_state.half_moves >= 6:
+        # first three moves of the game, impossible to castle
+        recalculate_castling_state(new_state, move)
+        recalculate_king_position(new_state, move)
+
+    new_state.turn = abs(new_state.turn - 1)
     checkmate = q.its_checkmate(new_state)
     stalemate = False
     if not checkmate:
@@ -207,11 +210,6 @@ def get_new_state(state: t.GameState, move: t.Move, board: t.Board) -> t.GameSta
         new_state.checkmate = 1
     elif stalemate:
         new_state.stalemate = 1
-    else:
-        if new_state.half_moves >= 6:
-            # first three moves of the game, impossible to castle
-            recalculate_castling_state(new_state, move)
-            recalculate_king_position(new_state, move)
 
     return new_state
 
@@ -232,7 +230,7 @@ def recalculate_en_passant(state: t.GameState, move: t.Move, board: t.Board) -> 
 
 
 def recalculate_king_position(state: t.GameState, move: t.Move) -> None:
-    if move.piece == "k":
+    if move.piece is not None and move.piece.lower() == "k":
         if state.turn:
             state.king_square_black = move.dest  # type: ignore
         else:
@@ -364,7 +362,7 @@ def get_updated_FEN_src_rank(fen: str, src_file_idx: int, en_passant: str = "") 
     return create_FEN_from_tokens(updated_rank)
 
 
-def get_updated_FEN_dest_rank(fen, dest_file_idx, turn: int, piece: str) -> str:
+def get_updated_FEN_dest_rank(fen, dest_file_idx, piece: str) -> str:
     tokens_dest = split_FEN_into_tokens(fen)
     updated_rank = []
 
@@ -377,14 +375,14 @@ def get_updated_FEN_dest_rank(fen, dest_file_idx, turn: int, piece: str) -> str:
 
 
 def get_updated_FEN_same_rank(
-    fen: str, turn: int, piece: str, src_file_idx: int, dest_file_idx: int
+    fen: str, piece: str, src_file_idx: int, dest_file_idx: int
 ) -> str:
     updated_rank = []
     tokens_src = split_FEN_into_tokens(fen)
 
     for idx, token in enumerate(tokens_src):
         if idx == dest_file_idx:
-            updated_rank.append(piece if turn == 1 else piece.upper())
+            updated_rank.append(piece)
         elif idx == src_file_idx:
             updated_rank.append(BLANK)
         else:
@@ -392,7 +390,7 @@ def get_updated_FEN_same_rank(
     return create_FEN_from_tokens(updated_rank)
 
 
-def get_updated_rank_FENs(state, move, ranks, board) -> dict[int, str]:
+def get_updated_rank_FENs(move, ranks, board) -> dict[int, str]:
     updated_ranks = {}
     src_file_idx = string.ascii_lowercase.index(move.src[0])
     src_rank_idx = int(move.src[1]) - 1
@@ -409,7 +407,6 @@ def get_updated_rank_FENs(state, move, ranks, board) -> dict[int, str]:
     if dest_rank_idx == src_rank_idx:
         updated_ranks[src_rank_idx] = get_updated_FEN_same_rank(
             fen=src_rank_FEN,
-            turn=state.turn,
             piece=move.piece,  # type: ignore
             src_file_idx=src_file_idx,
             dest_file_idx=dest_file_idx,
@@ -422,7 +419,7 @@ def get_updated_rank_FENs(state, move, ranks, board) -> dict[int, str]:
             src_file_idx=src_file_idx,
             en_passant=en_passant,
         )
-        updated_ranks[dest_rank_idx] = get_updated_FEN_dest_rank(fen=dest_rank_FEN, dest_file_idx=dest_file_idx, turn=state.turn, piece=move.piece)  # type: ignore
+        updated_ranks[dest_rank_idx] = get_updated_FEN_dest_rank(fen=dest_rank_FEN, dest_file_idx=dest_file_idx, piece=move.piece)  # type: ignore
     return updated_ranks
 
 
@@ -437,7 +434,7 @@ def recalculate_FEN(state: t.GameState, move: t.Move, board: t.Board) -> str:
         updated_ranks[rank_src_idx] = updated_rank
     else:
         for rank_idx, updated_FEN in get_updated_rank_FENs(
-            move=move, state=state, ranks=ranks, board=board
+            move=move, ranks=ranks, board=board
         ).items():
             updated_ranks[rank_idx] = updated_FEN
 

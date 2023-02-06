@@ -23,7 +23,7 @@ pyperclip.copy(f'{{"type": "move", "uid": "{uid}", "src": "b7", "dest": "b8", "p
 time.sleep(.2)
 pyperclip.copy(f'{{"type": "move", "uid": "{uid}", "src": "d8", "dest": "d3", "piece": "q"}}')
 time.sleep(.2)
-pyperclip.copy(f'{{"type": "move", "uid": "{uid}", "src": "c7", "dest": "b7", "piece": "Q", "capture": 1}}')
+pyperclip.copy(f'{{"type": "move", "uid": "{uid}", "src": "d7", "dest": "b7", "piece": "Q", "capture": 1}}')
 time.sleep(.2)
 pyperclip.copy(f'{{"type": "move", "uid": "{uid}", "src": "e8", "dest": "f7", "piece": "k"}}')
 time.sleep(.2)

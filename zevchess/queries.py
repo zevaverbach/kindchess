@@ -1,6 +1,9 @@
 import sqlite3
 
+from rich.pretty import pprint
+
 from zevchess.db import r
+from zevchess.print_board import print_board_from_FEN
 import zevchess.ztypes as t
 
 
@@ -56,12 +59,13 @@ def its_checkmate(state: t.GameState) -> bool:
 def its_stalemate(state: t.GameState) -> bool:
     board = t.Board.from_FEN(state.FEN)
     if t.its_check_for(
-        not state.turn,
+        state.turn,
         board,
         state.king_square_black if state.turn else state.king_square_white,
     ):
         return False
-    return get_all_legal_moves(state, board) == []
+    all_possible_moves = get_all_legal_moves(state, board)
+    return all_possible_moves == []
 
 
 def get_castling_moves(state: t.GameState, board: t.Board) -> list[t.Move]:

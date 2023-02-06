@@ -18,10 +18,10 @@ def test_recalculate_FEN():
 def test_recalculate_FEN_same_rank():
     state = t.GameState(FEN="rnb1kbnr/pppppppp/8/8/1R3q2/8/PPPPPPPP/1NBQKBNR")
     move = t.Move(
-        piece="r",
+        piece="R",
         src="b4",
         dest="f4",
-        capture=0,
+        capture=1,
     )
     board = t.Board.from_FEN(state.FEN)
     newFEN = recalculate_FEN(state, move, board)

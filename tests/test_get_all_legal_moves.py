@@ -1,3 +1,4 @@
+from rich.pretty import pprint
 import zevchess.queries as q
 import zevchess.ztypes as t
 
@@ -304,3 +305,26 @@ def test_get_all_legal_moves_for_specific_bug_2_but_only_checking_state_after_mo
         king_square_black="e8",
     )
     assert q.get_all_legal_moves(state) == []
+
+
+def test_get_all_legal_moves_specific_bug_4():
+    state = t.GameState(
+        half_moves=18,
+        black_can_castle_kingside=1,
+        white_can_castle_kingside=1,
+        black_can_castle_queenside=1,
+        white_can_castle_queenside=1,
+        turn=0,
+        half_moves_since_last_capture=1,
+        king_square_white='g6',
+        king_square_black='e8',
+        en_passant_square='',
+        need_to_choose_pawn_promotion_piece='',
+        checkmate=0,
+        stalemate=0,
+        abandoned=0,
+        FEN='2Q2bnr/4p1pq/5pkr/7p/7P/4P3/PPPP1PP1/RNB1KBNR'
+    )
+    all_possible_moves = q.get_all_legal_moves(state)
+    pprint(all_possible_moves)
+    assert t.Move(**{"src": "c8", "dest": "e6", "piece": "Q"}) in all_possible_moves
