@@ -80,7 +80,7 @@ def get_black_castling_moves(state, board):
                     piece=king,
                     move=t.Move(piece="k", src="e8", dest=dest),
                     board=board,
-                    king_square="e8",
+                    king_square=dest,
                 )
                 for dest in spaces
             )
@@ -106,7 +106,7 @@ def get_white_castling_moves(state, board):
                     piece=king,
                     move=t.Move(piece="k", src="e1", dest=dest),
                     board=board,
-                    king_square="e1",
+                    king_square=dest,
                 )
                 for dest in spaces
             )
