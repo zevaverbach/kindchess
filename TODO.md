@@ -16,8 +16,8 @@
          - [ ] resign
          - [ ] draw
             - [ ] this has to be implemented similarly to pawn promotion in core
-         - [ ] move
-            - [ ] try stalemate
+         - [x] move
+            - [x] try stalemate
             - [x] try the fool's mate, make sure it goes
                 - f2-f3, e7-e5, g2-g4, Qd8-Qh4
             - [x] on success, return to whoever's turn it is

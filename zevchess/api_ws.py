@@ -113,7 +113,7 @@ async def remove_connection(ws):
 
 
 
-async def game_over(ws, store: ConnectionStore, reason: typing.Literal["abandoned", "checkmate", "stalemate"], side: typing.Literal["white", "black"] | None = None) -> None:
+async def game_over(ws, store: ConnectionStore, reason: typing.Literal["abandoned", "checkmate", "stalemate"], side: typing.Literal["white", "black"], the_move: t.Move | None = None) -> None:
     match reason:
         case "abandoned":
             other_side = "white" if side == "black" else "white"
@@ -124,13 +124,16 @@ async def game_over(ws, store: ConnectionStore, reason: typing.Literal["abandone
             msg = f"stalemate!"
 
     uid = store.uid
+    state = q.get_game_state(store.uid)
     recipients = get_all_participants(store)
+    if reason != "abandoned":
+        non_winner_participants = get_all_participants(store, but=getattr(store, side))
+        websockets.broadcast(non_winner_participants, json.dumps({"type": "move", "move": the_move.to_json(), "state": dc.asdict(state)}))  # type: ignore
     websockets.broadcast(recipients, json.dumps({"type": "game_over", "message": msg}))  # type: ignore
 
-    state = q.get_game_state(store.uid)
     if reason == "abandoned":
+        # otherwise, the `checkmate` or `stalemate` field was already set in the core logic
         state.abandoned = 1
-    # otherwise, the `checkmate` or `stalemate` field was already set in the core logic
     c.save_game_to_db(uid, state)
     c.remove_game_from_cache(uid)
     for p in recipients:
@@ -146,7 +149,8 @@ async def handler(ws):
             event = json.loads(message)
         except json.decoder.JSONDecodeError:
             print(message)
-            return await error(ws, "invalid event")
+            await error(ws, "invalid event")
+            continue
         print(event)
         uid = event["uid"]
         match event["type"]:
@@ -203,14 +207,15 @@ async def move(ws, event: dict) -> None:
 
     if (state.turn and event['piece'].isupper()) or (state.turn == 0 and event['piece'].islower()):
         return await error(ws, "that's not your piece!")
+    move = t.Move(**event)
     try:
-        move = t.Move(**event)
         new_state = c.make_move_and_persist(uid=uid, move=move, state=state)
-    except c.Stalemate:
-        await game_over(ws, store=store, reason="stalemate")
+    except c.Stalemate as e:
+        side = "black" if str(e) == "0" else "white"
+        await game_over(ws, store=store, reason="stalemate", side=side, the_move=move)
     except c.Checkmate as e:
         winner = "black" if str(e) == "0" else "white"
-        await game_over(ws=ws, store=store, side=winner, reason="checkmate")
+        await game_over(ws=ws, store=store, side=winner, reason="checkmate", the_move=move)
     except c.InvalidMove as e:
         print(f"{state=}")
         print(str(e))
