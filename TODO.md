@@ -5,7 +5,8 @@
       - [x] POST
          - [x] /create
   - [ ] websockets
-     - [ ] there's a bug (Feb 5, 2023) where some invalid chars are sent but a) somehow this doesn't produce an error and 'continue' and b) the sender gets disconnected. Possibly I just fat-fingered this and disconnected myself, BUT the game didn't get set as "abandoned" when it happened, which points to an actual bug.
+     - [x] there's a bug (Feb 5, 2023) where some invalid chars are sent but a) somehow this doesn't produce an error and 'continue' and b) the sender gets disconnected. Possibly I just fat-fingered this and disconnected myself, BUT the game didn't get set as "abandoned" when it happened, which points to an actual bug.
+        - resolved on Feb 6, 2023 with commit c510c4f51e61c0b4a555016bf70de46056391837
      - [x] use the [websockets][1] library, at first without concerning yourself with authentication
      - [ ] move the extra move validation out of websockets and into core
         - [ ] "can't move for another player", "can't move when you're a spectator", etc.

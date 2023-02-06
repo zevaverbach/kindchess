@@ -139,11 +139,11 @@ class Move:
     castle: t.Literal["k", "q"] | None = None
 
     def to_json(self):
-        d = {'piece': self.piece, 'src': self.src, 'dest': self.dest}
+        d = {"piece": self.piece, "src": self.src, "dest": self.dest}
         if self.capture:
-            d['capture'] = 1 # type: ignore
+            d["capture"] = 1  # type: ignore
         if self.castle is not None:
-            d['castle'] = self.castle
+            d["castle"] = self.castle
         return d
 
 

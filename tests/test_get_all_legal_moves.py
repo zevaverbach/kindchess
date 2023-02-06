@@ -316,14 +316,14 @@ def test_get_all_legal_moves_specific_bug_4():
         white_can_castle_queenside=1,
         turn=0,
         half_moves_since_last_capture=1,
-        king_square_white='g6',
-        king_square_black='e8',
-        en_passant_square='',
-        need_to_choose_pawn_promotion_piece='',
+        king_square_white="g6",
+        king_square_black="e8",
+        en_passant_square="",
+        need_to_choose_pawn_promotion_piece="",
         checkmate=0,
         stalemate=0,
         abandoned=0,
-        FEN='2Q2bnr/4p1pq/5pkr/7p/7P/4P3/PPPP1PP1/RNB1KBNR'
+        FEN="2Q2bnr/4p1pq/5pkr/7p/7P/4P3/PPPP1PP1/RNB1KBNR",
     )
     all_possible_moves = q.get_all_legal_moves(state)
     pprint(all_possible_moves)

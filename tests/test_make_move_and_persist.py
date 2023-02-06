@@ -1,4 +1,4 @@
-import pytest 
+import pytest
 from rich.pretty import pprint
 
 from zevchess import commands as c
