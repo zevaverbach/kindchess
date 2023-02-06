@@ -4,8 +4,6 @@ import dataclasses as dc
 import string
 import typing as t
 
-from zevchess.print_board import print_board_from_FEN
-
 Side = t.Literal[0, 1]
 Castle = t.Literal["k", "q"]
 # Piece = t.Literal["q", "k", "b", "n", "r", "p"]

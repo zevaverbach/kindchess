@@ -1,3 +1,10 @@
+ - [ ] move the extra move validation out of websockets and into a separate interfaces module (not core)
+    - [ ] "can't move for another player", "can't move when you're a spectator", etc.
+- [ ] organize code
+  - [ ] core
+      - [ ] pieces
+      - [ ] ...
+  - [ ] UIs
 - [ ] move history
 - [ ] load testing
 - [ ] consider [socketify][1] for performance if you're going to stay with Python
