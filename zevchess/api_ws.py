@@ -3,7 +3,10 @@ import dataclasses as dc
 import json
 import typing
 
-from websockets.legacy.protocol import broadcast as ws_broadcast, WebSocketCommonProtocol as Ws
+from websockets.legacy.protocol import (
+    broadcast as ws_broadcast,
+    WebSocketCommonProtocol as Ws,
+)
 from websockets.legacy.server import serve as ws_serve
 
 from zevchess import commands as c
@@ -15,7 +18,7 @@ from zevchess import ztypes as t
 @dc.dataclass
 class ConnectionStore:
     uid: str
-    white: Ws | None = None 
+    white: Ws | None = None
     black: Ws | None = None
     watchers: set[Ws] | None = None
 
@@ -28,6 +31,8 @@ CONNECTION_WS_STORE_DICT: dict[
 
 class InvalidUid(Exception):
     pass
+
+
 class InvalidArguments(Exception):
     pass
 
@@ -116,7 +121,15 @@ async def remove_connection(ws):
         if store.watchers:
             store.watchers.remove(ws)
         if store.watchers is not None and len(store.watchers) > 0:
-            ws_broadcast(store.watchers, json.dumps({"type": "message", "message": f"someone has left chat, there are {len(store.watchers)} left."}))
+            ws_broadcast(
+                store.watchers,
+                json.dumps(
+                    {
+                        "type": "message",
+                        "message": f"someone has left chat, there are {len(store.watchers)} left.",
+                    }
+                ),
+            )
         del CONNECTION_WS_STORE_DICT[ws]
     else:
         side = attribute
@@ -146,8 +159,13 @@ async def game_over(
         if the_move is None:
             raise InvalidArguments
         non_winner_participants = get_all_participants(store, but=getattr(store, side))
-        ws_broadcast(non_winner_participants, json.dumps({"type": "move", "move": the_move.to_json(), "state": dc.asdict(state)})) 
-    ws_broadcast(recipients, json.dumps({"type": "game_over", "message": msg})) 
+        ws_broadcast(
+            non_winner_participants,
+            json.dumps(
+                {"type": "move", "move": the_move.to_json(), "state": dc.asdict(state)}
+            ),
+        )
+    ws_broadcast(recipients, json.dumps({"type": "game_over", "message": msg}))
 
     if reason == "abandoned":
         # otherwise, the `checkmate` or `stalemate` field was already set in the core logic
@@ -192,7 +210,7 @@ async def handler(ws):
             pass
 
 
-def get_all_participants(store: ConnectionStore, but: Ws | None = None) -> set[Ws]: 
+def get_all_participants(store: ConnectionStore, but: Ws | None = None) -> set[Ws]:
     ps = store.watchers or set()
     if store.white is not None:
         ps.add(store.white)
@@ -256,7 +274,9 @@ async def move(ws, event: dict) -> None:
         await error(ws, "haven't chosen promotion piece")
     except c.Stalemate as e:
         side = "black" if str(e) == "0" else "white"
-        await game_over(ws, store=store, reason="stalemate", side=side, the_move=the_move)
+        await game_over(
+            ws, store=store, reason="stalemate", side=side, the_move=the_move
+        )
     except c.Checkmate as e:
         winner = "black" if str(e) == "0" else "white"
         await game_over(
@@ -268,7 +288,7 @@ async def move(ws, event: dict) -> None:
         ws_broadcast(
             recipients,
             json.dumps(
-                { 
+                {
                     "type": "move",
                     **the_move.to_json(),
                     "side": "black" if new_state.turn else "white",
@@ -320,7 +340,7 @@ async def draw(ws, uid: str):
 
 
 async def main():
-    async with ws_serve(handler, "", 8001): 
+    async with ws_serve(handler, "", 8001):
         await asyncio.Future()  # run forever
 
 

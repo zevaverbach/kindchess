@@ -69,9 +69,9 @@ def get_black_castling_moves(state, board):
     if king is None or not isinstance(king, t.King):
         return []
     for attr, spaces, letter in (
-            ("black_can_castle_kingside", ("f8", "g8"), "k"),
-            ("black_can_castle_queenside", ("b8", "c8", "d8"), "q"),
-        ):
+        ("black_can_castle_kingside", ("f8", "g8"), "k"),
+        ("black_can_castle_queenside", ("b8", "c8", "d8"), "q"),
+    ):
         if (
             getattr(state, attr)
             and all(getattr(board, space) is None for space in spaces)
@@ -95,9 +95,9 @@ def get_white_castling_moves(state, board):
     if king is None or not isinstance(king, t.King):
         return []
     for attr, spaces, letter in (
-            ("white_can_castle_kingside", ("f1", "g1"), "k"),
-            ("white_can_castle_queenside", ("b1", "c1", "d1"), "q"),
-        ):
+        ("white_can_castle_kingside", ("f1", "g1"), "k"),
+        ("white_can_castle_queenside", ("b1", "c1", "d1"), "q"),
+    ):
         if (
             getattr(state, attr)
             and all(getattr(board, space) is None for space in spaces)

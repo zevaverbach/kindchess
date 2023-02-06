@@ -386,7 +386,9 @@ class Pawn(Piece):
                 possible_moves.append(self.move(diag_r, capture=1))
         return possible_moves
 
-    def get_en_passant_move(self, en_passant_square: str, fl: str, rank: int) -> list[Move] | list:
+    def get_en_passant_move(
+        self, en_passant_square: str, fl: str, rank: int
+    ) -> list[Move] | list:
         if en_passant_square != "":
             file_to_left_of_en_passant_square = None
             file_to_right_of_en_passant_square = None
