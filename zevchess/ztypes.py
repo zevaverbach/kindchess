@@ -349,20 +349,18 @@ class Pawn(Piece):
             if no_one_is_there(two_squares_in_front, board):
                 return self.move(two_squares_in_front)
 
-    def get_possible_moves(
-        self, board: Board, en_passant_square: str = ""
-    ) -> list[Move]:
+    def get_move_up_moves(self, fl: str, rank: int, board: Board) -> list[Move] | list:
         possible_moves = []
-        fl, rank_str = self.square
-        rank = int(rank_str)
-
         move_one_up = self.get_move_one_up(fl, rank, board)
         if move_one_up is not None:
             possible_moves.append(move_one_up)
             move_two_up = self.get_move_two_up(fl, rank, board)
             if move_two_up is not None:
                 possible_moves.append(move_two_up)
+        return possible_moves
 
+    def get_capture_moves(self, fl, rank, board) -> list[Move] | list:
+        possible_moves = []
         diag_l = None
         try:
             prev_fl, _ = get_prev_fl(fl, -1)
@@ -386,7 +384,9 @@ class Pawn(Piece):
                 from_piece_perspective=self, square=diag_r, board=board
             ):
                 possible_moves.append(self.move(diag_r, capture=1))
+        return possible_moves
 
+    def get_en_passant_move(self, en_passant_square: str, fl: str, rank: int) -> list[Move] | list:
         if en_passant_square != "":
             file_to_left_of_en_passant_square = None
             file_to_right_of_en_passant_square = None
@@ -409,9 +409,21 @@ class Pawn(Piece):
                 file_to_right_of_en_passant_square is not None
                 and self.square == f"{file_to_right_of_en_passant_square}{rank}"
             ):
-                possible_moves.append(self.move(behind_en_passant_square, capture=1))
+                return [self.move(behind_en_passant_square, capture=1)]
+        return []
 
-        return possible_moves
+    def get_possible_moves(
+        self, board: Board, en_passant_square: str = ""
+    ) -> list[Move]:
+
+        fl, rank_str = self.square
+        rank = int(rank_str)
+        return (
+            []
+            + self.get_move_up_moves(fl, rank, board)
+            + self.get_capture_moves(fl, rank, board)
+            + self.get_en_passant_move(en_passant_square, fl, rank)
+        )
 
 
 def home_row(color: int, rank: int) -> bool:

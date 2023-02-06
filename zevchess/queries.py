@@ -1,9 +1,6 @@
 import sqlite3
 
-from rich.pretty import pprint
-
 from zevchess.db import r
-from zevchess.print_board import print_board_from_FEN
 import zevchess.ztypes as t
 
 
@@ -46,8 +43,6 @@ def get_all_legal_moves(
 def its_checkmate(state: t.GameState) -> bool:
     board = t.Board.from_FEN(state.FEN)
     if not t.its_check_for(
-        # TODO: why does this make the `test_make_move_its_checkmate` test fail??
-        # int(not state.turn),
         state.turn,
         board,
         state.king_square_black if state.turn else state.king_square_white,
@@ -68,80 +63,59 @@ def its_stalemate(state: t.GameState) -> bool:
     return all_possible_moves == []
 
 
-def get_castling_moves(state: t.GameState, board: t.Board) -> list[t.Move]:
+def get_black_castling_moves(state, board):
     moves = []
-    if state.turn:
-        king = board.e8
+    king = board.e8
+    if king is None or not isinstance(king, t.King):
+        return []
+    for attr, spaces, letter in (
+            ("black_can_castle_kingside", ("f8", "g8"), "k"),
+            ("black_can_castle_queenside", ("b8", "c8", "d8"), "q"),
+        ):
         if (
-            state.black_can_castle_kingside
-            and king is not None
-            and isinstance(king, t.King)
-            and board.f8 is None
-            and board.g8 is None
+            getattr(state, attr)
+            and all(getattr(board, space) is None for space in spaces)
             and not any(
                 t.it_would_be_self_check(
-                    piece=king,  # type: ignore
+                    piece=king,
                     move=t.Move(piece="k", src="e8", dest=dest),
                     board=board,
                     king_square="e8",
                 )
-                for dest in ("f8", "g8")
+                for dest in spaces
             )
         ):
-            moves.append(t.Move(castle="k"))
-        if (
-            state.black_can_castle_queenside
-            and king is not None
-            and isinstance(king, t.King)
-            and board.b8 is None
-            and board.c8 is None
-            and board.d8 is None
-            and not any(
-                t.it_would_be_self_check(
-                    piece=king,  # type: ignore
-                    move=t.Move(piece="k", src="e8", dest=dest),
-                    board=board,
-                    king_square="e8",
-                )
-                for dest in ("b8", "c8", "d8")
-            )
-        ):
-            moves.append(t.Move(castle="q"))
-        return moves
-    king = board.e1
-    if (
-        state.black_can_castle_kingside
-        and king is not None
-        and isinstance(king, t.King)
-        and board.f1 is None
-        and board.g1 is None
-        and not any(
-            t.it_would_be_self_check(
-                piece=king,  # type: ignore
-                move=t.Move(piece="k", src="e1", dest=dest),
-                board=board,
-                king_square=dest,
-            )
-            for dest in ("f1", "g1")
-        )
-    ):
-        moves.append(t.Move(castle="k"))
-    if (
-        state.black_can_castle_queenside
-        and king is not None
-        and isinstance(king, t.King)
-        and board.b1 is None
-        and board.c1 is None
-        and board.d1 is None
-        and not any(
-            t.it_would_be_self_check(
-                piece=king,  # type: ignore
-                move=t.Move(piece="k", src="e1", dest=dest),
-                board=board,
-                king_square=dest,
-            )
-            for dest in ("b1", "c1", "d1")
-        )
-    ):
-        moves.append(t.Move(castle="q"))
+            moves.append(t.Move(castle=letter))
     return moves
+
+
+def get_white_castling_moves(state, board):
+    moves = []
+    king = board.e8
+    if king is None or not isinstance(king, t.King):
+        return []
+    for attr, spaces, letter in (
+            ("white_can_castle_kingside", ("f1", "g1"), "k"),
+            ("white_can_castle_queenside", ("b1", "c1", "d1"), "q"),
+        ):
+        if (
+            getattr(state, attr)
+            and all(getattr(board, space) is None for space in spaces)
+            and not any(
+                t.it_would_be_self_check(
+                    piece=king,
+                    move=t.Move(piece="k", src="e1", dest=dest),
+                    board=board,
+                    king_square="e1",
+                )
+                for dest in spaces
+            )
+        ):
+            moves.append(t.Move(castle=letter))
+    return moves
+
+
+def get_castling_moves(state: t.GameState, board: t.Board) -> list[t.Move]:
+    if state.turn:
+        return get_black_castling_moves(state, board)
+    return get_white_castling_moves(state, board)

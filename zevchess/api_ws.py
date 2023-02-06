@@ -3,7 +3,6 @@ import dataclasses as dc
 import json
 import typing
 
-from rich.pretty import pprint
 from websockets.legacy.protocol import broadcast as ws_broadcast, WebSocketCommonProtocol as Ws
 from websockets.legacy.server import serve as ws_serve
 
@@ -108,10 +107,10 @@ async def error(ws, msg: str):
 async def remove_connection(ws):
     try:
         store, attribute = CONNECTION_WS_STORE_DICT[ws]
-    except KeyError:
+    except KeyError as e:
         raise NoSuchConnection(
             f"could not find connection {ws}, so didn't remove it from {CONNECTIONS=}"
-        )
+        ) from e
 
     if attribute == "watchers":
         if store.watchers:
@@ -138,7 +137,7 @@ async def game_over(
         case "checkmate":
             msg = f"checkmate! {side} wins"
         case "stalemate":
-            msg = f"stalemate!"
+            msg = "stalemate!"
 
     uid = store.uid
     state = q.get_game_state(store.uid)
@@ -206,6 +205,11 @@ def get_all_participants(store: ConnectionStore, but: Ws | None = None) -> set[W
 
 async def move(ws, event: dict) -> None:
     uid = event.pop("uid")
+
+    ##############
+    # VALIDATION #
+    ##############
+
     try:
         store = CONNECTIONS[uid]
     except KeyError:
@@ -215,6 +219,7 @@ async def move(ws, event: dict) -> None:
         return await error(ws, "you're not a player, can't send moves!")
     if CONNECTION_WS_STORE_DICT[ws][0].uid != uid:
         return await error(ws, "no such game!")
+
     state = q.get_game_state(uid)
 
     if (state.turn and ws == store.white) or (state.turn == 0 and ws == store.black):
@@ -232,17 +237,14 @@ async def move(ws, event: dict) -> None:
         state.turn == 0 and event["piece"].islower()
     ):
         return await error(ws, "that's not your piece!")
-    move = t.Move(**event)
+
+    ############
+    # THE MOVE #
+    ############
+
+    the_move = t.Move(**event)
     try:
-        new_state = c.make_move_and_persist(uid=uid, move=move, state=state)
-    except c.Stalemate as e:
-        side = "black" if str(e) == "0" else "white"
-        await game_over(ws, store=store, reason="stalemate", side=side, the_move=move)
-    except c.Checkmate as e:
-        winner = "black" if str(e) == "0" else "white"
-        await game_over(
-            ws=ws, store=store, side=winner, reason="checkmate", the_move=move
-        )
+        new_state = c.make_move_and_persist(uid=uid, move=the_move, state=state)
     except c.InvalidMove as e:
         print(f"{state=}")
         print(str(e))
@@ -252,8 +254,15 @@ async def move(ws, event: dict) -> None:
         await error(ws, "not your turn!")
     except c.InvalidState:
         await error(ws, "haven't chosen promotion piece")
+    except c.Stalemate as e:
+        side = "black" if str(e) == "0" else "white"
+        await game_over(ws, store=store, reason="stalemate", side=side, the_move=the_move)
+    except c.Checkmate as e:
+        winner = "black" if str(e) == "0" else "white"
+        await game_over(
+            ws=ws, store=store, side=winner, reason="checkmate", the_move=the_move
+        )
     else:
-        pprint(f"{new_state=}")
         recipients = get_all_participants(store, but=ws)
         print_board.print_board_from_FEN(new_state.FEN)
         ws_broadcast(
@@ -261,7 +270,7 @@ async def move(ws, event: dict) -> None:
             json.dumps(
                 { 
                     "type": "move",
-                    **move.to_json(),
+                    **the_move.to_json(),
                     "side": "black" if new_state.turn else "white",
                     "state": dc.asdict(new_state),
                 }
@@ -272,7 +281,7 @@ async def move(ws, event: dict) -> None:
                 {
                     "type": "success",
                     "message": "move acknowledged",
-                    "move": move.to_json(),
+                    "move": the_move.to_json(),
                 }
             )
         )

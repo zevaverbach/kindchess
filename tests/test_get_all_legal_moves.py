@@ -1,4 +1,3 @@
-from rich.pretty import pprint
 import zevchess.queries as q
 import zevchess.ztypes as t
 
@@ -326,5 +325,4 @@ def test_get_all_legal_moves_specific_bug_4():
         FEN="2Q2bnr/4p1pq/5pkr/7p/7P/4P3/PPPP1PP1/RNB1KBNR",
     )
     all_possible_moves = q.get_all_legal_moves(state)
-    pprint(all_possible_moves)
     assert t.Move(**{"src": "c8", "dest": "e6", "piece": "Q"}) in all_possible_moves
