@@ -22,7 +22,10 @@ def create_completed_games_table() -> None:
             "en_passant_square string, "
             "checkmate integer, "
             "stalemate integer, "
-            "abandoned integer"
+            "abandoned integer, "
+            "resigned integer, "
+            "draw integer, "
+            "winner integer"
             ")"
         )
 

@@ -96,6 +96,10 @@ class GameState:
     checkmate: int = 0
     stalemate: int = 0
     abandoned: int = 0
+    resigned: int = 0
+    draw: int = 0
+    draw_offered: int = -1
+    winner: int = -1
     FEN: str = STARTING_FEN
 
     def to_db_dict(self) -> dict:
@@ -111,6 +115,9 @@ class GameState:
             checkmate=self.checkmate,
             stalemate=self.stalemate,
             abandoned=self.abandoned,
+            resigned=self.resigned,
+            draw=self.draw,
+            winner=self.winner,
         )
 
     @classmethod

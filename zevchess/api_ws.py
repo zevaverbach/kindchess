@@ -139,23 +139,33 @@ async def remove_connection(ws):
 async def game_over(
     ws,
     store: ConnectionStore,
-    reason: typing.Literal["abandoned", "checkmate", "stalemate"],
+    reason: typing.Literal["abandoned", "checkmate", "stalemate", "resigned", "draw_accepted"],
     side: typing.Literal["white", "black"],
     the_move: t.Move | None = None,
 ) -> None:
+    winner = None
     match reason:
         case "abandoned":
             other_side = "white" if side == "black" else "white"
-            msg = f"{side} abandoned the game, so {other_side} wins!"
+            winner = other_side
+            msg = f"{side} abandoned the game, so {winner} wins!"
         case "checkmate":
             msg = f"checkmate! {side} wins"
         case "stalemate":
             msg = "stalemate!"
+        case "resigned":
+            other_side = "white" if side == "black" else "white"
+            winner = other_side
+            msg = f"{side} has resigned!"
+        case "draw":
+            msg = "players have agreed to a draw"
+        case _:
+            raise InvalidArguments
 
     uid = store.uid
     state = q.get_game_state(store.uid)
     recipients = get_all_participants(store)
-    if reason != "abandoned":
+    if reason not in ("abandoned", "resigned", "draw"):
         if the_move is None:
             raise InvalidArguments
         non_winner_participants = get_all_participants(store, but=getattr(store, side))
@@ -170,6 +180,12 @@ async def game_over(
     if reason == "abandoned":
         # otherwise, the `checkmate` or `stalemate` field was already set in the core logic
         state.abandoned = 1
+        state.winner = 0 if winner == "white" else 1
+    elif reason == "resigned":
+        state.resigned = 1
+        state.winner = 0 if winner == "white" else 1
+    elif reason == "draw":
+        state.draw = 1
     c.save_game_to_db(uid, state)
     c.remove_game_from_cache(uid)
     for p in recipients:
@@ -188,6 +204,10 @@ async def handler(ws):
             await error(ws, "invalid event")
             continue
         print(event)
+        if "uid" not in event or "type" not in event:
+            print(message)
+            await error(ws, "invalid event")
+            continue
         uid = event["uid"]
         match event["type"]:
             case "join":
@@ -199,15 +219,30 @@ async def handler(ws):
                 del event["type"]
                 await move(ws, event)
             case "resign":
-                await resign(ws, event)
-            case "draw":
-                await draw(ws, event)
+                await resign(ws, uid)
+            case "offer_draw":
+                await offer_draw(ws, uid)
+            case "accept_draw":
+                await accept_draw(ws, uid)
+            case "reject_draw":
+                await reject_draw(ws, uid)
+            case "withdraw_draw":
+                await withdraw_draw(ws, uid)
+            case _:
+                print(event)
+                await error(ws, "invalid event")
+                continue
+
     else:
         print(f"ws {ws} has disconnected")
         try:
             await remove_connection(ws)
         except NoSuchConnection:
             pass
+
+
+def reject_draw(ws, uid):
+    raise NotImplementedError
 
 
 def get_all_participants(store: ConnectionStore, but: Ws | None = None) -> set[Ws]:
@@ -332,10 +367,29 @@ async def its_your_move(uid: str, state: t.GameState) -> None:
 
 
 async def resign(ws, uid: str):
+    store = CONNECTIONS[uid]
+    requester = "white" if ws == store.white else "black"
+    return await game_over(ws, reason="resigned", store=store, side=requester)
+
+
+async def offer_draw(ws, uid):
+    store = CONNECTIONS[uid]
+    requester = "white" if ws == store.white else "black"
+    side = 0 if ws == store.white else 1
+    c.offer_draw(uid, side)
+    # send("{requester} offers a draw")
     raise NotImplementedError
 
 
-async def draw(ws, uid: str):
+async def withdraw_draw(ws, uid):
+    raise NotImplementedError
+
+
+async def reject_draw(ws, uid):
+    raise NotImplementedError
+
+
+async def accept_draw(ws, uid: str):
     raise NotImplementedError
 
 

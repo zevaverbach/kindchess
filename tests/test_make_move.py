@@ -118,6 +118,17 @@ def test_before_pawn_promotion_piece_is_chosen():
         c.make_move_and_persist(uid="hi", move=move, state=state)
 
 
+def test_before_draw_offer_is_addressed():
+    """
+    If you move when someone has offered a draw, the draw is automatically rejected and the move is accepted.
+    """
+    state = t.GameState(FEN=t.STARTING_FEN, draw_offered=1)
+    move = t.Move(piece="P", src="c2", dest="c3")
+    # doesn't raise InvalidState
+    new_state = c.make_move_and_persist(uid="hi", move=move, state=state)
+    assert new_state.draw_offered == -1
+
+
 def test_make_move_for_specific_bug_2():
     state = t.GameState(
         FEN="rnbqkbnr/ppppp2p/5p2/6p1/3P4/4P3/PPP2PPP/RNBQKBNR",

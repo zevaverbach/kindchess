@@ -12,9 +12,11 @@
          - [x] handle abandoned games
            - [x] remove from redis, (maybe) add to db
          - [x] join
-         - [ ] resign
+         - [x] resign
          - [ ] draw
-            - [ ] this has to be implemented similarly to pawn promotion in core
+            - [ ] requested
+                - [ ] this has to be implemented similarly to pawn promotion in core
+            - [x] accepted 
          - [x] move
             - [x] try stalemate
             - [x] try the fool's mate, make sure it goes

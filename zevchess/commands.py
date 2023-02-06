@@ -111,6 +111,10 @@ def make_move_and_persist(
     """
     state = state or q.get_game_state(uid)
 
+    # draw offer is implicitly rejected if a move is made by either side
+    if state.draw_offered != -1:
+        state.draw_offered = -1
+
     if not pawn_promotion and state.need_to_choose_pawn_promotion_piece:
         raise InvalidState("need to choose promotion piece before doing a new move")
 
@@ -172,6 +176,35 @@ def remove_game_from_cache(uid: str) -> None:
     delete_game_from_redis(uid)
 
 
+def accept_draw(uid: str, side: int) -> None:
+    state = q.get_game_state(uid)
+    if state.draw_offered == -1:
+        raise InvalidArguments("there is no draw offered.")
+    elif state.draw_offered == side:
+        raise InvalidArguments("you are the one who requested a draw! you can't accept.")
+    state.draw = 1
+    save_game_to_db(uid, state)
+    remove_game_from_cache(uid)
+
+
+def offer_draw(uid: str, side: int):
+    state = q.get_game_state(uid)
+    if state.draw_offered == side:
+        raise InvalidArguments("you already have a pending draw request")
+    elif state.draw_offered == int(not side):
+        raise InvalidArguments("your opponent has already offered a draw, accept it if you want")
+    state.draw = 1
+    store_state(uid, state)
+
+
+def reject_draw(uid: str):
+    state = q.get_game_state(uid)
+    if state.draw_offered == -1:
+        raise InvalidArguments("there is no draw offered.")
+    state.draw_offered = -1
+    store_state(uid, state)
+
+
 def is_pawn_promotion(move: t.Move) -> bool:
     if move.piece.lower() != "p":  # type: ignore
         return False
@@ -208,6 +241,7 @@ def get_new_state(state: t.GameState, move: t.Move, board: t.Board) -> t.GameSta
 
     if checkmate:
         new_state.checkmate = 1
+        new_state.winner = new_state.turn
     elif stalemate:
         new_state.stalemate = 1
 
