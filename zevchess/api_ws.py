@@ -139,20 +139,20 @@ async def remove_connection(ws):
 async def game_over(
     ws,
     store: ConnectionStore,
-    reason: typing.Literal["abandoned", "checkmate", "stalemate", "resigned", "draw_accepted"],
+    reason: typing.Literal["abandoned", "checkmate", "stalemate", "resigned", "draw"],
     side: typing.Literal["white", "black"],
     the_move: t.Move | None = None,
 ) -> None:
     winner = None
     match reason:
-        case "abandoned":
-            other_side = "white" if side == "black" else "white"
-            winner = other_side
-            msg = f"{side} abandoned the game, so {winner} wins!"
         case "checkmate":
             msg = f"checkmate! {side} wins"
         case "stalemate":
             msg = "stalemate!"
+        case "abandoned":
+            other_side = "white" if side == "black" else "white"
+            winner = other_side
+            msg = f"{side} abandoned the game, so {winner} wins!"
         case "resigned":
             other_side = "white" if side == "black" else "white"
             winner = other_side
@@ -184,8 +184,6 @@ async def game_over(
     elif reason == "resigned":
         state.resigned = 1
         state.winner = 0 if winner == "white" else 1
-    elif reason == "draw":
-        state.draw = 1
     c.save_game_to_db(uid, state)
     c.remove_game_from_cache(uid)
     for p in recipients:
@@ -220,14 +218,11 @@ async def handler(ws):
                 await move(ws, event)
             case "resign":
                 await resign(ws, uid)
-            case "offer_draw":
-                await offer_draw(ws, uid)
-            case "accept_draw":
-                await accept_draw(ws, uid)
-            case "reject_draw":
-                await reject_draw(ws, uid)
-            case "withdraw_draw":
-                await withdraw_draw(ws, uid)
+            case "draw":
+                if "draw" not in event:
+                    await error(ws, "invalid event")
+                    continue
+                await draw(ws, uid, event["draw"])
             case _:
                 print(event)
                 await error(ws, "invalid event")
@@ -239,10 +234,6 @@ async def handler(ws):
             await remove_connection(ws)
         except NoSuchConnection:
             pass
-
-
-def reject_draw(ws, uid):
-    raise NotImplementedError
 
 
 def get_all_participants(store: ConnectionStore, but: Ws | None = None) -> set[Ws]:
@@ -366,31 +357,76 @@ async def its_your_move(uid: str, state: t.GameState) -> None:
     )
 
 
-async def resign(ws, uid: str):
+async def resign(ws, uid: str) -> None:
     store = CONNECTIONS[uid]
+    if store.white is None or store.black is None:
+        return await error(ws, "we don't have two players, can't resign!")
     requester = "white" if ws == store.white else "black"
     return await game_over(ws, reason="resigned", store=store, side=requester)
 
 
-async def offer_draw(ws, uid):
+async def offer_draw(ws, uid) -> None:
+    store = CONNECTIONS[uid]
+    if store.white is None or store.black is None:
+        return await error(ws, "we don't have two players, can't offer a draw!")
+    requester = "white" if ws == store.white else "black"
+    side = 0 if ws == store.white else 1
+    try:
+        c.offer_draw(uid, side)
+    except c.InvalidArguments as e:
+        await ws.send(str(e))
+    else:
+        ws_broadcast(get_all_participants(store), f"{requester} offers a draw")
+
+
+async def withdraw_draw(ws, uid) -> None:
     store = CONNECTIONS[uid]
     requester = "white" if ws == store.white else "black"
     side = 0 if ws == store.white else 1
-    c.offer_draw(uid, side)
-    # send("{requester} offers a draw")
-    raise NotImplementedError
+    try:
+        c.withdraw_draw(uid, side)
+    except c.InvalidArguments as e:
+        await ws.send(str(e))
+    else:
+        ws_broadcast(get_all_participants(store), f"{requester} has withdrawn their draw offer")
 
 
-async def withdraw_draw(ws, uid):
-    raise NotImplementedError
+
+async def reject_draw(ws, uid) -> None:
+    store = CONNECTIONS[uid]
+    requester = "white" if ws == store.white else "black"
+    other = "white" if requester == "black" else "black"
+    side = 0 if ws == store.white else 1
+    try:
+        c.reject_draw(uid, side)
+    except c.InvalidArguments as e:
+        await ws.send(str(e))
+    else:
+        ws_broadcast(get_all_participants(store), f"{requester} has rejected {other}'s draw offer")
 
 
-async def reject_draw(ws, uid):
-    raise NotImplementedError
+async def accept_draw(ws, uid: str) -> None:
+    store = CONNECTIONS[uid]
+    requester = "white" if ws == store.white else "black"
+    side = 0 if ws == store.white else 1
+    try:
+        c.accept_draw(uid, side)
+    except c.InvalidArguments as e:
+        await ws.send(str(e))
+    else:
+        return await game_over(ws, store=store, reason="draw", side=requester)
 
 
-async def accept_draw(ws, uid: str):
-    raise NotImplementedError
+async def draw(ws, uid, draw_action: typing.Literal["offer", "accept", "reject", "withdraw"]) -> None:
+    match draw_action:
+        case "offer":
+            return await offer_draw(ws, uid)
+        case "accept":
+            return await accept_draw(ws, uid)
+        case "reject":
+            return await reject_draw(ws, uid)
+        case "withdraw":
+            return await withdraw_draw(ws, uid)
 
 
 async def main():

@@ -36,6 +36,8 @@
 
 - [ ] create a basic web interface
   - [ ] no user registration or chat
+  - [ ] uid in params
+  - [ ] 'invite' button which copies the URL to your clipboard
   - [ ] whoever creates the game is player 1
   - [ ] the second to arrive to the game is player 2
   - [ ] everyone else is a spectator

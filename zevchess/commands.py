@@ -187,20 +187,32 @@ def accept_draw(uid: str, side: int) -> None:
     remove_game_from_cache(uid)
 
 
-def offer_draw(uid: str, side: int):
+def offer_draw(uid: str, side: int) -> None:
     state = q.get_game_state(uid)
     if state.draw_offered == side:
         raise InvalidArguments("you already have a pending draw request")
     elif state.draw_offered == int(not side):
         raise InvalidArguments("your opponent has already offered a draw, accept it if you want")
-    state.draw = 1
+    state.draw_offered = side
     store_state(uid, state)
 
 
-def reject_draw(uid: str):
+def reject_draw(uid: str, side: int) -> None:
     state = q.get_game_state(uid)
     if state.draw_offered == -1:
         raise InvalidArguments("there is no draw offered.")
+    if state.draw_offered == side:
+        raise InvalidArguments("can't reject your own draw request.")
+    state.draw_offered = -1
+    store_state(uid, state)
+
+
+def withdraw_draw(uid: str, side: int) -> None:
+    state = q.get_game_state(uid)
+    if state.draw_offered == -1:
+        raise InvalidArguments("there is no draw offered.")
+    if state.draw_offered != side:
+        raise InvalidArguments("can't withdraw your opponent's draw request")
     state.draw_offered = -1
     store_state(uid, state)
 
