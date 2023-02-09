@@ -4,19 +4,34 @@ from zevchess.db import r
 import zevchess.ztypes as t
 
 
-def get_existing_uids_from_db() -> list[str]:
+class NoSuchGame(Exception):
+    pass
+
+
+def get_active_game_uids() -> list[str]:
     with sqlite3.connect("completed_games.db") as s:
-        c = s.execute("select uid from games")
+        c = s.execute("select uid from games where checkmate = 0 and stalemate = 0 and abandoned = 0 and resigned = 0 and draw = -1 and winner = -1")
         return c.fetchall()
 
 
 def get_game_state(uid: str) -> t.GameState:
-    state_dict = r.hgetall(uid)
+    state_dict = get_game_state_dict(uid)
+    if not state_dict:
+        raise NoSuchGame
     return t.GameState.from_redis(state_dict)  # type: ignore
 
 
+def get_game_state_dict(uid: str) -> dict:
+    return r.hgetall(uid)
+
+
 def uid_exists_and_is_an_active_game(uid: str) -> bool:
-    return r.hmget(uid, "turn") != [None]
+    state = get_game_state_dict(uid)
+    return (
+        len(state) != 0 
+        and all(state[key] == 0 for key in ('checkmate', 'stalemate', 'abandoned', 'resigned'))
+        and all(state[key] == -1 for key in ('draw', 'winner'))
+    )
 
 
 def get_all_legal_moves(
