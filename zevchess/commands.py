@@ -32,7 +32,7 @@ BLANK = "BLANK"
 
 def create_game() -> str:
     uid = None
-    while uid is None or r.sismember(name=EXISTING_UIDS, value=uid):
+    while uid is None or r.lpos(name=EXISTING_UIDS, value=uid):
         uid = str(uuid4())
     r.hset(uid, mapping=dc.asdict(t.GameState()))  # type: ignore
     update_existing_uids_cache(uid)
@@ -506,6 +506,6 @@ def store_state(uid: str, state: t.GameState) -> None:
 
 def update_existing_uids_cache(uid: str | list[str]) -> None:
     if isinstance(uid, list):
-        r.sadd("existing_uids", *uid)
+        r.lpush("existing_uids", *uid)
     else:
-        r.sadd("existing_uids", uid)
+        r.lpush("existing_uids", uid)

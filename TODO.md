@@ -1,5 +1,8 @@
 - core
   - [ ] mark 'winner' field of game state when there's a resignation
+  - [ ] update 'existing_uids' redis list as games end
+- websocket API
+  - [ ] send entire game state at start of game
 
 - [ ] create a basic web interface
   - [ ] /

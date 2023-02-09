@@ -9,9 +9,7 @@ class NoSuchGame(Exception):
 
 
 def get_active_game_uids() -> list[str]:
-    with sqlite3.connect("completed_games.db") as s:
-        c = s.execute("select uid from games where checkmate = 0 and stalemate = 0 and abandoned = 0 and resigned = 0 and draw = -1 and winner = -1")
-        return c.fetchall()
+    return r.lrange("existing_uids", 0, -1)
 
 
 def get_game_state(uid: str) -> t.GameState:
@@ -27,11 +25,13 @@ def get_game_state_dict(uid: str) -> dict:
 
 def uid_exists_and_is_an_active_game(uid: str) -> bool:
     state = get_game_state_dict(uid)
+    print(state)
     return (
         len(state) != 0 
-        and all(state[key] == 0 for key in ('checkmate', 'stalemate', 'abandoned', 'resigned'))
-        and all(state[key] == -1 for key in ('draw', 'winner'))
+        and int(state['winner']) == -1
+        and all(int(state[key]) == 0 for key in ('checkmate', 'stalemate', 'abandoned', 'resigned', 'draw'))
     )
+    # 'checkmate': '0', 'stalemate': '0', 'abandoned': '0', 'resigned': '0', 'draw': '0', 'draw_offered': '-1', 'winner': '-1'
 
 
 def get_all_legal_moves(

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ZevChess!</title>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='chessground.base.css') }}">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='chessground.brown.css') }}">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='chessground.cburnett.css') }}">
+        <style>
+            #chessground {
+                width: 360px;
+                height: 360px;
+            }
+            cg-board {
+                background-color: #bfcfdd;
+            }
+            .center {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-bottom: 2em !important;
+            }
+        </style>
+
+        <script type="module">
+            import { Chessground } from "{{ url_for('static', filename='chessground.min.js') }}";
+            const config = {};
+            const ground = Chessground(document.getElementById('chessground'), config);
+        </script>
+    </head>
+    <body>
+        <div id="chessground"></div>
+        <div id="watcher-count"></div>
+    </body>
+    <script>
+        const numberOfWatchers = 0;
+        const players = {
+            black: null,
+            white: null,
+        }
+        const gameState = {}
+        const uid = '{{ uid }}';
+        window.addEventListener("DOMContentLoaded", () => {
+            const board = document.getElementById("chessground");
+            const ws = new WebSocket("ws://localhost:8001/");
+            joinGame(ws);
+            receiveMoves(board, ws);
+            sendMoves(board, ws);
+        })
+        function joinGame(ws) {
+            ws.addEventListener("open", function() {
+                ws.send(JSON.stringify({type: "join", uid}));
+            })
+        }
+
+        function receiveMoves(board, ws) {
+            websocket.addEventListener("message", function({data}) {
+                const event = JSON.parse(data)
+                console.log(event)
+            }) 
+        }
+    </script>
+</html>
