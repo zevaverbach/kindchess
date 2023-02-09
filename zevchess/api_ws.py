@@ -109,7 +109,7 @@ async def error(ws, msg: str):
     await ws.send(json.dumps({"type": "error", "message": msg}))
 
 
-async def remove_connection(ws):
+async def remove_connection(ws, because_ws_disconnected=True):
     try:
         store, attribute = CONNECTION_WS_STORE_DICT[ws]
     except KeyError as e:
@@ -131,9 +131,10 @@ async def remove_connection(ws):
                 ),
             )
         del CONNECTION_WS_STORE_DICT[ws]
-    else:
+    elif because_ws_disconnected:
         side = attribute
         await game_over(ws=ws, store=store, side=side, reason="abandoned")
+
 
 
 async def game_over(
@@ -190,7 +191,7 @@ async def game_over(
         await p.close()
     if uid in CONNECTIONS:
         del CONNECTIONS[uid]
-    del CONNECTION_WS_STORE_DICT[ws]
+    await remove_connection(ws, because_ws_disconnected=False)
 
 
 async def handler(ws):
