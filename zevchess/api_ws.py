@@ -388,8 +388,9 @@ async def withdraw_draw(ws, uid) -> None:
     except c.InvalidArguments as e:
         await ws.send(str(e))
     else:
-        ws_broadcast(get_all_participants(store), f"{requester} has withdrawn their draw offer")
-
+        ws_broadcast(
+            get_all_participants(store), f"{requester} has withdrawn their draw offer"
+        )
 
 
 async def reject_draw(ws, uid) -> None:
@@ -402,7 +403,10 @@ async def reject_draw(ws, uid) -> None:
     except c.InvalidArguments as e:
         await ws.send(str(e))
     else:
-        ws_broadcast(get_all_participants(store), f"{requester} has rejected {other}'s draw offer")
+        ws_broadcast(
+            get_all_participants(store),
+            f"{requester} has rejected {other}'s draw offer",
+        )
 
 
 async def accept_draw(ws, uid: str) -> None:
@@ -417,7 +421,9 @@ async def accept_draw(ws, uid: str) -> None:
         return await game_over(ws, store=store, reason="draw", side=requester)
 
 
-async def draw(ws, uid, draw_action: typing.Literal["offer", "accept", "reject", "withdraw"]) -> None:
+async def draw(
+    ws, uid, draw_action: typing.Literal["offer", "accept", "reject", "withdraw"]
+) -> None:
     match draw_action:
         case "offer":
             return await offer_draw(ws, uid)

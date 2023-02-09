@@ -180,8 +180,10 @@ def accept_draw(uid: str, side: int) -> None:
     state = q.get_game_state(uid)
     if state.draw_offered == -1:
         raise InvalidArguments("there is no draw offered.")
-    elif state.draw_offered == side:
-        raise InvalidArguments("you are the one who requested a draw! you can't accept.")
+    if state.draw_offered == side:
+        raise InvalidArguments(
+            "you are the one who requested a draw! you can't accept."
+        )
     state.draw = 1
     save_game_to_db(uid, state)
     remove_game_from_cache(uid)
@@ -191,8 +193,10 @@ def offer_draw(uid: str, side: int) -> None:
     state = q.get_game_state(uid)
     if state.draw_offered == side:
         raise InvalidArguments("you already have a pending draw request")
-    elif state.draw_offered == int(not side):
-        raise InvalidArguments("your opponent has already offered a draw, accept it if you want")
+    if state.draw_offered == int(not side):
+        raise InvalidArguments(
+            "your opponent has already offered a draw, accept it if you want"
+        )
     state.draw_offered = side
     store_state(uid, state)
 
