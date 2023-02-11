@@ -8,7 +8,7 @@
         <div id="active-games">
             {% for uid in active_games %}
             <div>
-                <a href="{{ url_for('game', uid=uid) }}">game {{ uid }}</a>
+                <a href="{{ url_for('game', uid=uid, _external=True) }}">game {{ uid }}</a>
             </div>
             {% endfor %}
         </div>
