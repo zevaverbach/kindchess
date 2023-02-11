@@ -1,5 +1,3 @@
-import sqlite3
-
 from zevchess.db import r
 import zevchess.ztypes as t
 

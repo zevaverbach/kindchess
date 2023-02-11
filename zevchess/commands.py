@@ -57,6 +57,8 @@ def delete_game_from_redis(uid: str) -> None:
     r.delete(f"game-{uid}")
     # delete state
     r.delete(uid)
+    print(f"deleting {uid} from existing_uids")
+    r.lrem("existing_uids", 1, uid)
 
 
 class Checkmate(Exception):
@@ -509,3 +511,8 @@ def update_existing_uids_cache(uid: str | list[str]) -> None:
         r.lpush("existing_uids", *uid)
     else:
         r.lpush("existing_uids", uid)
+
+
+def remove_all_active_game_uids_from_redis():
+    for i in r.lrange("existing_uids", 0, -1):
+        r.lrem("existing_uids", 1, i)

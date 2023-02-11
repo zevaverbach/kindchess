@@ -14,6 +14,8 @@
     - [ ] when you click on the create game button it automatically brings you to that new URL
     - [x] list of active games, each joinable
   - [ ] /<uid>
+    - [ ] allow refreshing of the browser without destroying the game
+       - [ ] or just don't allow refreshing of the page, or do an 'alert' to tell them it will end the game
     - [x] render the board
     - [ ] connect the board!
         - [ ] when a piece moves, trigger a ws message

@@ -47,34 +47,36 @@ class InvalidMoveEvent(Exception):
 
 async def join(ws, uid: str):
     if uid in CONNECTIONS:
-        store = CONNECTIONS[uid]
+        st = CONNECTIONS[uid]
 
-        if ws in get_all_participants(store):
-            if ws in (store.black, store.white):
+        if ws in get_all_participants(st):
+            if ws in (st.black, st.white):
                 msg = "you're already playing in this game!"
             else:
                 msg = "you're already watching this game!"
             return await error(ws, msg)
 
-        if store.white and store.black:
-            if store.watchers is None:
-                store.watchers = {ws}
+        if st.white and st.black and ws not in (st.white, st.black):
+            if st.watchers is None:
+                st.watchers = {ws}
             else:
-                store.watchers.add(ws)
-            CONNECTION_WS_STORE_DICT[ws] = (store, "watchers")
-            print(f"watcher #{len(store.watchers)} has joined")
+                st.watchers.add(ws)
+            print(f"{st.watchers=}")
+            CONNECTION_WS_STORE_DICT[ws] = (st, "watchers")
+            print(f"watcher #{len(st.watchers)} has joined")
             return await ws.send(
                 json.dumps(
                     {
                         "type": "success",
-                        "message": f"you're watching game {uid}, you're joined by {len(store.watchers) - 1} others",
+                        "message": f"you're watching game {uid}, you're joined"
+                                   " by {len(st.watchers) - 1} others",
                         "game_state": dc.asdict(q.get_game_state(uid)),
                     }
                 )
             )
-        store.black = ws
+        st.black = ws
         print("second player has joined the game")
-        CONNECTION_WS_STORE_DICT[ws] = (store, "black")
+        CONNECTION_WS_STORE_DICT[ws] = (st, "black")
         await ws.send(
             json.dumps(
                 {
@@ -83,7 +85,7 @@ async def join(ws, uid: str):
                 }
             )
         )
-        return await store.white.send(
+        return await st.white.send(
             json.dumps(
                 {"type": "message", "message": "okay, let's start! it's your turn."}
             )
@@ -91,10 +93,10 @@ async def join(ws, uid: str):
     if not q.uid_exists_and_is_an_active_game(uid):
         raise InvalidUid
     CONNECTIONS[uid] = ConnectionStore(uid)
-    store = CONNECTIONS[uid]
-    store.white = ws
+    st = CONNECTIONS[uid]
+    st.white = ws
     print("first player has joined the game")
-    CONNECTION_WS_STORE_DICT[ws] = (store, "white")
+    CONNECTION_WS_STORE_DICT[ws] = (st, "white")
     await ws.send(
         json.dumps(
             {
@@ -118,23 +120,23 @@ async def remove_connection(ws, because_ws_disconnected=True):
         ) from e
 
     if attribute == "watchers":
-        if store.watchers:
-            store.watchers.remove(ws)
         if store.watchers is not None and len(store.watchers) > 0:
-            ws_broadcast(
-                store.watchers,
-                json.dumps(
-                    {
-                        "type": "message",
-                        "message": f"someone has left chat, there are {len(store.watchers)} left.",
-                    }
-                ),
-            )
+            store.watchers.remove(ws)
+            print(f"{store.watchers=}")
+            if len(store.watchers) > 0:
+                ws_broadcast(
+                    store.watchers,
+                    json.dumps(
+                        {
+                            "type": "message",
+                            "message": f"someone has left chat, there are {len(store.watchers)} left.",
+                        }
+                    ),
+                )
         del CONNECTION_WS_STORE_DICT[ws]
     elif because_ws_disconnected:
         side = attribute
         await game_over(ws=ws, store=store, side=side, reason="abandoned")
-
 
 
 async def game_over(
