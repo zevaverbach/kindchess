@@ -79,3 +79,8 @@
             - [x] don't allow a player to move out of turn
             - [x] don't allow a spectator to make a move
 
+  - [x] mark 'winner' field of game state when there's a resignation
+  - [x] update 'existing_uids' redis list as games end
+  - [x] BUG: when leaving/refreshing the browser, the game gets removed but somehow remains as a link on the home screen
+    - this might be because of the bullet point above
+

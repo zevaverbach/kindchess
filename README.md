@@ -17,6 +17,7 @@ I'm interested in this because a) I like chess and b) I want to learn more about
     - ipython
     - pytest
     - pyperclip
+    - python-lsp-server[all]
 
 # Testing
 - load testing (TODO)

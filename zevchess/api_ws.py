@@ -48,14 +48,6 @@ class InvalidMoveEvent(Exception):
 async def join(ws, uid: str):
     if uid in CONNECTIONS:
         st = CONNECTIONS[uid]
-
-        if ws in get_all_participants(st):
-            if ws in (st.black, st.white):
-                msg = "you're already playing in this game!"
-            else:
-                msg = "you're already watching this game!"
-            return await error(ws, msg)
-
         if st.white and st.black and ws not in (st.white, st.black):
             if st.watchers is None:
                 st.watchers = {ws}
@@ -69,7 +61,7 @@ async def join(ws, uid: str):
                     {
                         "type": "success",
                         "message": f"you're watching game {uid}, you're joined"
-                                   " by {len(st.watchers) - 1} others",
+                        f" by {len(st.watchers) - 1} others",
                         "game_state": dc.asdict(q.get_game_state(uid)),
                     }
                 )
@@ -181,14 +173,20 @@ async def game_over(
     ws_broadcast(recipients, json.dumps({"type": "game_over", "message": msg}))
 
     if reason == "abandoned":
-        # otherwise, the `checkmate` or `stalemate` field was already set in the core logic
+        # otherwise, the `checkmate` or `stalemate`
+        # field was already set in the core logic
         state.abandoned = 1
         state.winner = 0 if winner == "white" else 1
     elif reason == "resigned":
         state.resigned = 1
         state.winner = 0 if winner == "white" else 1
-    c.save_game_to_db(uid, state)
+    print(f"removing game {uid} from cache")
     c.remove_game_from_cache(uid)
+    try:
+        c.save_game_to_db(uid, state)
+    except q.NoSuchGame:
+        # the game ended before any moves
+        pass
     for p in recipients:
         await p.close()
     if uid in CONNECTIONS:
@@ -240,7 +238,7 @@ async def handler(ws):
 
 
 def get_all_participants(store: ConnectionStore, but: Ws | None = None) -> set[Ws]:
-    ps = store.watchers or set()
+    ps = store.watchers.copy() or set()
     if store.white is not None:
         ps.add(store.white)
     if store.black is not None:

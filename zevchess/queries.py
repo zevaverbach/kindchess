@@ -25,9 +25,12 @@ def uid_exists_and_is_an_active_game(uid: str) -> bool:
     state = get_game_state_dict(uid)
     print(state)
     return (
-        len(state) != 0 
-        and int(state['winner']) == -1
-        and all(int(state[key]) == 0 for key in ('checkmate', 'stalemate', 'abandoned', 'resigned', 'draw'))
+        len(state) != 0
+        and int(state["winner"]) == -1
+        and all(
+            int(state[key]) == 0
+            for key in ("checkmate", "stalemate", "abandoned", "resigned", "draw")
+        )
     )
     # 'checkmate': '0', 'stalemate': '0', 'abandoned': '0', 'resigned': '0', 'draw': '0', 'draw_offered': '-1', 'winner': '-1'
 

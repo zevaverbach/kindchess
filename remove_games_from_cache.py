@@ -1,0 +1,4 @@
+from zevchess.commands import remove_all_active_game_uids_from_redis
+
+remove_all_active_game_uids_from_redis()
+

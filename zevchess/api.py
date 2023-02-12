@@ -35,17 +35,19 @@ def game(uid: str) -> str:
 @application.route("/create_game", methods=["POST"])
 def create_game() -> flask.Response:
     uid = c.create_game()
-    print('created a game', uid)
+    print("created a game", uid)
     return flask.jsonify({"uid": uid})
 
 
-@application.route('/favicon.ico')
+@application.route("/favicon.ico")
 def favicon():
-    return flask.send_from_directory(pl.Path(application.root_path) / 'static', 'favicon.ico', mimetype='image/vnd.microsoft.icon')
-
+    return flask.send_from_directory(
+        pl.Path(application.root_path) / "static",
+        "favicon.ico",
+        mimetype="image/vnd.microsoft.icon",
+    )
 
 
 def main():
     # cache the UIDs of active games
     c.update_existing_uids_cache(*q.get_active_game_uids())
-

@@ -14,23 +14,15 @@
         </div>
         <button>Create A Game</button>
         <script>
-            const gameURL= "{{ url_for('home', _external=True) }}"
             const activeGamesElement = document.getElementById("active-games");
-            function addToActiveGames(uid) {
-                const div = document.createElement("div");
-                const newLink = document.createElement("a");
-                newLink.href = `${gameURL}${uid}`;
-                newLink.innerText = `game ${uid}`;
-                div.appendChild(newLink);
-                activeGamesElement.appendChild(div);
-            }
             const button = document.querySelector('button');
             button.addEventListener('click', async function() {
                 console.log('creating a game!')
                 const response = await fetch('/create_game', {method: "POST"});
                 jsonBody = await response.json()
-                console.log(jsonBody);
-                addToActiveGames(jsonBody.uid)
+                const gameURL= "{{ url_for('home', _external=True) }}"
+                const uid = jsonBody.uid;
+                window.location.href = `${gameURL}${uid}`;
             });
         </script>
     </body>
