@@ -1,17 +1,28 @@
 <!doctype html>
 <html>
     <head>
+        <title>
+            ZevChess
+        </title>
+        <style>
+            button {
+                margin-top: 2em;
+            }
+        </style>
 
     </head>
     <body>
 
-        <div id="active-games">
-            {% for uid in active_games %}
-            <div>
-                <a href="{{ url_for('game', uid=uid, _external=True) }}">game {{ uid }}</a>
+        {% if active_games %}
+            <h1>Active Games</h1>
+            <div id="active-games">
+                {% for uid in active_games %}
+                <div>
+                    <a href="{{ url_for('game', uid=uid, _external=True) }}">game {{ uid }}</a>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
-        </div>
+        {% endif %}
         <button>Create A Game</button>
         <script>
             const activeGamesElement = document.getElementById("active-games");

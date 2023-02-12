@@ -3,6 +3,7 @@ import dataclasses as dc
 import json
 import typing
 
+import websockets as w
 from websockets.legacy.protocol import (
     broadcast as ws_broadcast,
     WebSocketCommonProtocol as Ws,
@@ -158,7 +159,12 @@ async def game_over(
             raise InvalidArguments
 
     uid = store.uid
-    state = q.get_game_state(store.uid)
+    state = None
+    try:
+        state = q.get_game_state(store.uid)
+    except q.NoSuchGame:
+        # the game ended before any moves
+        pass
     recipients = get_all_participants(store)
     if reason not in ("abandoned", "resigned", "draw"):
         if the_move is None:
@@ -172,7 +178,7 @@ async def game_over(
         )
     ws_broadcast(recipients, json.dumps({"type": "game_over", "message": msg}))
 
-    if reason == "abandoned":
+    if state is not None and reason == "abandoned":
         # otherwise, the `checkmate` or `stalemate`
         # field was already set in the core logic
         state.abandoned = 1
@@ -182,11 +188,12 @@ async def game_over(
         state.winner = 0 if winner == "white" else 1
     print(f"removing game {uid} from cache")
     c.remove_game_from_cache(uid)
-    try:
-        c.save_game_to_db(uid, state)
-    except q.NoSuchGame:
-        # the game ended before any moves
-        pass
+    if state is not None:
+        try:
+            c.save_game_to_db(uid, state)
+        except q.NoSuchGame:
+            # the game ended before any moves
+            pass
     for p in recipients:
         await p.close()
     if uid in CONNECTIONS:
@@ -214,6 +221,9 @@ async def handler(ws):
                     await join(ws, uid)
                 except InvalidUid:
                     await error(ws, "game not found")
+                except w.exceptions.ConnectionClosedOK:
+                    store = CONNECTIONS[uid]
+                    await game_over(ws, store, "abandoned", which_side(ws, store))
             case "move":
                 del event["type"]
                 await move(ws, event)
@@ -238,7 +248,10 @@ async def handler(ws):
 
 
 def get_all_participants(store: ConnectionStore, but: Ws | None = None) -> set[Ws]:
-    ps = store.watchers.copy() or set()
+    if store.watchers is None:
+        ps = set()
+    else:
+        ps = store.watchers.copy()
     if store.white is not None:
         ps.add(store.white)
     if store.black is not None:
@@ -358,11 +371,15 @@ async def its_your_move(uid: str, state: t.GameState) -> None:
     )
 
 
+def which_side(ws, store):
+    return "white" if ws == store.white else "black"
+
+
 async def resign(ws, uid: str) -> None:
     store = CONNECTIONS[uid]
     if store.white is None or store.black is None:
         return await error(ws, "we don't have two players, can't resign!")
-    requester = "white" if ws == store.white else "black"
+    requester = which_side(ws, store)
     return await game_over(ws, reason="resigned", store=store, side=requester)
 
 
@@ -370,7 +387,7 @@ async def offer_draw(ws, uid) -> None:
     store = CONNECTIONS[uid]
     if store.white is None or store.black is None:
         return await error(ws, "we don't have two players, can't offer a draw!")
-    requester = "white" if ws == store.white else "black"
+    requester = which_side(ws, store)
     side = 0 if ws == store.white else 1
     try:
         c.offer_draw(uid, side)
@@ -382,7 +399,7 @@ async def offer_draw(ws, uid) -> None:
 
 async def withdraw_draw(ws, uid) -> None:
     store = CONNECTIONS[uid]
-    requester = "white" if ws == store.white else "black"
+    requester = which_side(ws, store)
     side = 0 if ws == store.white else 1
     try:
         c.withdraw_draw(uid, side)
@@ -396,7 +413,7 @@ async def withdraw_draw(ws, uid) -> None:
 
 async def reject_draw(ws, uid) -> None:
     store = CONNECTIONS[uid]
-    requester = "white" if ws == store.white else "black"
+    requester = which_side(ws, store)
     other = "white" if requester == "black" else "black"
     side = 0 if ws == store.white else 1
     try:
@@ -412,7 +429,7 @@ async def reject_draw(ws, uid) -> None:
 
 async def accept_draw(ws, uid: str) -> None:
     store = CONNECTIONS[uid]
-    requester = "white" if ws == store.white else "black"
+    requester = which_side(ws, store)
     side = 0 if ws == store.white else 1
     try:
         c.accept_draw(uid, side)
