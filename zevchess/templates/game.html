@@ -2,36 +2,24 @@
 <html>
     <head>
         <title>ZevChess!</title>
-        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='chessground.base.css') }}">
-        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='chessground.brown.css') }}">
-        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='chessground.cburnett.css') }}">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='cm-chessboard.css') }}">
         <style>
-            #chessground {
-                width: 360px;
-                height: 360px;
-            }
-            cg-board {
-                background-color: #bfcfdd;
-            }
-            .center {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                margin-bottom: 2em !important;
-            }
-
             textarea {
-                margin-top: 5vh;
+                position: absolute;
+                right: 25vw;
                 width: 40vw;
-                height: 20vh;
+                height: 40vh;
+            }
+            #board {
+              height: 30vh;
+              width: 30vw;
             }
         </style>
-
         <script type="module" src="{{ url_for('static', filename='game.js') }}">
         </script>
     </head>
     <body>
-        <div id="chessground"></div>
+        <div id="board"></div>
         <div id="watcher-count"></div>
         <textarea readonly id="ws"></textarea>
     </body>

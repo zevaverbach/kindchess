@@ -13,6 +13,7 @@
     - [ ] allow refreshing of the browser without destroying the game
        - [ ] or just don't allow refreshing of the page, or do an 'alert' to tell them it will end the game
     - [x] render the board
+    - [ ] use [cm-chessboard][3] which has event handlers
     - [ ] connect the board!
         - [ ] when a piece moves, trigger a ws message
     - [ ] show what players/watchers are there
@@ -24,3 +25,4 @@
 
 [1]: https://websockets.readthedocs.io/en/stable/intro/index.html
 [2]: https://websockets.readthedocs.io/en/stable/topics/authentication.html
+[3]: https://github.com/shaack/cm-chessboard#enablemoveinputeventhandler-color--undefined

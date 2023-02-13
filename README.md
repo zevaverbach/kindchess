@@ -18,6 +18,8 @@ I'm interested in this because a) I like chess and b) I want to learn more about
     - pytest
     - pyperclip
     - python-lsp-server[all]
+- websocat or another websocket client (`> brew install websocat`)
+  - for testing: `> websocat localhost:8001`
 
 # Testing
 - load testing (TODO)
