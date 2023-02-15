@@ -7,6 +7,7 @@ const board = new Chessboard(
         position: FEN.start,
     },
 );
+// window.board = board
 
 const numberOfWatchers = 0;
 
@@ -49,6 +50,16 @@ function receiveMoves(ws) {
                 boardArray = event.board;
                 console.log('boardArray:', boardArray);
                 break;
+            case "move":
+                console.log(event);
+                const move = event.move;
+                board.movePiece(move.src, move.dest, true) // `true` is for 'animated'
+                  .then(something => console.log(something));
+                gameState = event.game_state;
+                boardArray = event.board;
+                console.log('updated gameState and boardArray');
+
+                
         }
         // TODO: in a case statement,
         //   if it's a move from a player other than this one, use `ground.move("a4", "a5")`
@@ -57,14 +68,11 @@ function receiveMoves(ws) {
 
 function sendMoves(ws) {
     board.enableMoveInput(function (event) {
-        console.log(event);
         switch (event.type) {
         case INPUT_EVENT_TYPE.moveInputStarted:
-          console.log(`moveInputStarted: ${event.square}`)
           // return `true`, if input is accepted/valid, `false` aborts the interaction, the piece will not move
           return true
         case INPUT_EVENT_TYPE.validateMoveInput:
-          console.log(`validateMoveInput: ${event.squareFrom}-${event.squareTo}`)
           // return true, if input is accepted/valid, `false` takes the move back
           const msg = JSON.stringify({
             uid,
@@ -74,7 +82,7 @@ function sendMoves(ws) {
             piece: getPieceAt(event.squareFrom),
           })
           ws.send(msg)
-          wsMessageElement.value = wsMessageElement.value + `\nsent:\n ${message}\n`
+          wsMessageElement.value = wsMessageElement.value + `\nsent:\n ${msg}\n`
           return true
         case INPUT_EVENT_TYPE.moveInputCanceled:
           console.log(`moveInputCanceled`)
@@ -85,14 +93,11 @@ function sendMoves(ws) {
 function toggleTurn() {
     turn = + !turn;
     board.enableMoveInput(function (event) {
-        console.log(event);
         switch (event.type) {
         case INPUT_EVENT_TYPE.moveInputStarted:
-          console.log(`moveInputStarted: ${event.square}`)
           // return `true`, if input is accepted/valid, `false` aborts the interaction, the piece will not move
           return true
         case INPUT_EVENT_TYPE.validateMoveInput:
-          console.log(`validateMoveInput: ${event.squareFrom}-${event.squareTo}`)
           // return true, if input is accepted/valid, `false` takes the move back
           return true
         case INPUT_EVENT_TYPE.moveInputCanceled:
@@ -111,13 +116,10 @@ for (let file of Array.from("abcdefgh")) {
             counter++;
         }
     }
-console.log(squareToIndex);
 
 function getPieceAt(src) {
     const idx = squareToIndex[src];
-    console.log('got idx', idx);
     const piece = boardArray[idx];
-    console.log('got piece', piece);
     return piece
 }
 

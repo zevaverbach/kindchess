@@ -13,7 +13,10 @@
     - [x] render the board
     - [x] use [cm-chessboard][3] which has event handlers
     - [ ] connect the board!
-        - [ ] when a piece moves, trigger a ws message
+        - [x] when a piece moves, trigger a ws message
+        - [ ] freeze the pieces when it's not that player's turn
+        - [ ] turn the board around for black
+          - [ ] get which player the ws is for, set that as a global var
         - [ ] only allow legal moves [link][4]
     - [ ] show what players/watchers are there
     - [x] connect to websocket server

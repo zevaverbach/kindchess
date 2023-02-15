@@ -158,8 +158,7 @@ async def game_over(
             msg = "stalemate!"
         case "abandoned":
             other_side = "white" if side == "black" else "white"
-            winner = other_side
-            msg = f"{side} abandoned the game, so {winner} wins!"
+            msg = f"{side} abandoned the game, so {other_side} wins!"
         case "resigned":
             other_side = "white" if side == "black" else "white"
             winner = other_side
@@ -232,7 +231,7 @@ async def handler(ws):
                     await join(ws, uid)
                 except InvalidUid:
                     await error(ws, "game not found")
-                except w.exceptions.ConnectionClosedOK:
+                except (w.exceptions.ConnectionClosedOK, w.exceptions.ConnectionClosedError):
                     store = CONNECTIONS[uid]
                     await game_over(ws, store, "abandoned", which_side(ws, store))
             case "move":
@@ -336,14 +335,16 @@ async def move(ws, event: dict) -> None:
     else:
         recipients = get_all_participants(store, but=ws)
         print_board.print_board_from_FEN(new_state.FEN)
+        board = t.Board.from_FEN(new_state.FEN).to_array()
         ws_broadcast(
             recipients,
             json.dumps(
                 {
                     "type": "move",
-                    **the_move.to_json(),
+                    "move": the_move.to_json(),
                     "side": "black" if new_state.turn else "white",
                     "state": dc.asdict(new_state),
+                    "board": board,
                 }
             ),
         )
