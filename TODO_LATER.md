@@ -1,5 +1,7 @@
- - [ ] move the extra move validation out of websockets and into a separate interfaces module (not core)
-    - [ ] "can't move for another player", "can't move when you're a spectator", etc.
+- [ ] move the extra move validation out of websockets and into a separate interfaces module (not core)
+  - [ ] "can't move for another player", "can't move when you're a spectator", etc.
+- [ ] allow refreshing of the browser without destroying the game
+  - [ ] or just don't allow refreshing of the page, or do an 'alert' to tell them it will end the game
 - [ ] organize code
   - [ ] core
       - [ ] pieces

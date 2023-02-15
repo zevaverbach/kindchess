@@ -10,12 +10,11 @@
     - [x] when you click on the create game button it automatically brings you to that new URL
     - [x] list of active games, each joinable
   - [ ] /<uid>
-    - [ ] allow refreshing of the browser without destroying the game
-       - [ ] or just don't allow refreshing of the page, or do an 'alert' to tell them it will end the game
     - [x] render the board
-    - [ ] use [cm-chessboard][3] which has event handlers
+    - [x] use [cm-chessboard][3] which has event handlers
     - [ ] connect the board!
         - [ ] when a piece moves, trigger a ws message
+        - [ ] only allow legal moves [link][4]
     - [ ] show what players/watchers are there
     - [x] connect to websocket server
     - [ ] 'invite' button which copies the URL to your clipboard
@@ -26,3 +25,4 @@
 [1]: https://websockets.readthedocs.io/en/stable/intro/index.html
 [2]: https://websockets.readthedocs.io/en/stable/topics/authentication.html
 [3]: https://github.com/shaack/cm-chessboard#enablemoveinputeventhandler-color--undefined
+[4]: https://shaack.com/projekte/cm-chessboard/examples/validate-moves.html

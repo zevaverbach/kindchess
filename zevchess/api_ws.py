@@ -49,6 +49,9 @@ class InvalidMoveEvent(Exception):
 async def join(ws, uid: str):
     if uid in CONNECTIONS:
         st = CONNECTIONS[uid]
+        game_state = q.get_game_state(uid)
+        game_state_dict = dc.asdict(game_state)
+        board = t.Board.from_FEN(game_state.FEN).to_array()
         if st.white and st.black and ws not in (st.white, st.black):
             if st.watchers is None:
                 st.watchers = {ws}
@@ -60,10 +63,11 @@ async def join(ws, uid: str):
             return await ws.send(
                 json.dumps(
                     {
-                        "type": "success",
+                        "type": "join_success",
                         "message": f"you're watching game {uid}, you're joined"
                         f" by {len(st.watchers) - 1} others",
-                        "game_state": dc.asdict(q.get_game_state(uid)),
+                        "game_state": game_state_dict,
+                        "board": board,
                     }
                 )
             )
@@ -73,14 +77,21 @@ async def join(ws, uid: str):
         await ws.send(
             json.dumps(
                 {
-                    "type": "success",
+                    "type": "join_success",
                     "message": "you are player two, you're playing the black pieces",
+                    "game_state": game_state_dict,
+                    "board": board,
                 }
             )
         )
         return await st.white.send(
             json.dumps(
-                {"type": "message", "message": "okay, let's start! it's your turn."}
+                {
+                    "type": "join_success",
+                    "message": "okay, let's start! it's your turn.",
+                    "game_state": game_state_dict,
+                    "board": board,
+                }
             )
         )
     if not q.uid_exists_and_is_an_active_game(uid):

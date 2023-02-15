@@ -262,6 +262,13 @@ class Board:
     def copy(self):
         return self.from_FEN(self.to_FEN())
 
+    def to_array(self):
+        arr = [getattr(self, f"{f}{rank}") for f in "abcdefgh" for rank in range(1, 9)]
+        for idx, i in enumerate(arr):
+            if i is not None:
+                arr[idx] = i.name()
+        return arr
+
     @classmethod
     def from_FEN(cls, fen: str) -> t.Self:
         board_dict = {}
