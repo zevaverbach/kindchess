@@ -18,7 +18,7 @@ I'm interested in this because a) I like chess and b) I want to learn more about
     - pytest
     - pyperclip
     - python-lsp-server[all]
-- websocat or another websocket client (`> brew install websocat`)
+- `websocat` or another websocket client (`> brew install websocat`)
   - for testing: `> websocat localhost:8001`
 
 # Testing
@@ -27,6 +27,7 @@ I'm interested in this because a) I like chess and b) I want to learn more about
 
 # Deployment
 - v1 will be via render.com with some auto-scaling
+- the DB will have to be switched/refactored for scaling, since it's file-based and currently living on (each) server
 
 # UI Principles
 - super minimal, fewer widgets than chess.com/lichess
@@ -44,16 +45,15 @@ I'm excited about writing it in a language other than Python, though, and I'm wo
 The point here is "the journey", as I want to learn to measure and improve performance, including strategies beyond code.
 
 # UX
-- stickers
-- in-person chess 'dating'
-- ability to flag moves in real-time or in retrospect
-  - not sure it was good
-  - this was probably good
-  - blunder (retrospect only)
+- premoves
+- ability to jump ahead and imagine moves by both sides while a) waiting for opponent to move or b) figuring out how to move.
+  - store moves in a list and choose from them when ready
+    - only for the very next move at first, not multiple
 
 # Resources Used
 - [generate FEN from board](http://www.netreal.de/Forsyth-Edwards-Notation/index.php)
 - [generate board from FEN](http://www.ee.unb.ca/cgi-bin/tervo/fen.pl)
+- [the board](https://github.com/shaack/cm-chessboard)
 
 # Prior Art
 - [glee](https://github.com/tonyOreglia/glee)

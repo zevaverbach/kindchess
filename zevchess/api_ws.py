@@ -67,6 +67,7 @@ async def join(ws, uid: str):
                         "message": f"you're watching game {uid}, you're joined"
                         f" by {len(st.watchers) - 1} others",
                         "game_state": game_state_dict,
+                        "game_status": "ready",
                         "board": board,
                     }
                 )
@@ -79,6 +80,8 @@ async def join(ws, uid: str):
                 {
                     "type": "join_success",
                     "message": "you are player two, you're playing the black pieces",
+                    "side": "black",
+                    "game_status": "ready",
                     "game_state": game_state_dict,
                     "board": board,
                 }
@@ -89,6 +92,8 @@ async def join(ws, uid: str):
                 {
                     "type": "join_success",
                     "message": "okay, let's start! it's your turn.",
+                    "side": "white",
+                    "game_status": "ready",
                     "game_state": game_state_dict,
                     "board": board,
                 }
@@ -104,8 +109,9 @@ async def join(ws, uid: str):
     await ws.send(
         json.dumps(
             {
-                "type": "success",
+                "type": "join_success",
                 "message": "you are player one, you're playing the white pieces",
+                "game_status": "waiting",
             }
         )
     )

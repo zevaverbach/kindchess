@@ -1,34 +1,24 @@
 import { Chessboard, INPUT_EVENT_TYPE, BORDER_TYPE, MARKER_TYPE, COLOR } from "./node_modules/cm-chessboard/src/cm-chessboard/Chessboard.js"
 import { FEN } from "./node_modules/cm-chessboard/src/cm-chessboard/model/Position.js"
 
-const board = new Chessboard(
-    document.getElementById("board"),
-    {
-        position: FEN.start,
-    },
-);
-// window.board = board
-
 const numberOfWatchers = 0;
 
-const players = {
-    black: null,
-    white: null,
-}
-
+let side;
+let myTurn = false;
 let gameState = {}
 let boardArray = []
 const uid = window.location.pathname.replace('/', '');
 let turn = 1;
+let board;
 
 const wsMessageElement = document.getElementById('ws');
 
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", function() {
     const ws = new WebSocket("ws://localhost:8001/");
     joinGame(ws);
     receiveMoves(ws);
-    sendMoves(ws);
 })
+
 
 function joinGame(ws) {
     ws.addEventListener("open", function() {
@@ -48,6 +38,26 @@ function receiveMoves(ws) {
             case "join_success":
                 gameState = event.game_state;
                 boardArray = event.board;
+                if (event.game_status === "waiting") {
+                    side = "white";
+                } else {
+                    side = event.side;
+                } 
+
+                if (side == "white" && event.game_status === "ready") {
+                    myTurn = true;
+                } else {
+                    board = new Chessboard(
+                        document.getElementById("board"),
+                        {
+                            position: FEN.start,
+                            orientation: side[0],
+                        },
+                    );
+                }
+                if (myTurn) sendMoves(ws);
+                // window.board = board
+
                 console.log('boardArray:', boardArray);
                 break;
             case "move":
@@ -58,8 +68,8 @@ function receiveMoves(ws) {
                 gameState = event.game_state;
                 boardArray = event.board;
                 console.log('updated gameState and boardArray');
-
-                
+                myTurn = true;
+                sendMoves(ws);
         }
         // TODO: in a case statement,
         //   if it's a move from a player other than this one, use `ground.move("a4", "a5")`
@@ -67,46 +77,34 @@ function receiveMoves(ws) {
 }
 
 function sendMoves(ws) {
-    board.enableMoveInput(function (event) {
-        switch (event.type) {
-        case INPUT_EVENT_TYPE.moveInputStarted:
-          // return `true`, if input is accepted/valid, `false` aborts the interaction, the piece will not move
-          return true
-        case INPUT_EVENT_TYPE.validateMoveInput:
-          // return true, if input is accepted/valid, `false` takes the move back
-          const msg = JSON.stringify({
-            uid,
-            type: "move",
-            src: event.squareFrom,
-            dest: event.squareTo,
-            piece: getPieceAt(event.squareFrom),
-          })
-          ws.send(msg)
-          wsMessageElement.value = wsMessageElement.value + `\nsent:\n ${msg}\n`
-          return true
-        case INPUT_EVENT_TYPE.moveInputCanceled:
-          console.log(`moveInputCanceled`)
-      }
-   })
+    if (!myTurn) {
+        board.disableMoveInput();
+    } else {
+        board.enableMoveInput(function (event) {
+            switch (event.type) {
+            case INPUT_EVENT_TYPE.moveInputStarted:
+              // return `true`, if input is accepted/valid, `false` aborts the interaction, the piece will not move
+              return true
+            case INPUT_EVENT_TYPE.validateMoveInput:
+              // return true, if input is accepted/valid, `false` takes the move back
+              const msg = JSON.stringify({
+                uid,
+                type: "move",
+                src: event.squareFrom,
+                dest: event.squareTo,
+                piece: getPieceAt(event.squareFrom),
+              })
+              ws.send(msg)
+              wsMessageElement.value = wsMessageElement.value + `\nsent:\n ${msg}\n`
+              myTurn = false;
+              board.disableMoveInput();
+              return true
+            case INPUT_EVENT_TYPE.moveInputCanceled:
+              console.log(`moveInputCanceled`)
+          }
+       }, side === "black" ? COLOR.black : COLOR.white)
+    }
 }
-
-function toggleTurn() {
-    turn = + !turn;
-    board.enableMoveInput(function (event) {
-        switch (event.type) {
-        case INPUT_EVENT_TYPE.moveInputStarted:
-          // return `true`, if input is accepted/valid, `false` aborts the interaction, the piece will not move
-          return true
-        case INPUT_EVENT_TYPE.validateMoveInput:
-          // return true, if input is accepted/valid, `false` takes the move back
-          return true
-        case INPUT_EVENT_TYPE.moveInputCanceled:
-          console.log(`moveInputCanceled`)
-      }
-   }, turn ? COLOR.black : COLOR.white)
-};
-
-toggleTurn();
 
 let squareToIndex = {}
 let counter = 0

@@ -1,8 +1,7 @@
 - websocket API
   - [x] wrong number of watchers is shown once someone leaves (seems like it's not always decrement, or else maybe it's including the players once there's been more than one watcher?)
   - [x] "someone has left chat" is the message shown when a watcher leaves! (also wrong count)
-  - [ ] send entire game state at start of game, including to players
-  - [ ] split out the 'welcome' message for watchers from the initial state, two separate messages
+  - [x] send entire game state at start of game, including to players
 
 - [ ] create a basic web interface
   - [ ] /
@@ -14,10 +13,12 @@
     - [x] use [cm-chessboard][3] which has event handlers
     - [ ] connect the board!
         - [x] when a piece moves, trigger a ws message
-        - [ ] freeze the pieces when it's not that player's turn
-        - [ ] turn the board around for black
-          - [ ] get which player the ws is for, set that as a global var
-        - [ ] only allow legal moves [link][4]
+        - [ ] only allow legal moves
+        - [ ] make captures work (have to deliver 'capture' arg to ws server)
+        - [ ] show the allowed moves  [link][4]
+        - [x] freeze the pieces when it's not that player's turn
+        - [x] turn the board around for black
+          - [x] get which player the ws is for, set that as a global var
     - [ ] show what players/watchers are there
     - [x] connect to websocket server
     - [ ] 'invite' button which copies the URL to your clipboard
