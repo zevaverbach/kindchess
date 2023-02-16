@@ -11,16 +11,18 @@
                 height: 40vh;
             }
             #board {
-              height: 30vh;
-              width: 30vw;
+              height: 60vh;
+              width: 60vw;
             }
         </style>
         <script type="module" src="{{ url_for('static', filename='game.js') }}">
         </script>
     </head>
     <body>
-        <div id="board"></div>
-        <div id="watcher-count"></div>
-        <textarea readonly id="ws"></textarea>
+        <main>
+            <div id="board"></div>
+            <div id="watcher-count"></div>
+            <div id="messagebox"</div>
+        </main>
     </body>
 </html>

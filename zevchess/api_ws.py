@@ -50,6 +50,7 @@ async def join(ws, uid: str):
     if uid in CONNECTIONS:
         st = CONNECTIONS[uid]
         game_state = q.get_game_state(uid)
+        all_possible_moves = q.get_all_legal_moves(game_state, json=True)
         game_state_dict = dc.asdict(game_state)
         board = t.Board.from_FEN(game_state.FEN).to_array()
         if st.white and st.black and ws not in (st.white, st.black):
@@ -69,6 +70,7 @@ async def join(ws, uid: str):
                         "game_state": game_state_dict,
                         "game_status": "ready",
                         "board": board,
+                        "possible_moves": all_possible_moves,
                     }
                 )
             )
@@ -84,6 +86,7 @@ async def join(ws, uid: str):
                     "game_status": "ready",
                     "game_state": game_state_dict,
                     "board": board,
+                    "possible_moves": all_possible_moves,
                 }
             )
         )
@@ -96,6 +99,7 @@ async def join(ws, uid: str):
                     "game_status": "ready",
                     "game_state": game_state_dict,
                     "board": board,
+                    "possible_moves": all_possible_moves,
                 }
             )
         )
@@ -146,7 +150,11 @@ async def remove_connection(ws, because_ws_disconnected=True):
         del CONNECTION_WS_STORE_DICT[ws]
     elif because_ws_disconnected:
         side = attribute
-        await game_over(ws=ws, store=store, side=side, reason="abandoned")
+        await game_over(ws=ws, store=store, side=other_color(side), reason="abandoned")
+
+
+def other_color(color):
+    return "black" if color == "white" else "white"
 
 
 async def game_over(
@@ -163,8 +171,7 @@ async def game_over(
         case "stalemate":
             msg = "stalemate!"
         case "abandoned":
-            other_side = "white" if side == "black" else "white"
-            msg = f"{side} abandoned the game, so {other_side} wins!"
+            msg = f"{side} abandoned the game, so {other_color(side)} wins!"
         case "resigned":
             other_side = "white" if side == "black" else "white"
             winner = other_side
@@ -186,12 +193,10 @@ async def game_over(
         if the_move is None:
             raise InvalidArguments
         non_winner_participants = get_all_participants(store, but=getattr(store, side))
-        ws_broadcast(
-            non_winner_participants,
-            json.dumps(
-                {"type": "move", "move": the_move.to_json(), "state": dc.asdict(state)}
-            ),
-        )
+        payload = {"type": "move", "move": the_move.to_json()}
+        if state:
+            payload["state"] = dc.asdict(state)
+        ws_broadcast(non_winner_participants, json.dumps(payload))
     ws_broadcast(recipients, json.dumps({"type": "game_over", "message": msg}))
 
     if state is not None and reason == "abandoned":
@@ -237,9 +242,14 @@ async def handler(ws):
                     await join(ws, uid)
                 except InvalidUid:
                     await error(ws, "game not found")
-                except (w.exceptions.ConnectionClosedOK, w.exceptions.ConnectionClosedError):
+                except (
+                    w.exceptions.ConnectionClosedOK,
+                    w.exceptions.ConnectionClosedError,
+                ):
                     store = CONNECTIONS[uid]
-                    await game_over(ws, store, "abandoned", which_side(ws, store))
+                    await game_over(
+                        ws, store, "abandoned", other_color(which_side(ws, store))
+                    )
             case "move":
                 del event["type"]
                 await move(ws, event)
@@ -342,6 +352,7 @@ async def move(ws, event: dict) -> None:
         recipients = get_all_participants(store, but=ws)
         print_board.print_board_from_FEN(new_state.FEN)
         board = t.Board.from_FEN(new_state.FEN).to_array()
+        all_possible_moves = q.get_all_legal_moves(new_state, json=True)
         ws_broadcast(
             recipients,
             json.dumps(
@@ -351,6 +362,7 @@ async def move(ws, event: dict) -> None:
                     "side": "black" if new_state.turn else "white",
                     "state": dc.asdict(new_state),
                     "board": board,
+                    "possible_moves": all_possible_moves,
                 }
             ),
         )
@@ -374,7 +386,7 @@ def validate_move_event(event: dict) -> None:
 
 
 async def its_your_move(uid: str, state: t.GameState) -> None:
-    all_possible_moves = q.get_all_legal_moves(state)
+    all_possible_moves = q.get_all_legal_moves(state, json=True)
     turn = state.turn
     store = CONNECTIONS[uid]
     ws = store.black if turn else store.white
@@ -382,7 +394,7 @@ async def its_your_move(uid: str, state: t.GameState) -> None:
         json.dumps(
             {
                 "type": "possible_moves",
-                "possible_moves": [m.to_json() for m in all_possible_moves],
+                "possible_moves": all_possible_moves,
                 "message": "it's your turn!",
             }
         )

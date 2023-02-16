@@ -36,7 +36,9 @@ def uid_exists_and_is_an_active_game(uid: str) -> bool:
 
 
 def get_all_legal_moves(
-    state: t.GameState, board: t.Board | None = None
+    state: t.GameState,
+    board: t.Board | None = None,
+    json: bool = False,
 ) -> list[t.Move]:
     board = board or t.Board.from_FEN(state.FEN)
     if state.turn:
@@ -48,12 +50,15 @@ def get_all_legal_moves(
         king_square = state.king_square_white
         K = "K"
 
-    return [
+    moves = [
         move
         for piece in pieces
         for move in piece.get_possible_moves(board, state.en_passant_square)
         if not t.it_would_be_self_check(piece, move, board, king_square if move.piece != K else move.dest)  # type: ignore
     ] + get_castling_moves(state, board)
+    if json:
+        return [m.to_json() for m in moves]
+    return moves
 
 
 def its_checkmate(state: t.GameState) -> bool:

@@ -2,9 +2,10 @@
   - [x] wrong number of watchers is shown once someone leaves (seems like it's not always decrement, or else maybe it's including the players once there's been more than one watcher?)
   - [x] "someone has left chat" is the message shown when a watcher leaves! (also wrong count)
   - [x] send entire game state at start of game, including to players
+  - [ ] who abandoned the game? there's some confusion here
 
 - [ ] create a basic web interface
-  - [ ] /
+  - [x] /
     - [x] 'create game' button
     - [x] when you click on the create game button it automatically brings you to that new URL
     - [x] list of active games, each joinable
@@ -17,9 +18,12 @@
         - [x] turn the board around for black
           - [x] get which player the ws is for, set that as a global var
     - [ ] only allow legal moves
+      - [x] check possible_moves as delivered with 'your_turn' event
+      - [ ] check castling (what does that look like from the board, 'o-o' or?
     - [x] make captures work (have to deliver 'capture' arg to ws server)
     - [ ] show the allowed moves  [link][4]
-    - [ ] indicate check/checkmate
+    - [ ] indicate checkmate
+    - [ ] indicate check
     - [ ] show previous move coloring
     - [ ] show what players/watchers are there
     - [x] connect to websocket server

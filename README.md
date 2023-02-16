@@ -45,7 +45,7 @@ I'm excited about writing it in a language other than Python, though, and I'm wo
 The point here is "the journey", as I want to learn to measure and improve performance, including strategies beyond code.
 
 # UX
-- premoves
+- super low-friction to jumping into a game with people you know, or maybe who are part of a trusted group
 - ability to jump ahead and imagine moves by both sides while a) waiting for opponent to move or b) figuring out how to move.
   - store moves in a list and choose from them when ready
     - only for the very next move at first, not multiple
