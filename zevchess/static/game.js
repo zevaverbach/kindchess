@@ -14,7 +14,7 @@ let board;
 const wsMessageElement = document.getElementById('ws');
 
 window.addEventListener("DOMContentLoaded", function() {
-    const ws = new WebSocket("ws://localhost:8001/");
+    const ws = new WebSocket("ws://0.0.0.0:8001/");
     joinGame(ws);
     receiveMoves(ws);
 })
@@ -93,6 +93,7 @@ function sendMoves(ws) {
                 src: event.squareFrom,
                 dest: event.squareTo,
                 piece: getPieceAt(event.squareFrom),
+                capture: getPieceAt(event.squareTo) ? 1 : 0,
               })
               ws.send(msg)
               wsMessageElement.value = wsMessageElement.value + `\nsent:\n ${msg}\n`
@@ -120,7 +121,3 @@ function getPieceAt(src) {
     const piece = boardArray[idx];
     return piece
 }
-
-
-
-

@@ -472,7 +472,7 @@ async def draw(
 
 
 async def main():
-    async with ws_serve(handler, "", 8001):
+    async with ws_serve(handler, "0.0.0.0", 8001):
         await asyncio.Future()  # run forever
 
 

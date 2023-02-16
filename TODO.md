@@ -11,14 +11,16 @@
   - [ ] /<uid>
     - [x] render the board
     - [x] use [cm-chessboard][3] which has event handlers
-    - [ ] connect the board!
+    - [x] connect the board!
         - [x] when a piece moves, trigger a ws message
-        - [ ] only allow legal moves
-        - [ ] make captures work (have to deliver 'capture' arg to ws server)
-        - [ ] show the allowed moves  [link][4]
         - [x] freeze the pieces when it's not that player's turn
         - [x] turn the board around for black
           - [x] get which player the ws is for, set that as a global var
+    - [ ] only allow legal moves
+    - [x] make captures work (have to deliver 'capture' arg to ws server)
+    - [ ] show the allowed moves  [link][4]
+    - [ ] indicate check/checkmate
+    - [ ] show previous move coloring
     - [ ] show what players/watchers are there
     - [x] connect to websocket server
     - [ ] 'invite' button which copies the URL to your clipboard
