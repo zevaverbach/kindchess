@@ -1,20 +1,20 @@
 import {
   Chessboard,
   INPUT_EVENT_TYPE,
-  BORDER_TYPE,
-  MARKER_TYPE,
   COLOR,
-} from './node_modules/cm-chessboard/src/cm-chessboard/Chessboard.js';
-import { FEN } from './node_modules/cm-chessboard/src/cm-chessboard/model/Position.js';
 
-let side, board, main, messageBox;
+} from './node_modules/cm-chessboard/src/cm-chessboard/Chessboard.js';
+import { FEN } 
+  from './node_modules/cm-chessboard/src/cm-chessboard/model/Position.js';
+
+let side, board, messageBox;
 let myTurn = false;
-let numberOfWatchers = 0;
 let gameState = {};
 let boardArray = [];
 let turn = 1;
 let possibleMoves = [];
 let testing = false;
+const main = document.getElementsByTagName('main')[0];
 
 if (testing) {
   const div = document.createElement('div');
@@ -23,25 +23,20 @@ if (testing) {
 }
 const uid = window.location.pathname.replace('/', '');
 
-function showWaiting() {
-  messageBox.innerHTML = 'waiting for black to join';
-}
-
-function hideWaiting() {
-  messageBox.innerHTML = '';
-}
-
-function displayMessage(message) {
+function displayMessage(message, timeout = true) {
   messageBox.innerHTML = message;
-  setTimeout(function () {
-    messageBox.innerHTML = '';
-  }, 3000);
+  if (timeout) {
+    setTimeout(function () {
+      messageBox.innerHTML = '';
+    }, 3000);
+  }
 }
+
+function clearMessage() { messageBox.innerHTML = ""; }
 
 window.addEventListener('DOMContentLoaded', function () {
-  main = document.getElementsByTagName('main')[0];
   messageBox = document.getElementById('messagebox');
-  showWaiting();
+  displayMessage('waiting for black to join', false);
   const ws = new WebSocket('ws://0.0.0.0:8001/');
   joinGame(ws);
   receiveMessages(ws);
@@ -71,15 +66,15 @@ function receiveMessages(ws) {
         gameState = event.game_state;
         boardArray = event.board;
         possibleMoves = event.possible_moves;
-        console.log('possibleMoves:', possibleMoves);
         if (event.game_status === 'waiting') {
           side = 'white';
+                   
         } else {
           side = event.side;
-          hideWaiting();
+          clearMessage();
           displayMessage('game on!');
         }
-
+        showShareButton();
         if (side == 'white' && event.game_status === 'ready') {
           myTurn = true;
         } else {
@@ -106,6 +101,23 @@ function receiveMessages(ws) {
         displayMessage(event.message);
     }
   });
+}
+
+function showShareButton() {
+  if (document.getElementById('share-button')) return
+  const url = window.location.href;
+  const shareButton = document.createElement("button");
+  shareButton.id = "share-button";
+  shareButton.addEventListener('click', () => {
+    navigator.clipboard.writeText(url);
+    displayMessage(
+      `I've copied the following to your clipboard: ${url}, 
+       feel free to share it with whoever you want to play against. 
+       I'll let you know when they've joined!`, false
+      )    
+  })
+  shareButton.innerText = "share invite URL"
+  main.appendChild(shareButton);
 }
 
 function sendMoves(ws) {

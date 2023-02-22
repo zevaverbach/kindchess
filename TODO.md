@@ -6,7 +6,6 @@
 
 - [ ] create a basic web interface
   - [x] /
-    - [x] 'create game' button
     - [x] when you click on the create game button it automatically brings you to that new URL
     - [x] list of active games, each joinable
   - [ ] /<uid>
@@ -27,7 +26,7 @@
     - [ ] show previous move coloring
     - [ ] show what players/watchers are there
     - [x] connect to websocket server
-    - [ ] 'invite' button which copies the URL to your clipboard
+    - [x] 'invite' button which copies the URL to your clipboard
     - [x] a debug box to show the websocket messages getting sent/received
   - [ ] when a game is over, keep the page stable even though the websocket connection is closed
     - [ ] alternatively, don't close the websocket connection so chat can continue
