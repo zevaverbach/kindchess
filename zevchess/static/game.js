@@ -7,6 +7,7 @@ import {
 import { FEN } 
   from './node_modules/cm-chessboard/src/cm-chessboard/model/Position.js';
 
+const WEBSOCKET_SERVER_ADDR = 'ws://0.0.0.0:8001/'
 let side, board, messageBox;
 let myTurn = false;
 let gameState = {};
@@ -35,7 +36,7 @@ function clearMessage() { messageBox.innerHTML = ""; }
 
 window.addEventListener('DOMContentLoaded', function () {
   messageBox = document.getElementById('messagebox');
-  const ws = new WebSocket('ws://0.0.0.0:8001/');
+  const ws = new WebSocket(WEBSOCKET_SERVER_ADDR);
   joinGame(ws);
   receiveMessages(ws);
   if (side) {
