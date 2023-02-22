@@ -11,7 +11,6 @@ let side, board, messageBox;
 let myTurn = false;
 let gameState = {};
 let boardArray = [];
-let turn = 1;
 let possibleMoves = [];
 let testing = false;
 const main = document.getElementsByTagName('main')[0];
@@ -36,10 +35,12 @@ function clearMessage() { messageBox.innerHTML = ""; }
 
 window.addEventListener('DOMContentLoaded', function () {
   messageBox = document.getElementById('messagebox');
-  displayMessage('waiting for black to join', false);
   const ws = new WebSocket('ws://0.0.0.0:8001/');
   joinGame(ws);
   receiveMessages(ws);
+  if (side) {
+    displayMessage('waiting for black to join', false);
+  }
 });
 
 function joinGame(ws) {
@@ -71,8 +72,12 @@ function receiveMessages(ws) {
                    
         } else {
           side = event.side;
+          if (!side) {
+            // it's a watcher
+          } else {
           clearMessage();
           displayMessage('game on!');
+          }
         }
         showShareButton();
         if (side == 'white' && event.game_status === 'ready') {
@@ -81,7 +86,7 @@ function receiveMessages(ws) {
           // game_status is 'waiting', so draw the board this one time.
           board = new Chessboard(document.getElementById('board'), {
             position: FEN.start,
-            orientation: side[0],
+            orientation: side ? side[0] : "w", // if it's a watcher, display from white's POV
           });
         }
         if (myTurn) sendMoves(ws);
