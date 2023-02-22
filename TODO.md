@@ -16,9 +16,13 @@
         - [x] freeze the pieces when it's not that player's turn
         - [x] turn the board around for black
           - [x] get which player the ws is for, set that as a global var
-    - [ ] only allow legal moves
+    - [x] only allow legal moves
       - [x] check possible_moves as delivered with 'your_turn' event
-      - [ ] check castling (what does that look like from the board, 'o-o' or?
+      - [x] check castling (what does that look like from the board, 'o-o' or?
+    - [ ] support castling
+       - [ ] move the rook automatically
+       - [ ] deliver the move accurately to the server
+       - [ ] make sure it's shown on opponent's/watchers' boards
     - [x] make captures work (have to deliver 'capture' arg to ws server)
     - [ ] show the allowed moves  [link][4]
     - [ ] indicate checkmate

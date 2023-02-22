@@ -94,9 +94,20 @@ function receiveMessages(ws) {
         break;
       case 'move':
         const move = event.move;
-        board
-          .movePiece(move.src, move.dest, true) // `true` is for 'animated'
-          .then((something) => console.log(something));
+        if (move.castle) {
+          const rank = side === "black" ? 8 : 1;
+          if (move.castle === "k") {
+            board.movePiece(`e${rank}`, `g${rank}`, true)
+            board.movePiece(`h${rank}`, `f${rank}`, true)
+          } else {
+            board.movePiece(`e${rank}`, `c${rank}`, true)
+            board.movePiece(`a${rank}`, `d${rank}`, true)
+          }
+        } else {
+          board
+            .movePiece(move.src, move.dest, true) // `true` is for 'animated'
+            .then((something) => console.log(something));
+        }
         gameState = event.game_state;
         boardArray = event.board;
         possibleMoves = event.possible_moves;
@@ -134,27 +145,31 @@ function sendMoves(ws) {
       function (event) {
         switch (event.type) {
           case INPUT_EVENT_TYPE.moveInputStarted:
-            const moveSources = possibleMoves.map((mv) => mv.src);
+            const moveSources = possibleMoves.map(mv => mv.castle ? getKingStartSquare(side) : mv.src)
             return moveSources.includes(event.square);
           case INPUT_EVENT_TYPE.validateMoveInput:
-            const move = {
-              piece: getPieceAt(event.squareFrom),
-              src: event.squareFrom,
-              dest: event.squareTo,
-            };
-            const capture = getPieceAt(event.squareTo) ? 1 : 0;
-            if (capture) {
-              move.capture = capture;
+            const piece = getPieceAt(event.squareFrom);
+            let move = {};
+            if (piece.toLowerCase() === "k" && (event.squareFrom[0] === "e" && ["g", "c"].includes(event.squareTo[0]))) {
+              move.castle = event.squareTo[0] === "c" ? "q" : "k";
+            } else {
+              move.piece = piece;
+              move.src = event.squareFrom;
+              move.dest = event.squareTo;
+              const capture = getPieceAt(event.squareTo) ? 1 : 0;
+              if (capture) {
+                move.capture = capture;
+              }
             }
             if (
-              !possibleMoves.some(
-                (pm) =>
-                  pm.src === move.src &&
-                  pm.dest === move.dest &&
-                  pm.piece === move.piece &&
-                  pm.capture === move.capture,
+              !possibleMoves.some(pm => 
+                //  because some of these attributes may be undefined on one side
+                // and null on the other
+                pm.src == move.src && pm.dest == move.dest && pm.piece == move.piece 
+                && pm.capture == move.capture && pm.castle == move.castle
               )
             ) {
+              console.log('denied move:', move)
               return false;
             }
             const msg = JSON.stringify({
@@ -174,6 +189,10 @@ function sendMoves(ws) {
       side === 'black' ? COLOR.black : COLOR.white,
     );
   }
+}
+
+function getKingStartSquare(side) {
+  return side === "black" ? "e8" : "e1"
 }
 
 function getPieceAt(src) {
