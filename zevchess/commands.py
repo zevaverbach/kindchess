@@ -256,16 +256,25 @@ def get_new_state(state: t.GameState, move: t.Move, board: t.Board) -> t.GameSta
         recalculate_king_position(new_state, move)
 
     new_state.turn = abs(new_state.turn - 1)
-    checkmate = q.its_checkmate(new_state)
+    board = t.Board.from_FEN(new_state.FEN)
+    checkmate = q.its_checkmate(new_state, board)
     stalemate = False
+    check = False
     if not checkmate:
-        stalemate = q.its_stalemate(new_state)
+        check = q.its_check(new_state, board)
+        if not check:
+            stalemate = q.its_stalemate(new_state, board)
 
     if checkmate:
         new_state.checkmate = 1
         new_state.winner = new_state.turn
+    elif check:
+        new_state.check = new_state.turn
     elif stalemate:
         new_state.stalemate = 1
+
+    if not check and new_state.check in (0, 1):
+        new_state.check = -1
 
     return new_state
 

@@ -64,6 +64,12 @@
 .cm-chessboard.default .board .square.black {
   fill: #c5a076; }
 
+.cm-chessboard.default .board .square.check {
+  fill: yellow; }
+
+.cm-chessboard.default .board .square.mate {
+  fill: red; }
+
 .cm-chessboard.default.border-type-thin .board .border {
   stroke: #c5a076;
   stroke-width: 0.7%;

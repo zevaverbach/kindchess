@@ -170,10 +170,10 @@ async def game_over(
         case "stalemate":
             msg = "stalemate!"
         case "abandoned":
-            msg = f"{side} abandoned the game, so {other_color(side)} wins!"
+            winner = other_color(side)
+            msg = f"{side} abandoned the game, so {winner} wins!"
         case "resigned":
-            other_side = "white" if side == "black" else "white"
-            winner = other_side
+            winner = other_color(side)
             msg = f"{side} has resigned!"
         case "draw":
             msg = "players have agreed to a draw"
@@ -196,7 +196,7 @@ async def game_over(
         if state:
             payload["state"] = dc.asdict(state)
         ws_broadcast(non_winner_participants, json.dumps(payload))
-    ws_broadcast(recipients, json.dumps({"type": "game_over", "message": msg}))
+    ws_broadcast(recipients, json.dumps({"type": "game_over", "message": msg, "winner": winner}))
 
     if state is not None and reason == "abandoned":
         # otherwise, the `checkmate` or `stalemate`

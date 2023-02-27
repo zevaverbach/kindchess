@@ -122,11 +122,27 @@ function receiveMessages(ws) {
         boardArray = event.board;
         possibleMoves = event.possible_moves;
         console.log('possibleMoves:', possibleMoves);
-        if (possibleMoves == undefined) console.log('event.type:', event.type)
+        if (gameState) {
+          if ([0, 1].includes(gameState.check)) {
+            const checkedKingSquare = gameState.check === 1 ? gameState.kingSquareBlack : gameState.kingSquareWhite;
+            document.querySelector(`[data-square="${checkedKingSquare}"]`).classList.add("check")
+          } else {
+            for (const square of [gameState.kingSquareBlack, gameState.kingSquareWhite]) {
+              if (document.querySelector(`[data-square="${square}"]`).classList.includes("check")) {
+                document.querySelector(`[data-square="${square}"]`).classList.remove("check")
+              }
+            }
+          }
+        }
         myTurn = true;
         sendMoves(ws);
         break;
       case 'game_over':
+        const winner = event.winner;
+        if (winner != null) {
+          const checkmatedKingSquare = gameState.winner === 1 ? gameState.kingSquareBlack : gameState.kingSquareWhite;
+          document.querySelector(`[data-square="${checkmatedKingSquare}"]`).classList.add("mate")
+        }
         displayMessage(event.message);
         break;
     }

@@ -93,6 +93,7 @@ class GameState:
     king_square_black: str = "e8"
     en_passant_square: str = ""
     need_to_choose_pawn_promotion_piece: str = ""  # f"{src} {target} {capture: int}"
+    its_check: int = -1
     checkmate: int = 0
     stalemate: int = 0
     abandoned: int = 0
@@ -112,6 +113,7 @@ class GameState:
             turn=self.turn,
             half_moves_since_last_capture=self.half_moves_since_last_capture,
             en_passant_square=self.en_passant_square,
+            check=self.its_check,
             checkmate=self.checkmate,
             stalemate=self.stalemate,
             abandoned=self.abandoned,
@@ -119,6 +121,14 @@ class GameState:
             draw=self.draw,
             winner=self.winner,
         )
+
+    @property
+    def check(self):
+        return self.its_check
+
+    @check.setter
+    def check(self, val):
+        self.its_check = val
 
     @classmethod
     def from_redis(cls, redis_response: dict):

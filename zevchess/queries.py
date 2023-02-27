@@ -61,8 +61,7 @@ def get_all_legal_moves(
     return moves
 
 
-def its_checkmate(state: t.GameState) -> bool:
-    board = t.Board.from_FEN(state.FEN)
+def its_checkmate(state: t.GameState, board) -> bool:
     if not t.its_check_for(
         state.turn,
         board,
@@ -72,8 +71,11 @@ def its_checkmate(state: t.GameState) -> bool:
     return get_all_legal_moves(state, board) == []
 
 
-def its_stalemate(state: t.GameState) -> bool:
-    board = t.Board.from_FEN(state.FEN)
+def its_check(state: t.GameState, board) -> bool:
+    return t.its_check_for(state.turn, board, state.king_square_black if state.turn else state.king_square_white)
+
+
+def its_stalemate(state: t.GameState, board) -> bool:
     if t.its_check_for(
         state.turn,
         board,

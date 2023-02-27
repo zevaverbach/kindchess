@@ -30,6 +30,8 @@
 - [ ] detect cheating
 - [ ] consider using [this web][2] component for the board, it seems nice
 - [ ] show previous move coloring
+- [ ] when a game is over, keep the page stable even though the websocket connection is closed
+  - [ ] alternatively, don't close the websocket connection so chat can continue
 
 [1]: https://docs.socketify.dev/websockets-backpressure.html
 [2]: https://github.com/shaack/cm-chessboard

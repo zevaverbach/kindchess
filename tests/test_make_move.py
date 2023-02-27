@@ -30,7 +30,7 @@ def test_make_move_its_checkmate():
         king_square_black="e8",
         turn=1,
     )
-    assert q.its_checkmate(state)
+    assert q.its_checkmate(state, t.Board.from_FEN(state.FEN))
 
 
 def test_make_move_its_stalemate():
@@ -41,7 +41,7 @@ def test_make_move_its_stalemate():
         king_square_black="h8",
         turn=1,
     )
-    assert q.its_stalemate(state)
+    assert q.its_stalemate(state, t.Board.from_FEN(state.FEN))
 
 
 def test_pawn_promotion_with_capture():
@@ -207,12 +207,11 @@ def test_state_after_move_for_specific_bug_2():
         king_square_white="e1",
         king_square_black="e8",
     )
-    assert q.its_checkmate(state)
+    assert q.its_checkmate(state, t.Board.from_FEN(state.FEN))
 
 
 def test_after_move_for_specific_bug_2_more_state():
-    assert q.its_checkmate(
-        t.GameState(
+    state = t.GameState(
             half_moves=7,
             black_can_castle_kingside=1,
             white_can_castle_kingside=1,
@@ -228,22 +227,21 @@ def test_after_move_for_specific_bug_2_more_state():
             stalemate=0,
             FEN="rnbqkbnr/ppppp2p/5p2/6pQ/3P4/4P3/PPP2PPP/RNB1KBNR",
         )
-    )
+    assert q.its_checkmate(state, t.Board.from_FEN(state.FEN))
 
 
 def test_stalemate_bug_4():
     """
     from 'the fastest stalemate', in ten moves
     """
-    assert q.its_stalemate(
-        t.GameState(
+    state = t.GameState(
             half_moves=19,
             king_square_white="e1",
             king_square_black="g6",
             turn=1,
             FEN="5bnr/4p1pq/4Qpkr/7p/7P/4P3/PPPP1PP1/RNB1KBNR",
         )
-    )
+    assert q.its_stalemate(state, t.Board.from_FEN(state.FEN))
 
 
 def test_stalemate_bug_4_make_move():
