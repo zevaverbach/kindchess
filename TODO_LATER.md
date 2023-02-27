@@ -32,6 +32,7 @@
 - [ ] show previous move coloring
 - [ ] when a game is over, keep the page stable even though the websocket connection is closed
   - [ ] alternatively, don't close the websocket connection so chat can continue
+- [ ] make king disappear at checkmate
 
 [1]: https://docs.socketify.dev/websockets-backpressure.html
 [2]: https://github.com/shaack/cm-chessboard

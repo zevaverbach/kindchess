@@ -11,8 +11,10 @@ const WEBSOCKET_SERVER_ADDR = 'ws://0.0.0.0:8001/'
 let side, board, messageBox;
 let myTurn = false;
 let gameState = {};
+let gameOver = false;
 let boardArray = [];
 let possibleMoves = [];
+let checkedKing = "";
 const main = document.getElementsByTagName('main')[0];
 
 let testing = false;
@@ -46,7 +48,7 @@ window.addEventListener('DOMContentLoaded', function () {
 });
 
 function joinGame(ws) {
-  ws.addEventListener('open', function () {
+  ws.addEventListener('open', function (event) {
     const message = JSON.stringify({
       type: 'join',
       uid,
@@ -56,6 +58,8 @@ function joinGame(ws) {
       wsMessageElement.value =
         wsMessageElement.value + `\nsent:\n ${message}\n`;
   });
+  ws.addEventListener('close', function (event) {
+  })
 }
 
 function receiveMessages(ws) {
@@ -94,12 +98,24 @@ function receiveMessages(ws) {
         if (myTurn) sendMoves(ws);
         break;
       case 'success':
-        if (!myTurn && event.move.castle && event.message === "move acknowledged") {
+        if (event.message !== "move acknowledged" || myTurn) break;
+        if (event.move.castle) {
           const rank = side === "black" ? 8 : 1; // it's this side that castled
           if (event.move.castle === "k") {
             board.movePiece(`h${rank}`, `f${rank}`, true)
           } else {
             board.movePiece(`a${rank}`, `d${rank}`, true)
+          }
+        } else {
+          const gameState = event.game_state;
+          if (gameState == undefined) break;
+          if ([0, 1].includes(gameState.its_check)) {
+            checkedKing = gameState.its_check === 0 ? gameState.king_square_white: gameState.king_square_black;
+            document.querySelector(`[data-square="${checkedKing}"]`).classList.add("check")
+          } else if (checkedKing) {
+              const query = `[data-square="${checkedKing}"]`
+              document.querySelector(query).classList.remove("check")
+              checkedKing = "";
           }
         }
         break;
@@ -121,29 +137,35 @@ function receiveMessages(ws) {
         gameState = event.game_state;
         boardArray = event.board;
         possibleMoves = event.possible_moves;
-        console.log('possibleMoves:', possibleMoves);
         if (gameState) {
-          if ([0, 1].includes(gameState.check)) {
-            const checkedKingSquare = gameState.check === 1 ? gameState.kingSquareBlack : gameState.kingSquareWhite;
-            document.querySelector(`[data-square="${checkedKingSquare}"]`).classList.add("check")
-          } else {
-            for (const square of [gameState.kingSquareBlack, gameState.kingSquareWhite]) {
-              if (document.querySelector(`[data-square="${square}"]`).classList.includes("check")) {
-                document.querySelector(`[data-square="${square}"]`).classList.remove("check")
-              }
-            }
+          if ([0, 1].includes(gameState.its_check)) {
+            checkedKing = gameState.its_check === 0 ? gameState.king_square_white: gameState.king_square_black;
+            document.querySelector(`[data-square="${checkedKing}"]`).classList.add("check")
+          } else if (checkedKing) {
+              const query = `[data-square="${checkedKing}"]`
+              document.querySelector(query).classList.remove("check")
+              checkedKing = "";
           }
         }
         myTurn = true;
         sendMoves(ws);
         break;
       case 'game_over':
+        if (gameOver) break;
         const winner = event.winner;
+        gameState = event.game_state;
         if (winner != null) {
-          const checkmatedKingSquare = gameState.winner === 1 ? gameState.kingSquareBlack : gameState.kingSquareWhite;
-          document.querySelector(`[data-square="${checkmatedKingSquare}"]`).classList.add("mate")
+          const checkmatedKingSquare = winner === "black" ? gameState.king_square_white: gameState.king_square_black;
+          const selector = `[data-square="${checkmatedKingSquare}"]`;
+          document.querySelector(selector).classList.add("mate");
+        } else if (event.message === "stalemate!") {
+          for (const color of ["white", "black"]) {
+            const selector = `[data-square="${gameState['king_square_' + color]}"]`;
+            document.querySelector(selector).classList.add("stale");
+          }
         }
-        displayMessage(event.message);
+        displayMessage(event.message, false);
+        gameOver = true;
         break;
     }
   });

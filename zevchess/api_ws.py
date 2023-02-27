@@ -125,6 +125,7 @@ async def error(ws, msg: str):
 
 
 async def remove_connection(ws, because_ws_disconnected=True):
+    print('remove_connection')
     try:
         store, attribute = CONNECTION_WS_STORE_DICT[ws]
     except KeyError as e:
@@ -152,7 +153,6 @@ async def remove_connection(ws, because_ws_disconnected=True):
 
 
 def other_color(color):
-    print(f"{color=}")
     return "black" if color == "white" else "white"
 
 
@@ -166,7 +166,8 @@ async def game_over(
     winner = None
     match reason:
         case "checkmate":
-            msg = f"checkmate! {side} wins"
+            winner = side
+            msg = f"checkmate! {winner} wins"
         case "stalemate":
             msg = "stalemate!"
         case "abandoned":
@@ -182,11 +183,15 @@ async def game_over(
 
     uid = store.uid
     state = None
+    state_dict = None
     try:
         state = q.get_game_state(store.uid)
     except q.NoSuchGame:
         # the game ended before any moves
+        print(f"no game found for uid {store.uid}")
         pass
+    else: 
+        state_dict = dc.asdict(state)
     recipients = get_all_participants(store)
     if reason not in ("abandoned", "resigned", "draw"):
         if the_move is None:
@@ -194,9 +199,12 @@ async def game_over(
         non_winner_participants = get_all_participants(store, but=getattr(store, side))
         payload = {"type": "move", "move": the_move.to_json()}
         if state:
-            payload["state"] = dc.asdict(state)
-        ws_broadcast(non_winner_participants, json.dumps(payload))
-    ws_broadcast(recipients, json.dumps({"type": "game_over", "message": msg, "winner": winner}))
+            payload["game_state"] = state_dict        
+            ws_broadcast(non_winner_participants, json.dumps(payload))
+    ws_broadcast(
+        recipients, 
+        json.dumps({"type": "game_over", "message": msg, "winner": winner, "game_state": state_dict})
+    )
 
     if state is not None and reason == "abandoned":
         # otherwise, the `checkmate` or `stalemate`
@@ -206,7 +214,6 @@ async def game_over(
     elif reason == "resigned":
         state.resigned = 1
         state.winner = 0 if winner == "white" else 1
-    print(f"removing game {uid} from cache")
     c.remove_game_from_cache(uid)
     if state is not None:
         try:
@@ -352,7 +359,7 @@ async def move(ws, event: dict) -> None:
                     "type": "move",
                     "move": the_move.to_json(),
                     "side": "black" if new_state.turn else "white",
-                    "state": dc.asdict(new_state),
+                    "game_state": dc.asdict(new_state),
                     "board": board,
                     "possible_moves": all_possible_moves,
                 }
@@ -363,6 +370,7 @@ async def move(ws, event: dict) -> None:
                 {
                     "type": "success",
                     "message": "move acknowledged",
+                    "game_state": dc.asdict(new_state),
                     "move": the_move.to_json(),
                 }
             )

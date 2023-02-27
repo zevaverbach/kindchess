@@ -210,6 +210,17 @@ def test_state_after_move_for_specific_bug_2():
     assert q.its_checkmate(state, t.Board.from_FEN(state.FEN))
 
 
+def test_state_after_move_for_specific_bug_5():
+    """fastest possible mate"""
+    state = t.GameState(
+        FEN="rnb1kbnr/pppp1ppp/4p3/8/5PPq/8/PPPPP2P/RNBQKBNR",
+        turn=0,
+        king_square_white="e1",
+        king_square_black="e8",
+    )
+    assert q.its_checkmate(state, t.Board.from_FEN(state.FEN))
+
+
 def test_after_move_for_specific_bug_2_more_state():
     state = t.GameState(
             half_moves=7,

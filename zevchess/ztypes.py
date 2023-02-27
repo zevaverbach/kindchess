@@ -113,7 +113,7 @@ class GameState:
             turn=self.turn,
             half_moves_since_last_capture=self.half_moves_since_last_capture,
             en_passant_square=self.en_passant_square,
-            check=self.its_check,
+            its_check=self.its_check,
             checkmate=self.checkmate,
             stalemate=self.stalemate,
             abandoned=self.abandoned,

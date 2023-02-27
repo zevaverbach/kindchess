@@ -40,3 +40,14 @@ def test_make_move_and_persist_stalemate_bug_4():
     mov = Move(**{"src": "c8", "dest": "e6", "piece": "Q"})
     with pytest.raises(c.Stalemate):
         c.make_move_and_persist(uid, state=state, move=mov, testing=True)
+
+
+def test_make_move_and_persist_bug_5():
+    """fastest possible mate"""
+    uid = c.create_game()
+    state = q.get_game_state(uid)
+    state = c.make_move_and_persist(uid, state=state, move=Move(src="f2", dest="f4", piece="P"))
+    state = c.make_move_and_persist(uid, state=state, move=Move(src="e7", dest="e6", piece="p"))
+    state = c.make_move_and_persist(uid, state=state, move=Move(src="g2", dest="g4", piece="P"))
+    with pytest.raises(c.Checkmate):
+        c.make_move_and_persist(uid, state=state, move=Move(src="d8", dest="h4", piece="q"))

@@ -55,12 +55,17 @@ def validate_move_arg(move, turn: int) -> None:
 
 
 def delete_game_from_redis(uid: str) -> None:
-    # delete moves
-    r.delete(f"game-{uid}")
-    # delete state
-    r.delete(uid)
-    print(f"deleting {uid} from existing_uids")
+    delete_moves_from_redis(uid)
+    delete_state_from_redis(uid)
     r.lrem("existing_uids", 1, uid)
+
+
+def delete_state_from_redis(uid):
+    r.delete(uid)
+
+
+def delete_moves_from_redis(uid):
+    r.delete(f"game-{uid}")
 
 
 class Checkmate(Exception):
@@ -147,12 +152,11 @@ def make_move_and_persist(
     if new_state.checkmate:
         if not testing:
             save_game_to_db(uid, new_state)
-            remove_game_from_cache(uid)
+            print('checkmate!')
         raise Checkmate(new_state.turn)
     if new_state.stalemate:
         if not testing:
             save_game_to_db(uid, new_state)
-            remove_game_from_cache(uid)
         raise Stalemate(new_state.turn)
     store_state(uid, new_state)
     return new_state
@@ -257,25 +261,16 @@ def get_new_state(state: t.GameState, move: t.Move, board: t.Board) -> t.GameSta
 
     new_state.turn = abs(new_state.turn - 1)
     board = t.Board.from_FEN(new_state.FEN)
-    checkmate = q.its_checkmate(new_state, board)
-    stalemate = False
-    check = False
-    if not checkmate:
-        check = q.its_check(new_state, board)
-        if not check:
-            stalemate = q.its_stalemate(new_state, board)
 
-    if checkmate:
+    if q.its_checkmate(new_state, board):
         new_state.checkmate = 1
         new_state.winner = new_state.turn
-    elif check:
+    elif q.its_check(new_state, board):
         new_state.check = new_state.turn
-    elif stalemate:
-        new_state.stalemate = 1
-
-    if not check and new_state.check in (0, 1):
+    elif new_state.check in (0, 1):
         new_state.check = -1
-
+    elif q.its_stalemate(new_state, board):
+        new_state.stalemate = 1
     return new_state
 
 
