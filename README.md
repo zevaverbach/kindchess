@@ -8,18 +8,36 @@ I want to build a chess application from scratch. It will be an API-first monoli
 I'm interested in this because a) I like chess and b) I want to learn more about system design.
 
 # Requirements
+
+## Production
 - a Redis server 
 - sqlite3
 - Python 3.11
-- ./requirements.txt
-  - don't actually need in production (maybe switch to a more modern packager)
-    - pylint
-    - ipython
-    - pytest
-    - pyperclip
-    - python-lsp-server[all]
-- `websocat` or another websocket client (`> brew install websocat`)
-  - for testing: `> websocat localhost:8001`
+- ./requirements_prod.txt
+
+## Development
+
+Everything from above plus
+  - pylint
+  - ipython
+  - pytest
+  - pyperclip
+  - python-lsp-server[all]
+  - `websocat` or another websocket client (`> brew install websocat`)
+    - for testing: `> websocat localhost:8001`
+
+## Environment Variables
+- DB_USER
+- DB_PASS
+- DB_NAME
+- DB_HOSTNAME
+- DB_URL
+- DB_URL_PUBLIC
+- PSQL_COMMAND
+- REDIS_NAME
+- REDIS_URL
+- ZEVCHESS_PROD (0/1)
+
 
 # Testing
 - load testing (TODO)
@@ -28,6 +46,12 @@ I'm interested in this because a) I like chess and b) I want to learn more about
 # Deployment
 - v1 will be via render.com with some auto-scaling
 - the DB will have to be switched/refactored for scaling, since it's file-based and currently living on (each) server
+
+## Cost
+- $17 as of feb 27 2023
+  - postgres $7 (dev $0)
+  - redis $10 (dev $0)
+
 
 # UI Principles
 - super minimal, fewer widgets than chess.com/lichess

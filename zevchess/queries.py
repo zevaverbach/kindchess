@@ -23,6 +23,8 @@ def get_game_state_dict(uid: str) -> dict:
 
 def uid_exists_and_is_an_active_game(uid: str) -> bool:
     state = get_game_state_dict(uid)
+    if not state:
+        return False
     print(state)
     return (
         len(state) != 0

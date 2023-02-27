@@ -1,3 +1,21 @@
+- [ ] deploy
+  - [x] spin up Redis instances
+    - [x] prod
+    - [x] dev
+  - [x] spin up postgres instances
+    - [x] prod
+    - [x] dev
+  - [ ] make script for initializing postgres DB
+    - [ ] run it on 
+      - [x] dev
+      - [ ] prod
+  - [x] replace hardcoded assets with env vars
+    - [x] db connection
+    - [x] redis connection
+  - [x] refactor DB operations to postgres
+  - [ ] make a separate requirements-prod.txt
+  - [ ] create a web service for the API
+  - [ ] create a web service for the websocket server
 - [ ] small UI improvements
   - [ ] show the allowed moves [link][4]
   - [x] indicate checkmate
@@ -7,5 +25,6 @@
   - [ ] BUG: why does the checkmated player automatically disconnect?
     - it currently causes a "white abandoned the game" message which has to be ignored on the front end
   - [ ] BUG: when 'abandoning' the game, that side's king gets highlighted in red
+  - [ ] BUG: there's a bunch of stray UIDs on the home screen, they're getting stuck in Redis 
 
 [4]: https://shaack.com/projekte/cm-chessboard/examples/validate-moves.html

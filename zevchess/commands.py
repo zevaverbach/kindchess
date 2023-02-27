@@ -1,13 +1,12 @@
 import copy
 import dataclasses as dc
-import sqlite3
 import string
 import typing
 from uuid import uuid4
 
 from rich.pretty import pprint
 
-from zevchess.db import r
+from zevchess.db import r, con
 import zevchess.queries as q
 import zevchess.ztypes as t
 
@@ -171,13 +170,15 @@ def store_completed_game(uid: str, moves: list[str], state: t.GameState) -> None
     db_dict = state.to_db_dict()
     db_dict_num_entries = len(db_dict)
     field_names = db_dict.keys()
-    query = f"insert into games (uid, moves, {', '.join(field_names)}) values(?,?,{','.join(['?' for _ in range(db_dict_num_entries)])})"
-    with sqlite3.connect("completed_games.db") as s:
-        try:
-            s.execute(query, (uid, " ".join(moves), *db_dict.values()))
-        except (sqlite3.ProgrammingError, sqlite3.OperationalError):
-            print(query, uid, db_dict.values())
-            raise
+    query = f"insert into games (uid, moves, {', '.join(field_names)}) values(%s, %s, {', '.join(['%s' for _ in range(db_dict_num_entries)])})"
+    with con:
+        with con.cursor() as cur:
+            try:
+                cur.execute(query, (uid, " ".join(moves), *db_dict.values()))
+            except Exception as e:
+                print(str(e))
+                print(query, uid, db_dict.values())
+                raise
 
 
 def remove_game_from_cache(uid: str) -> None:
