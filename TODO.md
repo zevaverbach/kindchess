@@ -21,14 +21,14 @@
       - [x] check possible_moves as delivered with 'your_turn' event
       - [x] check castling (what does that look like from the board, 'o-o' or?
     - [ ] support castling
-       - [ ] move the rook automatically
-       - [ ] deliver the move accurately to the server
-       - [ ] make sure it's shown on opponent's/watchers' boards
+       - [x] move the rook automatically
+       - [x] deliver the move accurately to the server
+       - [x] make sure it's shown on opponent's/watchers' boards
+       - [x] don't let castling happen more than once!
     - [x] make captures work (have to deliver 'capture' arg to ws server)
     - [ ] show the allowed moves  [link][4]
     - [ ] indicate checkmate
     - [ ] indicate check
-    - [ ] show previous move coloring
     - [ ] show what players/watchers are there
     - [x] connect to websocket server
     - [x] 'invite' button which copies the URL to your clipboard

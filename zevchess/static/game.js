@@ -94,7 +94,7 @@ function receiveMessages(ws) {
         if (myTurn) sendMoves(ws);
         break;
       case 'success':
-        if (event.move.castle && event.message === "move acknowledged") {
+        if (!myTurn && event.move.castle && event.message === "move acknowledged") {
           const rank = side === "black" ? 8 : 1; // it's this side that castled
           if (event.move.castle === "k") {
             board.movePiece(`h${rank}`, `f${rank}`, true)
@@ -102,6 +102,7 @@ function receiveMessages(ws) {
             board.movePiece(`a${rank}`, `d${rank}`, true)
           }
         }
+        break;
       case 'move':
         const move = event.move;
         if (move.castle) {
@@ -115,17 +116,19 @@ function receiveMessages(ws) {
           }
         } else {
           board
-            .movePiece(move.src, move.dest, true) // `true` is for 'animated'
-            .then((something) => console.log(something));
+            .movePiece(move.src, move.dest, true).then(_ => null);
         }
         gameState = event.game_state;
         boardArray = event.board;
         possibleMoves = event.possible_moves;
         console.log('possibleMoves:', possibleMoves);
+        if (possibleMoves == undefined) console.log('event.type:', event.type)
         myTurn = true;
         sendMoves(ws);
+        break;
       case 'game_over':
         displayMessage(event.message);
+        break;
     }
   });
 }

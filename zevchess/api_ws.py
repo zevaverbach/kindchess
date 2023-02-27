@@ -11,7 +11,6 @@ from websockets.legacy.protocol import (
 from websockets.legacy.server import serve as ws_serve
 
 from zevchess import commands as c
-from zevchess import print_board
 from zevchess import queries as q
 from zevchess import ztypes as t
 
@@ -230,7 +229,6 @@ async def handler(ws):
             print(message)
             await error(ws, "invalid event")
             continue
-        print(event)
         if "uid" not in event or "type" not in event:
             print(message)
             await error(ws, "invalid event")
@@ -345,7 +343,6 @@ async def move(ws, event: dict) -> None:
         )
     else:
         recipients = get_all_participants(store, but=ws)
-        print_board.print_board_from_FEN(new_state.FEN)
         board = t.Board.from_FEN(new_state.FEN).to_array()
         all_possible_moves = q.get_all_legal_moves(new_state, json=True)
         ws_broadcast(

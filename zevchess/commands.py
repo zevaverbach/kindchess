@@ -40,7 +40,6 @@ def create_game() -> str:
 
 
 def validate_move_arg(move, turn: int) -> None:
-    print(f"{move=}")
     if move.castle:
         if any(
             i is not None for i in (move.piece, move.src, move.dest)
@@ -322,7 +321,7 @@ def recalculate_castling_state(state: t.GameState, move: t.Move) -> None:
         king_rook_origin = "h8"
         queen_rook_origin = "a8"
 
-    if getattr(state, attr_q, 0) and getattr(state, attr_k, 0):
+    if getattr(state, attr_q) == 0 and getattr(state, attr_k) == 0:
         return
 
     def cant_castle_anymore(side: typing.Literal["k", "q", "both"]) -> None:
