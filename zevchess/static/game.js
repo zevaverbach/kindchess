@@ -2,8 +2,8 @@ import {
   Chessboard,
   INPUT_EVENT_TYPE,
   COLOR,
-
 } from './node_modules/cm-chessboard/src/cm-chessboard/Chessboard.js';
+
 import { FEN } 
   from './node_modules/cm-chessboard/src/cm-chessboard/model/Position.js';
 
@@ -13,8 +13,9 @@ let myTurn = false;
 let gameState = {};
 let boardArray = [];
 let possibleMoves = [];
-let testing = false;
 const main = document.getElementsByTagName('main')[0];
+
+let testing = false;
 
 if (testing) {
   const div = document.createElement('div');
@@ -92,10 +93,19 @@ function receiveMessages(ws) {
         }
         if (myTurn) sendMoves(ws);
         break;
+      case 'success':
+        if (event.move.castle && event.message === "move acknowledged") {
+          const rank = side === "black" ? 8 : 1; // it's this side that castled
+          if (event.move.castle === "k") {
+            board.movePiece(`h${rank}`, `f${rank}`, true)
+          } else {
+            board.movePiece(`a${rank}`, `d${rank}`, true)
+          }
+        }
       case 'move':
         const move = event.move;
         if (move.castle) {
-          const rank = side === "black" ? 8 : 1;
+          const rank = side === "black" ? 1 : 8; // it's the other side that castled
           if (move.castle === "k") {
             board.movePiece(`e${rank}`, `g${rank}`, true)
             board.movePiece(`h${rank}`, `f${rank}`, true)
@@ -149,7 +159,11 @@ function sendMoves(ws) {
             return moveSources.includes(event.square);
           case INPUT_EVENT_TYPE.validateMoveInput:
             const piece = getPieceAt(event.squareFrom);
-            let move = {};
+            let move = {
+              piece: null,
+              src: null,
+              dest: null,
+            };
             if (piece.toLowerCase() === "k" && (event.squareFrom[0] === "e" && ["g", "c"].includes(event.squareTo[0]))) {
               move.castle = event.squareTo[0] === "c" ? "q" : "k";
             } else {

@@ -149,11 +149,11 @@ async def remove_connection(ws, because_ws_disconnected=True):
                 )
         del CONNECTION_WS_STORE_DICT[ws]
     elif because_ws_disconnected:
-        side = attribute
-        await game_over(ws=ws, store=store, side=other_color(side), reason="abandoned")
+        await game_over(ws=ws, store=store, side=attribute, reason="abandoned")
 
 
 def other_color(color):
+    print(f"{color=}")
     return "black" if color == "white" else "white"
 
 
@@ -248,7 +248,7 @@ async def handler(ws):
                 ):
                     store = CONNECTIONS[uid]
                     await game_over(
-                        ws, store, "abandoned", other_color(which_side(ws, store))
+                        ws, store, "abandoned", which_side(ws, store)
                     )
             case "move":
                 del event["type"]
@@ -316,11 +316,6 @@ async def move(ws, event: dict) -> None:
         validate_move_event(event)
     except InvalidMoveEvent as e:
         return await error(ws, str(e))
-
-    if (state.turn and event["piece"].isupper()) or (
-        state.turn == 0 and event["piece"].islower()
-    ):
-        return await error(ws, "that's not your piece!")
 
     ############
     # THE MOVE #

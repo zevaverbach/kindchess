@@ -40,12 +40,15 @@ def create_game() -> str:
 
 
 def validate_move_arg(move, turn: int) -> None:
-    if move.castle is None and any(
+    print(f"{move=}")
+    if move.castle:
+        if any(
+            i is not None for i in (move.piece, move.src, move.dest)
+        ):
+            raise InvalidArguments
+        return
+    if any(
         i is None for i in (move.piece, move.src, move.dest)
-    ):
-        raise InvalidArguments
-    if move.castle is not None and any(
-        i is not None for i in (move.piece, move.src, move.dest)
     ):
         raise InvalidArguments
     if (turn and move.piece.isupper()) or (not turn and move.piece.islower()):
@@ -224,6 +227,8 @@ def withdraw_draw(uid: str, side: int) -> None:
 
 
 def is_pawn_promotion(move: t.Move) -> bool:
+    if move.piece is None:
+        return False
     if move.piece.lower() != "p":  # type: ignore
         return False
     last_rank = 1 if move.piece == "p" else 8
@@ -267,6 +272,8 @@ def get_new_state(state: t.GameState, move: t.Move, board: t.Board) -> t.GameSta
 
 
 def recalculate_en_passant(state: t.GameState, move: t.Move, board: t.Board) -> None:
+    if move.piece is None:
+        return
     if move.piece.lower() != "p":  # type: ignore
         return
     file, rank_str = move.src  # type: ignore

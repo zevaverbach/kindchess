@@ -2,7 +2,8 @@
   - [x] wrong number of watchers is shown once someone leaves (seems like it's not always decrement, or else maybe it's including the players once there's been more than one watcher?)
   - [x] "someone has left chat" is the message shown when a watcher leaves! (also wrong count)
   - [x] send entire game state at start of game, including to players
-  - [ ] who abandoned the game? there's some confusion here
+  - [x] who abandoned the game? there's some confusion here
+    - "black abandoned the game, so white wins!" -- this happens when white abandons
 
 - [ ] create a basic web interface
   - [x] /
