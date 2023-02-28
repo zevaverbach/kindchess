@@ -1,3 +1,4 @@
+
 # Bugs
   - [ ] BUG: why does the checkmated player automatically disconnect?
     - it currently causes a "white abandoned the game" message which has to be ignored on the front end
@@ -15,26 +16,7 @@
     - [link](https://dashboard.render.com/web/srv-cfuuh9t3t39doaurs5q0/logs)
   - [ ] BUG: on dev server it says 'game not found' when creating a new game
 
-- [x] deploy
-  - [x] spin up Redis instances
-    - [x] prod
-    - [x] dev
-  - [x] spin up postgres instances
-    - [x] prod
-    - [x] dev
-  - [x] make script for initializing postgres DB
-    - [x] run it on 
-      - [x] dev (locally)
-      - [x] prod
-  - [x] replace hardcoded assets with env vars
-    - [x] db connection
-    - [x] redis connection
-  - [x] refactor DB operations to postgres
-  - [x] make a separate requirements-prod.txt
-  - [x] create a web service for the API
-    - [x] add gunicorn
-  - [x] create a web service for the websocket server
-- [ ] small UI improvements
+# small UI improvements
   - [ ] show the allowed moves [link][4]
   - [x] indicate checkmate
   - [x] indicate check

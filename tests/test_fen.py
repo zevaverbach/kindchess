@@ -37,6 +37,17 @@ def test_recalculate_FEN_castling_kingside():
     newFEN = recalculate_FEN(state, move, board)
     assert newFEN == "rnbqkbnr/pppppppp/8/8/5BN1/8/PPPPPPPP/RNBQ1RK1"
 
+    
+def test_recalculate_FEN_castling_kingside_2():
+    fen = "2kr3r/p2pQ2p/1p2p3/8/5b2/P7/1N3PPP/4K2R"
+    state = t.GameState(FEN=fen)
+    move = t.Move(
+        castle="k",
+    )
+    board = t.Board.from_FEN(state.FEN)
+    newFEN = recalculate_FEN(state, move, board)
+    assert newFEN == "2kr3r/p2pQ2p/1p2p3/8/5b2/P7/1N3PPP/5RK1"
+
 
 def test_recalculate_FEN_castling_queenside():
     state = t.GameState(FEN="rnbqkbnr/pppppppp/8/2B5/3N4/4Q3/PPPPPPPP/R3KBNR")

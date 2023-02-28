@@ -4,6 +4,9 @@ import dataclasses as dc
 import string
 import typing as t
 
+from rich.pretty import pprint
+
+
 Side = t.Literal[0, 1]
 Castle = t.Literal["k", "q"]
 # Piece = t.Literal["q", "k", "b", "n", "r", "p"]
@@ -663,12 +666,16 @@ def it_would_be_self_check(
 
 
 def its_check_for(side: int, board: Board, king_square: str) -> bool:
+    if isinstance(side, bool):
+        # print("warning, 'side' is a boolean not an int")
+        side = int(side)
     if side:
         opposing_pieces = board.white_pieces()
     else:
         opposing_pieces = board.black_pieces()
     for piece in opposing_pieces:
-        for move in piece.get_possible_moves(board):
+        possible_moves = piece.get_possible_moves(board)
+        for move in possible_moves:
             if move.dest == king_square:
                 return True
     return False

@@ -1,6 +1,7 @@
 import zevchess.ztypes as t
 
 
+
 def test_board_from_fen():
     board = t.Board.from_FEN("8/4k3/8/8/3R4/8/5K2/8")
     assert board.e7.name() == "k"

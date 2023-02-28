@@ -1,5 +1,4 @@
 import zevchess.ztypes as t
-import zevchess.print_board as pb
 
 
 def test_its_check_for_TRUE():
@@ -50,6 +49,4 @@ def test_its_check_when_rook_leaves_pin_1():
         board = orig_board.copy()
         setattr(board, e.src, None)  # type: ignore
         setattr(board, e.dest, t.Rook(0, e.dest))  # type: ignore
-        if not t.its_check_for(0, board, king_square):
-            pb.print_board_from_FEN(fen)
         assert t.its_check_for(0, board, king_square)

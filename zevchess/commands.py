@@ -398,11 +398,12 @@ def get_updated_rank_FEN_after_castling(
             LEFT_SIDE_TOKENS_AFTER_QUEEN_CASTLE + right_side
         )
 
+    RIGHT_SIDE_FEN_BEFORE_KING_CASTLE = "k2r" if state.turn == 1 else "K2R"
     RIGHT_SIDE_FEN_AFTER_KING_CASTLE = "1rk1" if state.turn == 1 else "1RK1"
     RIGHT_SIDE_TOKENS_AFTER_KING_CASTLE = split_FEN_into_tokens(
         RIGHT_SIDE_FEN_AFTER_KING_CASTLE
     )
-    left_side = split_FEN_into_tokens(rank_src_FEN[:4])  # "(****)1rk"
+    left_side = split_FEN_into_tokens(rank_src_FEN[:rank_src_FEN.find(RIGHT_SIDE_FEN_BEFORE_KING_CASTLE)])  # "(****)1rk"
     return rank_src_idx, create_FEN_from_tokens(
         left_side + RIGHT_SIDE_TOKENS_AFTER_KING_CASTLE
     )

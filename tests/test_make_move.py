@@ -221,6 +221,7 @@ def test_state_after_move_for_specific_bug_5():
     assert q.its_checkmate(state, t.Board.from_FEN(state.FEN))
 
 
+
 def test_after_move_for_specific_bug_2_more_state():
     state = t.GameState(
             half_moves=7,
@@ -264,7 +265,55 @@ def test_stalemate_bug_4_make_move():
         FEN="5bnr/4p1pq/4Qpkr/7p/7P/4P3/PPPP1PP1/RNB1KBNR",
     )
     move = t.Move(**{"src": "c8", "dest": "e6", "piece": "Q"})
-    # with pytest.raises(c.Stalemate):
     new_state = c.get_new_state(state, move, t.Board.from_FEN(fen))
     assert new_state.FEN == "5bnr/4p1pq/4Qpkr/7p/7P/4P3/PPPP1PP1/RNB1KBNR"
     assert new_state.stalemate == 1
+
+
+def test_make_move_bug_9():
+    fen = "2kr3r/p2pQ2p/1p2p3/8/5b2/P7/1N3PPP/4K2R"
+    state = t.GameState(
+        king_square_white="e1",
+        king_square_black="c8",
+        turn=0,
+        half_moves=8,
+        FEN=fen,
+    )
+    move = t.Move(castle='k')
+    new_state = c.get_new_state(state, move, t.Board.from_FEN(fen))
+    assert new_state.FEN == "2kr3r/p2pQ2p/1p2p3/8/5b2/P7/1N3PPP/5RK1"
+    assert new_state.white_can_castle_kingside == 0
+    assert new_state.white_can_castle_queenside == 0
+
+
+def test_make_move_bug_6():
+    state = t.GameState(
+        king_square_white="g1",
+        king_square_black="c8",
+        turn=0,
+        FEN="2kr4/p2p4/1p2p2p/6r1/6b1/P2Q4/1N3PPP/5RK1",
+    )
+    move = t.Move(**{"src": "d3", "dest": "c3", "piece": "Q"})
+    new_state = c.get_new_state(state, move, t.Board.from_FEN(state.FEN))
+    assert new_state.check == 1
+
+    
+def test_state_after_move_for_bug_6():
+    state = t.GameState(
+        FEN="2kr4/p2p4/1p2p2p/8/8/P7/1N2bPrP/5RK1",
+        turn=0,
+        king_square_white="g1",
+        king_square_black="c8",
+    )
+    assert q.its_check(state, t.Board.from_FEN(state.FEN))
+
+
+def test_state_after_move_for_bug_7():
+    state = t.GameState(
+        FEN="2kr4/p2p4/1p2p2p/6r1/2Q3b1/P7/1N3PPP/5RK1",
+        turn=1,
+        king_square_white="g1",
+        king_square_black="c8",
+    )
+    assert q.its_check(state, t.Board.from_FEN(state.FEN))
+

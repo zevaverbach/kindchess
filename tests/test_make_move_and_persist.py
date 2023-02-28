@@ -2,7 +2,6 @@ import pytest
 from rich.pretty import pprint
 
 from zevchess import commands as c
-from zevchess.print_board import print_board_from_FEN
 from zevchess import queries as q
 from zevchess.ztypes import Move
 
@@ -36,7 +35,6 @@ def test_make_move_and_persist_stalemate_bug_4():
             state = c.make_move_and_persist(uid, state=state, move=mov, testing=True)
         except c.InvalidMove:
             pprint(mov)
-            print_board_from_FEN(state.FEN)
     mov = Move(**{"src": "c8", "dest": "e6", "piece": "Q"})
     with pytest.raises(c.Stalemate):
         c.make_move_and_persist(uid, state=state, move=mov, testing=True)

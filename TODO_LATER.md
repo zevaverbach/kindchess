@@ -1,3 +1,4 @@
+- [ ] add ethical analytics
 - [ ] build out the site, make it look nice
   - consider using [these web components][3] for straightforward, buildless dev.
 - [ ] move the extra move validation out of websockets and into a separate interfaces module (not core)

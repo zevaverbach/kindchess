@@ -1,3 +1,22 @@
+- [x] deploy
+  - [x] spin up Redis instances
+    - [x] prod
+    - [x] dev
+  - [x] spin up postgres instances
+    - [x] prod
+    - [x] dev
+  - [x] make script for initializing postgres DB
+    - [x] run it on 
+      - [x] dev (locally)
+      - [x] prod
+  - [x] replace hardcoded assets with env vars
+    - [x] db connection
+    - [x] redis connection
+  - [x] refactor DB operations to postgres
+  - [x] make a separate requirements-prod.txt
+  - [x] create a web service for the API
+    - [x] add gunicorn
+  - [x] create a web service for the websocket server
 - websocket API
   - [x] wrong number of watchers is shown once someone leaves (seems like it's not always decrement, or else maybe it's including the players once there's been more than one watcher?)
   - [x] "someone has left chat" is the message shown when a watcher leaves! (also wrong count)
