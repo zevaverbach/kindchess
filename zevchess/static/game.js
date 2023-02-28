@@ -11,8 +11,9 @@ let WEBSOCKET_SERVER_ADDR;
 if (window.location.host === "localhost:8000") {
   WEBSOCKET_SERVER_ADDR = 'ws://0.0.0.0:8001/'
 } else {
-  WEBSOCKET_SERVER_ADDR = 'wss://zevchess-ws-zyr9.onrender.com:8001'
+  WEBSOCKET_SERVER_ADDR = 'wss://zevchess-ws-zyr9.onrender.com'
 }
+console.log("WEBSOCKET_SERVER_ADDR:", WEBSOCKET_SERVER_ADDR);
 let side, board, messageBox;
 let myTurn = false;
 let gameState = {};
