@@ -13,9 +13,9 @@ I'm interested in this because a) I like chess and b) I want to learn more about
 - a Redis server 
 - sqlite3
 - Python 3.11
-- ./requirements_prod.txt
+- ./requirements.txt
 
-## Development
+## Development (requirements-dev.txt)
 
 Everything from above plus
   - pylint
@@ -53,6 +53,12 @@ Everything from above plus
   - redis $10 (dev $0)
   - websocket server $7 (dev $0)
   - web API server $7 (dev $0)
+
+## Services
+
+### websocket server
+
+### web API server
 
 
 # UI Principles
