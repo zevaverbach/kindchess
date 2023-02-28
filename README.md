@@ -14,6 +14,7 @@ I'm interested in this because a) I like chess and b) I want to learn more about
 - sqlite3
 - Python 3.11
 - ./requirements.txt
+- `apt install apturl`
 
 ## Development (requirements-dev.txt)
 
