@@ -14,7 +14,6 @@ I'm interested in this because a) I like chess and b) I want to learn more about
 - sqlite3
 - Python 3.11
 - ./requirements.txt
-- `apt install apturl`
 
 ## Development (requirements-dev.txt)
 
@@ -38,6 +37,19 @@ Everything from above plus
 - REDIS_NAME
 - REDIS_URL
 - ZEVCHESS_PROD (0/1)
+
+## Steps
+
+### New Service/Infra
+- create the service in render.com dashboard
+  - associate the appropriate env group (`zevchess` or `zevchess-dev`)
+  - use the default `pip install -r requirements.txt`
+  - for web API, `gunicorn -w 2 <or however many> app:application`
+  - for websocket server, `python ws_server.py`
+  - run `python init_db.py`
+
+### Code Updates
+- simply push to the monorepo, then either wait 1-10 mins to mirror to Github or manually sync (https://code.averba.ch/Zev/zevchess/settings)
 
 
 # Testing
