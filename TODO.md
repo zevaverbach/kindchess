@@ -1,7 +1,10 @@
 - [ ] pawn promotion! (websockets and web view)
   - maybe use native `dialog` [link](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dialog)
 - [ ] move history
-- [ ] make a way to walk through a bunch of pre-determined moves for testing purposes
+  - [ ] make sure it gets captured even when the game moves into a buggy state
+  - [ ] make a way to grab it from DB/redis and provide it to the front end
+  - [ ] make a way of showing/walking through history on front end
+  - [ ] make a way to walk through a bunch of pre-determined moves for testing purposes
 
 # Bugs
   - [ ] BUG: this isn't checkmate?

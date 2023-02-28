@@ -100,7 +100,7 @@ function receiveMessages(ws) {
             position: FEN.start,
             orientation: side ? side[0] : "w", // if it's a watcher, display from white's POV
           });
-          window.board = board;
+          // window.board = board;
         }
         if (myTurn) sendMoves(ws);
         break;
