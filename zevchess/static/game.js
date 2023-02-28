@@ -7,7 +7,12 @@ import {
 import { FEN } 
   from './node_modules/cm-chessboard/src/cm-chessboard/model/Position.js';
 
-const WEBSOCKET_SERVER_ADDR = 'ws://0.0.0.0:8001/'
+let WEBSOCKET_SERVER_ADDR;
+if (window.location.host === "localhost:8000") {
+  WEBSOCKET_SERVER_ADDR = 'ws://0.0.0.0:8001/'
+} else {
+  WEBSOCKET_SERVER_ADDR = 'wss://zevchess-ws-zyr9.onrender.com:8001'
+}
 let side, board, messageBox;
 let myTurn = false;
 let gameState = {};
