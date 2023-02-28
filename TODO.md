@@ -1,33 +1,43 @@
-- [ ] deploy
-  - [x] spin up Redis instances
-    - [x] prod
-    - [x] dev
-  - [x] spin up postgres instances
-    - [x] prod
-    - [x] dev
-  - [ ] make script for initializing postgres DB
-    - [ ] run it on 
-      - [x] dev
-      - [ ] prod
-  - [x] replace hardcoded assets with env vars
-    - [x] db connection
-    - [x] redis connection
-  - [x] refactor DB operations to postgres
-  - [ ] make a separate requirements-prod.txt
-  - [ ] create a web service for the API
-    - [ ] add gunicorn
-  - [ ] create a web service for the websocket server
-- [ ] small UI improvements
-  - [ ] show the allowed moves [link][4]
-  - [x] indicate checkmate
-  - [x] indicate check
-  - [x] indicate stalemate
-  - [ ] show what players/watchers are there
+# Bugs
   - [ ] BUG: why does the checkmated player automatically disconnect?
     - it currently causes a "white abandoned the game" message which has to be ignored on the front end
   - [ ] BUG: when 'abandoning' the game, that side's king gets highlighted in red
   - [ ] BUG: there's a bunch of stray UIDs on the home screen, they're getting stuck in Redis 
   - [ ] BUG: this isn't check?? 
      - rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR - black to move
+  - [ ] BUG: this isn't check??
+    - ![screenshot](screenshots/this_isnt_check_but_should_be_BUG.png)
+    - ![screenshot](screenshots/this_isnt_check_but_should_be_BUG_2.png)
+  - [ ] BUG: white king can't capture rook here??
+    - ![screenshot](white_king_cant_capture_rook_BUG.png)
+    - related: ![white rook doesn't exist after castling](white_rook_doesnt_exist_after_castling_BUG.png)
+  - [ ] BUG: there are a bunch of error messages on websocket server
+    - [link](https://dashboard.render.com/web/srv-cfuuh9t3t39doaurs5q0/logs)
+  - [ ] BUG: on dev server it says 'game not found' when creating a new game
 
+- [x] deploy
+  - [x] spin up Redis instances
+    - [x] prod
+    - [x] dev
+  - [x] spin up postgres instances
+    - [x] prod
+    - [x] dev
+  - [x] make script for initializing postgres DB
+    - [x] run it on 
+      - [x] dev (locally)
+      - [x] prod
+  - [x] replace hardcoded assets with env vars
+    - [x] db connection
+    - [x] redis connection
+  - [x] refactor DB operations to postgres
+  - [x] make a separate requirements-prod.txt
+  - [x] create a web service for the API
+    - [x] add gunicorn
+  - [x] create a web service for the websocket server
+- [ ] small UI improvements
+  - [ ] show the allowed moves [link][4]
+  - [x] indicate checkmate
+  - [x] indicate check
+  - [x] indicate stalemate
+  - [ ] show what players/watchers are there
 [4]: https://shaack.com/projekte/cm-chessboard/examples/validate-moves.html
