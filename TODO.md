@@ -15,6 +15,7 @@
   - [x] refactor DB operations to postgres
   - [ ] make a separate requirements-prod.txt
   - [ ] create a web service for the API
+    - [ ] add gunicorn
   - [ ] create a web service for the websocket server
 - [ ] small UI improvements
   - [ ] show the allowed moves [link][4]
@@ -26,5 +27,7 @@
     - it currently causes a "white abandoned the game" message which has to be ignored on the front end
   - [ ] BUG: when 'abandoning' the game, that side's king gets highlighted in red
   - [ ] BUG: there's a bunch of stray UIDs on the home screen, they're getting stuck in Redis 
+  - [ ] BUG: this isn't check?? 
+     - rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR - black to move
 
 [4]: https://shaack.com/projekte/cm-chessboard/examples/validate-moves.html

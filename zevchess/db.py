@@ -7,19 +7,33 @@ import redis
 from rich.pretty import pprint
 
 PROD = os.getenv("ZEVCHESS_PROD")
-dotenv_path = ".env" if PROD else ".env-dev"
+
+match PROD:
+    case 1 | '1':
+        dotenv_path = ".env"
+        REDIS_URL_ENV_VAR = "REDIS_URL"
+        DB_HOSTNAME_ENV_VAR = "DB_HOSTNAME"
+    case 0 | '0':
+        dotenv_path = ".env-dev"
+        REDIS_URL_ENV_VAR = "REDIS_URL_PUBLIC"
+        DB_HOSTNAME_ENV_VAR = "DB_HOSTNAME_PUBLIC"
+    case _:
+        raise Exception
+
 load_dotenv(dotenv_path)
-
-REDIS_URL = os.getenv("REDIS_URL") if PROD == 1 else os.getenv("REDIS_URL_PUBLIC")
-DB_URL = os.getenv("DB_URL")
-
+REDIS_URL = os.getenv(REDIS_URL_ENV_VAR)
+DB_HOSTNAME = os.getenv(DB_HOSTNAME_ENV_VAR)
+print(f"{PROD=}")
+print(f"{REDIS_URL}")
+print(f"{dotenv_path=}")
 
 r = redis.Redis().from_url(REDIS_URL, decode_responses=True)
+
 con = psycopg2.connect(
     dbname=os.getenv("DB_NAME"),
     user=os.getenv("DB_USER"),
     password=os.getenv("DB_PASS"),
-    host=os.getenv("DB_HOSTNAME"),
+    host=DB_HOSTNAME,
     )
 atexit.register(lambda: con.close())
 

@@ -48,9 +48,11 @@ Everything from above plus
 - the DB will have to be switched/refactored for scaling, since it's file-based and currently living on (each) server
 
 ## Cost
-- $17 as of feb 27 2023
+- $32 as of feb 27 2023
   - postgres $7 (dev $0)
   - redis $10 (dev $0)
+  - websocket server $7 (dev $0)
+  - web API server $7 (dev $0)
 
 
 # UI Principles
