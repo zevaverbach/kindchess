@@ -100,6 +100,7 @@ function receiveMessages(ws) {
             position: FEN.start,
             orientation: side ? side[0] : "w", // if it's a watcher, display from white's POV
           });
+          window.board = board;
         }
         if (myTurn) sendMoves(ws);
         break;
@@ -261,4 +262,34 @@ function getPieceAt(src) {
   if (piece == null) return null;
   const [color, pieceName] = piece;
   return color === "b" ? pieceName : pieceName.toUpperCase();
+}
+
+function doMoves(ws) {
+  // TODO
+}
+
+function movePiece(src, dest, ws) {
+  const piece = getPieceAt(src);
+  let move = {
+    piece: null,
+    src: null,
+    dest: null,
+  };
+  if (piece.toLowerCase() === "k" && (src[0] === "e" && ["g", "c"].includes(dest[0]))) {
+    move.castle = dest[0] === "c" ? "q" : "k";
+  } else {
+    move.piece = piece;
+    move.src = src;
+    move.dest = dest;
+    const capture = getPieceAt(move.dest) ? 1 : 0;
+    if (capture) {
+      move.capture = capture;
+    }
+  }
+  const msg = JSON.stringify({
+    uid,
+    type: 'move',
+    ...move,
+  });
+  ws.send(msg);
 }

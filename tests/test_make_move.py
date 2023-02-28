@@ -286,6 +286,52 @@ def test_make_move_bug_9():
     assert new_state.white_can_castle_queenside == 0
 
 
+def test_make_move_bug_10():
+    state = t.GameState(
+        king_square_white="g1",
+        king_square_black="g8",
+        turn=0,
+        FEN="r1b3k1/ppp1Q1pp/8/1B2ppP1/3P4/5PP1/PPP4P/RNB2RK1",
+        black_can_castle_kingside=0,
+        black_can_castle_queenside=0,
+        white_can_castle_kingside=0,
+        white_can_castle_queenside=0,
+        half_moves=20,
+    )
+    move = t.Move(**{"src": "e7", "dest": "e8", "piece": "Q"})
+    new_state = c.get_new_state(state, move, t.Board.from_FEN(state.FEN))
+    assert new_state.checkmate == 1
+
+
+def test_make_move_bug_11():
+    """
+    After castling it seems like we don't know where the king is.
+    """
+    state = t.GameState(
+        king_square_white="g1",
+        king_square_black="e8",
+        turn=1,
+        FEN="r1b1k2r/ppp3pp/8/4ppP1/3P4/2QB1PP1/PPP4P/RNB2RK1",
+        black_can_castle_kingside=1,
+        black_can_castle_queenside=1,
+        white_can_castle_kingside=0,
+        white_can_castle_queenside=0,
+        half_moves=20,
+    )
+    new_state = state
+    for move in [
+        t.Move(castle="k"),
+        t.Move(**{"src": "c3", "dest": "a3", "piece": "Q"}),
+        t.Move(**{"src": "f8", "dest": "f6", "piece": "r"}),
+        t.Move(**{"src": "a3", "dest": "a4", "piece": "Q"}),
+        t.Move(**{"src": "f6", "dest": "g6", "piece": "r"}),
+    ]:
+        new_state = c.get_new_state(new_state, move, t.Board.from_FEN(state.FEN))
+    move = t.Move(**{"src": "a4", "dest": "e8", "piece": "Q"})
+    new_state = c.get_new_state(new_state, move, t.Board.from_FEN(state.FEN))
+    assert new_state.checkmate == 1
+
+
 def test_make_move_bug_6():
     state = t.GameState(
         king_square_white="g1",
