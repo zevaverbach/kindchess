@@ -35,7 +35,7 @@ con = psycopg2.connect(
     password=os.getenv("DB_PASS"),
     host=DB_HOSTNAME,
     )
-atexit.register(lambda: con.close())
+# atexit.register(lambda: con.close())
 
 
 def create_completed_games_table() -> None:
