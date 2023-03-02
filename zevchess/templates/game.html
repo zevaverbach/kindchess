@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>ZevChess!</title>
         <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='cm-chessboard.css') }}">
         <style>
@@ -10,9 +11,20 @@
                 width: 40vw;
                 height: 40vh;
             }
+
+            #board-container {
+                width: 775px;
+            }
+
+            @media (max-width: 750px) {
+                #board-container {
+                    width: 96%;
+                }
+            }
+
             #board {
-              height: 60vh;
-              width: 60vw;
+              height: 100%;
+              width: 100%;
             }
         </style>
         <script type="module" src="{{ url_for('static', filename='game.js') }}">
@@ -20,7 +32,9 @@
     </head>
     <body>
         <main>
-            <div id="board"></div>
+            <div id="board-container">
+                <div id="board"></div>
+            </div>
             <div id="watcher-count"></div>
             <div id="messagebox"</div>
         </main>

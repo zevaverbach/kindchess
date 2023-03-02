@@ -1,3 +1,9 @@
+- [ ] move history
+  - [ ] make sure it gets captured even when the game moves into a buggy state
+  - [ ] make a way to grab it from DB/redis and provide it to the front end
+  - [ ] make a way of showing/walking through history on front end
+  - [ ] make a way to walk through a bunch of pre-determined moves for testing purposes
+- [ ] show what players/watchers are there
 - [ ] add ethical analytics
 - [ ] build out the site, make it look nice
   - consider using [these web components][3] for straightforward, buildless dev.

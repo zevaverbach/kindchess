@@ -1,3 +1,4 @@
+import os
 import pathlib as pl
 
 import flask
@@ -46,6 +47,20 @@ def favicon():
         "favicon.ico",
         mimetype="image/vnd.microsoft.icon",
     )
+
+
+@application.context_processor
+def override_url_for():
+    return dict(url_for=dated_url_for)
+
+
+def dated_url_for(endpoint, **values):
+    if endpoint == 'static':
+        filename = values.get('filename', None)
+        if filename:
+            file_path = os.path.join(application.root_path, endpoint, filename)
+            values['q'] = int(os.stat(file_path).st_mtime)
+    return flask.url_for(endpoint, **values)
 
 
 def main():
