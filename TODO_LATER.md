@@ -1,3 +1,5 @@
+- [ ] figure out how to get the message to actually display when being warned about abandoning a game.
+- [ ] don't warn about abandoning a game if the game is over
 - [ ] move history
   - [ ] make sure it gets captured even when the game moves into a buggy state
   - [ ] make a way to grab it from DB/redis and provide it to the front end

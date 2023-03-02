@@ -25,6 +25,13 @@ const main = document.getElementsByTagName('main')[0];
 
 let testing = false;
 
+window.addEventListener("beforeunload", beforeUnloadListener);
+
+function beforeUnloadListener(e) {
+  e.preventDefault();
+  return "are you sure you want to abandon this game?";
+}
+
 if (testing) {
   const div = document.createElement('div');
   div.innerHTML = "<textarea readonly id='ws'></textarea>";
@@ -173,10 +180,18 @@ function receiveMessages(ws) {
         }
         displayMessage(event.message, false);
         gameOver = true;
+
+        window.removeEventListener("beforeunload", beforeUnloadListener);
         break;
     }
   });
 }
+
+window.addEventListener("beforeunload", function(e) {
+  e.preventDefault();
+  return "are you sure you want to abandon this game?";
+})
+
 
 function showShareButton() {
   if (document.getElementById('share-button')) return
