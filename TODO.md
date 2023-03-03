@@ -2,7 +2,7 @@
   - maybe use native `dialog` [link](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dialog)
 
 # small UI improvements
-  - [ ] show the allowed moves 
+  - [x] show the allowed moves 
     - https://shaack.com/projekte/cm-chessboard/examples/validate-moves.html
   - [x] fill the screen on mobile
   - [x] warn when closing the tab/window, instead of allowing resume

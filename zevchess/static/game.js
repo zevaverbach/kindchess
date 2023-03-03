@@ -1,6 +1,7 @@
 import {
   Chessboard,
   INPUT_EVENT_TYPE,
+  MARKER_TYPE,
   COLOR,
 } from './node_modules/cm-chessboard/src/cm-chessboard/Chessboard.js';
 
@@ -13,7 +14,6 @@ if (window.location.host === "localhost:8000") {
 } else {
   WEBSOCKET_SERVER_ADDR = 'wss://zevchess-ws-zyr9.onrender.com'
 }
-console.log("WEBSOCKET_SERVER_ADDR:", WEBSOCKET_SERVER_ADDR);
 let side, board, messageBox;
 let myTurn = false;
 let gameState = {};
@@ -106,6 +106,7 @@ function receiveMessages(ws) {
           board = new Chessboard(document.getElementById('board'), {
             position: FEN.start,
             orientation: side ? side[0] : "w", // if it's a watcher, display from white's POV
+            style: {moveFromMarker: undefined, moveToMarker: undefined}, // disable standard markers
           });
           // window.board = board;
         }
@@ -218,8 +219,14 @@ function sendMoves(ws) {
       function (event) {
         switch (event.type) {
           case INPUT_EVENT_TYPE.moveInputStarted:
-            const moveSources = possibleMoves.map(mv => mv.castle ? getKingStartSquare(side) : mv.src)
-            return moveSources.includes(event.square);
+            event.chessboard.removeMarkers(MARKER_TYPE.dot);
+            const movesFromSquare = possibleMoves.filter(move => move.src == event.square || move.castle && getKingStartSquare(side) == event.square);
+            for (const move of movesFromSquare) {
+              event.chessboard.addMarker(MARKER_TYPE.dot, move.dest);
+            }
+            return movesFromSquare.length > 0;
+          case INPUT_EVENT_TYPE.moveInputCanceled:
+            event.chessboard.removeMarkers(MARKER_TYPE.dot);
           case INPUT_EVENT_TYPE.validateMoveInput:
             const piece = getPieceAt(event.squareFrom);
             let move = {
@@ -259,6 +266,7 @@ function sendMoves(ws) {
               wsMessageElement.value =
                 wsMessageElement.value + `\nsent:\n ${msg}\n`;
             myTurn = false;
+            event.chessboard.removeMarkers(MARKER_TYPE.dot);
             board.disableMoveInput();
             return true;
         }
