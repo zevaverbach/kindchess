@@ -1,30 +1,22 @@
 # Purpose
-I want to build a chess application from scratch. It will be an API-first monolith that supports playing via
+A chess server built from scratch (except the board itself). It supports playing via web browser, 
+and later it will be playable via command line/TUI or messaging.
 
-1) web browser
-2) command line/TUI
-3) messaging
-
-I'm interested in this because a) I like chess and b) I want to learn more about system design.
+I'm interested in this because a) I like chess and b) I want to learn more about system design and
+related topics.
 
 # Requirements
 
 ## Production
 - a Redis server 
-- sqlite3
+- a Postgres instance
 - Python 3.11
-- ./requirements.txt
+- `./requirements.txt`
 
-## Development (requirements-dev.txt)
-
-Everything from above plus
-  - pylint
-  - ipython
-  - pytest
-  - pyperclip
-  - python-lsp-server[all]
-  - `websocat` or another websocket client (`> brew install websocat`)
-    - for testing: `> websocat localhost:8001`
+## Development 
+- all of the above, substituting `requirements-dev.txt` for `requirements.txt`.
+- `websocat` or another websocket client (`> brew install websocat`)
+  - for testing: `> websocat localhost:8001`
 
 ## Environment Variables
 - DB_USER
@@ -38,59 +30,58 @@ Everything from above plus
 - REDIS_URL
 - ZEVCHESS_PROD (0/1)
 
-## Steps
+# Deployment
 
-### New Service/Infra
+## New Service/Infra
 - create the service in render.com dashboard
   - associate the appropriate env group (`zevchess` or `zevchess-dev`)
   - use the default `pip install -r requirements.txt`
   - for web API, `gunicorn -w 2 <or however many> app:application`
   - for websocket server, `python ws_server.py`
   - run `python init_db.py`
+    - this could be run locally if you tell it the appropriate DB to connect to
 
-### Code Updates
+## Code Updates
 - simply push to the monorepo, then either wait 1-10 mins to mirror to Github or manually sync (https://code.averba.ch/Zev/zevchess/settings)
 
 
 # Testing
-- load testing (TODO)
+- load testing (TODO as of March 3 2023)
 - unit testing (in process via test-driven development)
 
-# Deployment
-- v1 will be via render.com with some auto-scaling
-- the DB will have to be switched/refactored for scaling, since it's file-based and currently living on (each) server
-
-## Cost
-- $32 as of feb 27 2023
+# Cost
+- $32/month as of feb 27 2023
   - postgres $7 (dev $0)
   - redis $10 (dev $0)
   - websocket server $7 (dev $0)
   - web API server $7 (dev $0)
 
-## Services
-
-### websocket server
-
-### web API server
-
-
-# UI Principles
-- super minimal, fewer widgets than chess.com/lichess
-- emphasis on socializing, including voice
-
 # Roadmap
-Once there's a functional, not-too-buggy web API and web client, I'll load test and profile it to see what might be optimized. When nearing the "end of the road" of optimizations in Python, I'll explore porting to another language.
+Once there's a functional, not-too-buggy web API and web client, I'll load test and profile it 
+to see what might be optimized. When nearing the "end of the road" of optimizations in Python, 
+I'll explore porting to another language.
 
-My initial thought has been to port it to Go, but it looks like for websockets there are some better-performing choices:
+My initial thought has been to port it to Go, but it looks like for websockets there are some 
+better-performing choices:
 
-Node, [Bun](https://twitter.com/jarredsumner/status/1562121275945803776?lang=en) or even [socketify](https://raw.githubusercontent.com/cirospaciari/socketify.py/main/misc/ws-bar-graph.png) seem like great choices as they're able to send hundreds of thousands of messages per second.
+Node, [Bun](https://twitter.com/jarredsumner/status/1562121275945803776?lang=en) or even 
+[socketify](https://raw.githubusercontent.com/cirospaciari/socketify.py/main/misc/ws-bar-graph.png) 
+seem like great choices as they're able to send hundreds of thousands of messages per second.
 
-I'm excited about writing it in a language other than Python, though, and I'm wondering if the gains in websocket performance will be offset by the slowness of the engine. 
+I'm excited about writing it in a language other than Python, though, and I'm wondering if 
+the gains in websocket performance will be offset by the slowness of the engine. 
 
-The point here is "the journey", as I want to learn to measure and improve performance, including strategies beyond code.
+The point here is "the journey", as I want to learn to measure and improve performance, 
+including strategies beyond code.
 
 # UX
 - super low-friction to jumping into a game with people you know, or maybe who are part of a trusted group
+- friendliness, zero tolerance for jerks
+
+# UI 
+- super minimal, fewer widgets than chess.com/lichess
+- emphasis on socializing, including voice
+- thoughtful chess playing, possibly including an optional "minimum time to move"
 - ability to jump ahead and imagine moves by both sides while a) waiting for opponent to move or b) figuring out how to move.
   - store moves in a list and choose from them when ready
     - only for the very next move at first, not multiple
@@ -99,8 +90,3 @@ The point here is "the journey", as I want to learn to measure and improve perfo
 - [generate FEN from board](http://www.netreal.de/Forsyth-Edwards-Notation/index.php)
 - [generate board from FEN](http://www.ee.unb.ca/cgi-bin/tervo/fen.pl)
 - [the board](https://github.com/shaack/cm-chessboard)
-
-# Prior Art
-- [glee](https://github.com/tonyOreglia/glee)
-  - check out [the "bitboard" idea](https://blog.devgenius.io/improve-as-a-software-engineer-by-writing-a-chess-engine-c360109371aa) as a possible optimization
-- [FEN validation](https://chess.stackexchange.com/a/1483/34173)

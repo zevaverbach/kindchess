@@ -1,5 +1,7 @@
 - [ ] pawn promotion! (websockets and web view)
   - maybe use native `dialog` [link](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dialog)
+- [ ] enforce move limit (draw)
+- [ ] threefold repetition
 
 # small UI improvements
   - [x] show the allowed moves 
@@ -9,6 +11,9 @@
   - [x] indicate checkmate
   - [x] indicate check
   - [x] indicate stalemate
+  - [ ] shade the selected piece/background
+  - [ ] don't show the actual UIDs on the main screen, if at all
+  - [ ] add instructions for inviting a friend
 
 # Bugs
   - [ ] BUG: when 'abandoning' the game, that side's king gets highlighted in red

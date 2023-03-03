@@ -1,27 +1,22 @@
-- [ ] figure out how to get the message to actually display when being warned about abandoning a game.
-- [ ] don't warn about abandoning a game if the game is over
-- [ ] move history
-  - [ ] make sure it gets captured even when the game moves into a buggy state
-  - [ ] make a way to grab it from DB/redis and provide it to the front end
-  - [ ] make a way of showing/walking through history on front end
-  - [ ] make a way to walk through a bunch of pre-determined moves for testing purposes
-- [ ] show what players/watchers are there
-- [ ] add ethical analytics
-- [ ] build out the site, make it look nice
-  - consider using [these web components][3] for straightforward, buildless dev.
-- [ ] move the extra move validation out of websockets and into a separate interfaces module (not core)
-  - [ ] "can't move for another player", "can't move when you're a spectator", etc.
-- [ ] allow refreshing of the browser without destroying the game
-  - [ ] or just don't allow refreshing of the page, or do an 'alert' to tell them it will end the game
 - [ ] organize code
   - [ ] core
       - [ ] pieces
       - [ ] ...
   - [ ] UIs
+  - [ ] move the extra move validation out of websockets and into a separate interfaces module (not core)
+    - [ ] "can't move for another player", "can't move when you're a spectator", etc.
+- [ ] move history
+  - [ ] make sure it gets captured even when the game moves into a buggy state
+  - [ ] make a way to grab it from DB/redis and provide it to the front end
+  - [ ] make a way of showing/walking through history on front end
+  - [ ] make a way to walk through a bunch of pre-determined moves for testing purposes
+- [ ] accounts/auth
+- [ ] figure out how to get the message to actually display when being warned about abandoning a game.
+- [ ] don't warn about abandoning a game if the game is over
+- [ ] show what players/watchers are there
+- [ ] add ethical analytics
+- [ ] allow refreshing of the browser without destroying the game
 - [ ] load testing
-- [ ] make or find more tests
-    - [ ] could it ever be illegal to make the same move as a pawn when it's promoting with another piece?
-        - this is how the pawn promotion move is tested once the promotion piece type is chosen
 - [ ] find shortcuts to limit computation and storage
   - [ ] cache possible moves for every board
     - [ ] look in this cache before trying to calculate
@@ -30,17 +25,12 @@
     - [bitboard](https://blog.devgenius.io/improve-as-a-software-engineer-by-writing-a-chess-engine-c360109371aa)
   - [ ] if a pawn, king, knight is sufficiently far away, no need to check whether it can put the opposing king in check
 - [ ] game clock
-- [ ] enforce move limit (draw)
-- [ ] threefold repetition
 - [ ] material tracking - points, pieces
-- [ ] accounts/auth
-- [ ] detect cheating
-- [ ] consider using [this web][2] component for the board, it seems nice
+- [ ] build out the site, make it look nice
+  - consider using [these web components][3] for straightforward, buildless dev.
 - [ ] show previous move coloring
-- [ ] when a game is over, keep the page stable even though the websocket connection is closed
-  - [ ] alternatively, don't close the websocket connection so chat can continue
-- [ ] make king disappear at checkmate
+- [ ] make or find more tests
+    - [ ] could it ever be illegal to make the same move as a pawn when it's promoting with another piece?
+        - this is how the pawn promotion move is tested once the promotion piece type is chosen
 
-[1]: https://docs.socketify.dev/websockets-backpressure.html
-[2]: https://github.com/shaack/cm-chessboard
 [3]: https://shoelace.style/
