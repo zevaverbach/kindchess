@@ -10,6 +10,7 @@
   - [ ] make a way to grab it from DB/redis and provide it to the front end
   - [ ] make a way of showing/walking through history on front end
   - [ ] make a way to walk through a bunch of pre-determined moves for testing purposes
+- [ ] enforce move limit (draw)
 - [ ] accounts/auth
 - [ ] figure out how to get the message to actually display when being warned about abandoning a game.
 - [ ] don't warn about abandoning a game if the game is over

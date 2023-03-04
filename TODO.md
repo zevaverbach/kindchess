@@ -1,19 +1,26 @@
 - [ ] pawn promotion! (websockets and web view)
   - maybe use native `dialog` [link](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dialog)
-- [ ] enforce move limit (draw)
 - [ ] threefold repetition
+- [x] en passant
+  - [x] for black, it's not showing up as a possbile move
+  - [x] for white, the captured piece isn't disappearing
+    - [x] add en passant logic to "case: success" clause
+    - [x] figure out why `board.removePiece` isn't getting found (added it to chessground)
 
 # small UI improvements
+  - [ ] shade the selected piece/background
+  - [ ] don't show the actual UIDs on the main screen, if at all
+  - [ ] add instructions for inviting a friend
   - [x] show the allowed moves 
     - https://shaack.com/projekte/cm-chessboard/examples/validate-moves.html
+    - [x] normal moves
+    - [x] en passant
+    - [x] castling
   - [x] fill the screen on mobile
   - [x] warn when closing the tab/window, instead of allowing resume
   - [x] indicate checkmate
   - [x] indicate check
   - [x] indicate stalemate
-  - [ ] shade the selected piece/background
-  - [ ] don't show the actual UIDs on the main screen, if at all
-  - [ ] add instructions for inviting a friend
 
 # Bugs
   - [ ] BUG: when 'abandoning' the game, that side's king gets highlighted in red

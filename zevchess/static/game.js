@@ -114,6 +114,17 @@ function receiveMessages(ws) {
         break;
       case 'success':
         if (event.message !== "move acknowledged" || myTurn) break;
+        let enPassant = false;
+        if (event.move.dest) {
+          const [file, rankStr] = event.move.dest;
+          const rank = parseInt(rankStr);
+          const spaceBehindDest = side ? `${file}${rank + 1}` : `${file}${rank - 1}`;
+          enPassant = (
+            event.move.piece.toLowerCase() == "p" 
+            && event.move.capture === 1 
+            && getPieceAt(spaceBehindDest) == toggleCase(event.move.piece)
+          );
+        }
         if (event.move.castle) {
           const rank = side === "black" ? 8 : 1; // it's this side that castled
           if (event.move.castle === "k") {
@@ -121,6 +132,12 @@ function receiveMessages(ws) {
           } else {
             board.movePiece(`a${rank}`, `d${rank}`, true)
           }
+        } else if (enPassant) {
+          const [file, rankStr] = event.move.dest;
+          const rank = parseInt(rankStr);
+          const sq = side ? `${file}${rank + 1}` : `${file}${rank - 1}`;
+          console.log(`removing piece at ${sq}`);
+          board.setPiece(sq, null);
         } else {
           const gameState = event.game_state;
           if (gameState == undefined) break;
@@ -146,8 +163,16 @@ function receiveMessages(ws) {
             board.movePiece(`a${rank}`, `d${rank}`, true)
           }
         } else {
+          const enPassant = move.capture === 1 && getPieceAt(move.dest) == null
           board
-            .movePiece(move.src, move.dest, true).then(_ => null);
+            .movePiece(move.src, move.dest, true).then(_ => {
+              if (enPassant) {
+                const [file, rankStr] = move.dest;
+                const rank = parseInt(rankStr);
+                const sq = side ? `${file}${rank + 1}` : `${file}${rank - 1}`;
+                board.setPiece(sq, null);
+            };
+          });
         }
         gameState = event.game_state;
         boardArray = event.board;
@@ -220,7 +245,20 @@ function sendMoves(ws) {
         switch (event.type) {
           case INPUT_EVENT_TYPE.moveInputStarted:
             event.chessboard.removeMarkers(MARKER_TYPE.dot);
-            const movesFromSquare = possibleMoves.filter(move => move.src == event.square || move.castle && getKingStartSquare(side) == event.square);
+            let movesFromSquare = [];
+            for (const mv of possibleMoves) {
+              if (mv.src === event.square) {
+                movesFromSquare.push(mv);
+              } else if (mv.castle && getKingStartSquare(side) === event.square) {
+                const rank = side === "black" ? 8 : 1;
+                if (mv.castle === "k") {
+                  movesFromSquare.push({dest: `g${rank}`})
+                } else if (mv.castle === "q") {
+                  movesFromSquare.push({dest: `c${rank}`})
+                  movesFromSquare.push({dest: `b${rank}`})
+                }
+              }
+            }
             for (const move of movesFromSquare) {
               event.chessboard.addMarker(MARKER_TYPE.dot, move.dest);
             }
@@ -240,7 +278,22 @@ function sendMoves(ws) {
               move.piece = piece;
               move.src = event.squareFrom;
               move.dest = event.squareTo;
-              const capture = getPieceAt(event.squareTo) ? 1 : 0;
+              const thereIsAPieceAtDest = getPieceAt(event.squareTo);
+              let capture = thereIsAPieceAtDest ? 1 : 0;
+              // check if it's en passant
+              if (!capture && piece.toLowerCase() === "p") {
+                const [fileSource, rankSourceStr] = event.squareFrom;
+                const [fileDest, rankDestStr] = event.squareTo;
+                const fileSourceIndex = "abcdefgh".indexOf(fileSource);
+                const fileDestIndex = "abcdefgh".indexOf(fileDest);
+                const rankSource = parseInt(rankSourceStr);
+                const rankDest = parseInt(rankDestStr);
+                if (Math.abs(fileSourceIndex - fileDestIndex) === 1 
+                    && Math.abs(rankDest - rankSource) === 1) 
+                {
+                  capture = 1;
+                }
+              }
               if (capture) {
                 move.capture = capture;
               }
@@ -254,6 +307,8 @@ function sendMoves(ws) {
               )
             ) {
               console.log('denied move:', move)
+              console.log('possible moves:', possibleMoves);
+              console.log('game_state:', gameState);
               return false;
             }
             const msg = JSON.stringify({
@@ -315,4 +370,11 @@ function movePiece(src, dest, ws) {
     ...move,
   });
   ws.send(msg);
+}
+
+function toggleCase(str) {
+  if (str.toUpperCase() === str) {
+    return str.toLowerCase();
+  }
+  return str.toUpperCase();
 }

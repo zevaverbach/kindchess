@@ -281,12 +281,10 @@ def recalculate_en_passant(state: t.GameState, move: t.Move, board: t.Board) -> 
     if move.piece.lower() != "p":  # type: ignore
         return
     file, rank_str = move.src  # type: ignore
-
-    # TODO: is this necessary? it's epxnesive, and might have been accidentally pasted in
     state.FEN = recalculate_FEN(state, move, board)
     dest_f, dest_rank_str = move.dest  # type: ignore
     rank, dest_rank = int(rank_str), int(dest_rank_str)
-    if file == dest_f and (dest_rank - rank == 2):
+    if file == dest_f and abs(dest_rank - rank) == 2:
         state.en_passant_square = move.dest  # type: ignore
     elif state.en_passant_square != "":
         state.en_passant_square = ""
