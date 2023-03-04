@@ -51,12 +51,16 @@ def get_all_legal_moves(
         king_square = state.king_square_white
         K = "K"
 
-    moves = [
-        move
-        for piece in pieces
-        for move in piece.get_possible_moves(board, state.en_passant_square)
-        if not t.it_would_be_self_check(piece, move, board, king_square if move.piece != K else move.dest)  # type: ignore
-    ] + get_castling_moves(state, board)
+    moves = []
+    for piece in pieces:
+        possible_moves = piece.get_possible_moves(board, state.en_passant_square)
+        if possible_moves is None:
+            print(piece)
+            raise Exception
+        for move in possible_moves:
+            if not t.it_would_be_self_check(piece, move, board, king_square if move.piece != K else move.dest):
+                moves.append(move)
+    moves += get_castling_moves(state, board)
     if json:
         return [m.to_json() for m in moves]
     return moves

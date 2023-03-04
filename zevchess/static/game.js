@@ -88,14 +88,11 @@ function receiveMessages(ws) {
         possibleMoves = event.possible_moves;
         if (event.game_status === 'waiting') {
           side = 'white';
-                   
         } else {
           side = event.side;
-          if (!side) {
-            // it's a watcher
-          } else {
-          clearMessage();
-          displayMessage('game on!');
+          if (side) {
+            clearMessage();
+            displayMessage('game on!');
           }
         }
         showShareButton();
@@ -118,7 +115,7 @@ function receiveMessages(ws) {
         if (event.move.dest) {
           const [file, rankStr] = event.move.dest;
           const rank = parseInt(rankStr);
-          const spaceBehindDest = side ? `${file}${rank + 1}` : `${file}${rank - 1}`;
+          const spaceBehindDest = side === "black" ? `${file}${rank + 1}` : `${file}${rank - 1}`;
           enPassant = (
             event.move.piece.toLowerCase() == "p" 
             && event.move.capture === 1 
@@ -135,8 +132,7 @@ function receiveMessages(ws) {
         } else if (enPassant) {
           const [file, rankStr] = event.move.dest;
           const rank = parseInt(rankStr);
-          const sq = side ? `${file}${rank + 1}` : `${file}${rank - 1}`;
-          console.log(`removing piece at ${sq}`);
+          const sq = side === "black" ? `${file}${rank + 1}` : `${file}${rank - 1}`;
           board.setPiece(sq, null);
         } else {
           const gameState = event.game_state;
@@ -169,7 +165,7 @@ function receiveMessages(ws) {
               if (enPassant) {
                 const [file, rankStr] = move.dest;
                 const rank = parseInt(rankStr);
-                const sq = side ? `${file}${rank + 1}` : `${file}${rank - 1}`;
+                const sq = side === "black" ? `${file}${rank - 1}` : `${file}${rank + 1}`;
                 board.setPiece(sq, null);
             };
           });
@@ -255,7 +251,6 @@ function sendMoves(ws) {
                   movesFromSquare.push({dest: `g${rank}`})
                 } else if (mv.castle === "q") {
                   movesFromSquare.push({dest: `c${rank}`})
-                  movesFromSquare.push({dest: `b${rank}`})
                 }
               }
             }
@@ -306,9 +301,6 @@ function sendMoves(ws) {
                 && pm.capture == move.capture && pm.castle == move.castle
               )
             ) {
-              console.log('denied move:', move)
-              console.log('possible moves:', possibleMoves);
-              console.log('game_state:', gameState);
               return false;
             }
             const msg = JSON.stringify({

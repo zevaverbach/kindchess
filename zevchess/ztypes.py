@@ -416,30 +416,30 @@ class Pawn(Piece):
     def get_en_passant_move(
         self, en_passant_square: str, fl: str, rank: int
     ) -> list[Move] | list:
-        if en_passant_square == "":
-            return []
-        file_to_left_of_en_passant_square = None
-        file_to_right_of_en_passant_square = None
-        fl = en_passant_square[0]
-        if not fl.startswith("a"):
-            file_to_left_of_en_passant_square = string.ascii_lowercase[
-                string.ascii_lowercase.index(fl) - 1
-            ]
-        if not fl.startswith("h"):
-            file_to_right_of_en_passant_square = string.ascii_lowercase[
-                string.ascii_lowercase.index(fl) + 1
-            ]
-        rank = 4 if self.color else 5
-        rank_behind = 3 if self.color else 6
-        behind_en_passant_square = f"{fl}{rank_behind}"
-        if (
-            file_to_left_of_en_passant_square is not None
-            and self.square == f"{file_to_left_of_en_passant_square}{rank}"
-        ) or (
-            file_to_right_of_en_passant_square is not None
-            and self.square == f"{file_to_right_of_en_passant_square}{rank}"
-        ):
-            return [self.move(behind_en_passant_square, capture=1)]
+        if en_passant_square != "":
+            file_to_left_of_en_passant_square = None
+            file_to_right_of_en_passant_square = None
+            fl = en_passant_square[0]
+            if not fl.startswith("a"):
+                file_to_left_of_en_passant_square = string.ascii_lowercase[
+                    string.ascii_lowercase.index(fl) - 1
+                ]
+            if not fl.startswith("h"):
+                file_to_right_of_en_passant_square = string.ascii_lowercase[
+                    string.ascii_lowercase.index(fl) + 1
+                ]
+            rank = 4 if self.color else 5
+            rank_behind = 3 if self.color else 6
+            behind_en_passant_square = f"{fl}{rank_behind}"
+            if (
+                file_to_left_of_en_passant_square is not None
+                and self.square == f"{file_to_left_of_en_passant_square}{rank}"
+            ) or (
+                file_to_right_of_en_passant_square is not None
+                and self.square == f"{file_to_right_of_en_passant_square}{rank}"
+            ):
+                return [self.move(behind_en_passant_square, capture=1)]
+        return []
 
     def get_possible_moves(
         self, board: Board, en_passant_square: str = ""

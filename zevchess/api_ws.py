@@ -365,13 +365,15 @@ async def move(ws, event: dict) -> None:
                 }
             ),
         )
+        move_json = the_move.to_json()
+        print(move_json)
         await ws.send(
             json.dumps(
                 {
                     "type": "success",
                     "message": "move acknowledged",
                     "game_state": dc.asdict(new_state),
-                    "move": the_move.to_json(),
+                    "move": move_json,
                 }
             )
         )
