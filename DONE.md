@@ -135,6 +135,34 @@
     - [x] 'invite' button which copies the URL to your clipboard
     - [x] a debug box to show the websocket messages getting sent/received
 
+- [x] BUG: white king can't capture rook here??
+  - ![screenshot](white_king_cant_capture_rook_BUG.png)
+  - related: ![white rook doesn't exist after castling](white_rook_doesnt_exist_after_castling_BUG.png)
+- [x] BUG: this isn't check??
+  - ![screenshot](screenshots/this_isnt_check_but_should_be_BUG.png)
+  - ![screenshot](screenshots/this_isnt_check_but_should_be_BUG_2.png)
+- [x] BUG: there are a bunch of error messages on websocket server
+  - [link](https://dashboard.render.com/web/srv-cfuuh9t3t39doaurs5q0/logs)
+- [x] BUG: this isn't checkmate?
+  - ![screenshot](screenshots/should_be_checkmate.png)
+  - i can't replicate it (test_make_move_bug_11)
+
+- [x] en passant
+  - [x] for black, it's not showing up as a possbile move
+  - [x] for white, the captured piece isn't disappearing
+    - [x] add en passant logic to "case: success" clause
+    - [x] figure out why `board.removePiece` isn't getting found (added it to chessground)
+  - [x] show the allowed moves 
+    - https://shaack.com/projekte/cm-chessboard/examples/validate-moves.html
+    - [x] normal moves
+    - [x] en passant
+    - [x] castling
+  - [x] fill the screen on mobile
+  - [x] warn when closing the tab/window, instead of allowing resume
+  - [x] indicate checkmate
+  - [x] indicate check
+  - [x] indicate stalemate
+
 [1]: https://websockets.readthedocs.io/en/stable/intro/index.html
 [2]: https://websockets.readthedocs.io/en/stable/topics/authentication.html
 [3]: https://github.com/shaack/cm-chessboard#enablemoveinputeventhandler-color--undefined
