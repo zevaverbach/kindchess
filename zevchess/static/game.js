@@ -21,7 +21,21 @@ let gameOver = false;
 let boardArray = [];
 let possibleMoves = [];
 let checkedKing = "";
+let pawnPromotionSquare;
+let pawnPromotionPiece = "Queen";
+let pawnPromotionMove;
 const main = document.getElementsByTagName('main')[0];
+
+const choosePawnPromotionPiece = document.getElementById("pawn-promote");
+const choosePawnPromotionPieceSelect = choosePawnPromotionPiece.querySelector("select");
+
+choosePawnPromotionPieceSelect.addEventListener("change", function(e) {
+  pawnPromotionPiece = choosePawnPromotionPieceSelect.value;
+  const pieceLetter = whichPiece === "Knight" ? "n" : pawnPromotionPiece[0].toLowerCase();
+  const piece = `${side[0]}${pieceLetter}`;
+  board.setPiece(pawnPromotionSquare, piece);
+});
+
 
 let testing = false;
 
@@ -58,6 +72,17 @@ window.addEventListener('DOMContentLoaded', function () {
   if (side) {
     displayMessage('waiting for black to join', false);
   }
+  choosePawnPromotionPiece.addEventListener("close", function() {
+    ws.send(JSON.stringify({
+      type: "pawn_promote",
+      uid,
+      choice: pawnPromotionPiece.toLowerCase()[0],
+      move: JSON.stringify(pawnPromotionMove),
+    }));
+    pawnPromotionSquare = null;
+    pawnPromotionPiece = "Queen";
+    pawnPromotionMove = null;
+  });
 });
 
 function joinGame(ws) {
@@ -105,7 +130,7 @@ function receiveMessages(ws) {
             orientation: side ? side[0] : "w", // if it's a watcher, display from white's POV
             style: {moveFromMarker: undefined, moveToMarker: undefined}, // disable standard markers
           });
-          // window.board = board;
+          window.board = board;
         }
         if (myTurn) sendMoves(ws);
         break;
@@ -187,6 +212,14 @@ function receiveMessages(ws) {
         }
         myTurn = true;
         sendMoves(ws);
+        break;
+      case 'input_required':
+        if (event.message !== "choose pawn promotion piece") break;
+        pawnPromotionSquare = event.dest;
+        pawnPromotionMove = event.move;
+        const queenPiece = `${side[0]}q`;
+        board.setPiece(pawnPromotionSquare, queenPiece);
+        choosePawnPromotionPiece.showModal();
         break;
       case 'game_over':
         if (gameOver) break;

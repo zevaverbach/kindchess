@@ -265,6 +265,13 @@ async def handler(ws):
                     await error(ws, "invalid event")
                     continue
                 await draw(ws, uid, event["draw"])
+            case "pawn_promote":
+                await pawn_promotion_complete(
+                    ws=ws, 
+                    uid=uid, 
+                    choice=event["choice"], 
+                    move_dict=json.loads(event["move"])
+                )
             case _:
                 print(event)
                 await error(ws, "invalid event")
@@ -290,6 +297,80 @@ def get_all_participants(store: ConnectionStore, but: Ws | None = None) -> set[W
     if but is None:
         return ps
     return {p for p in ps if p != but}
+
+
+async def pawn_promotion_prompt(ws, store, need_to_choose, move) -> None:
+    _, dest, _ = need_to_choose.split(" ")
+    return await ws.send(
+        json.dumps(
+            {
+                "type": "input_required",
+                "message": "choose pawn promotion piece",
+                "dest": dest,
+                "move": move,
+            }
+        )
+    )
+
+
+async def pawn_promotion_complete(ws, uid, choice, move_dict) -> None:
+    store = CONNECTIONS[uid]
+    state = q.get_game_state(uid)
+    the_move = t.Move(**move_dict)
+    try:
+        new_state = c.choose_promotion_piece(uid, choice, state)
+    except c.NoPendingPawnPromotion:
+        print("a pawn promotion was attempted to be copmleted, but there isn't a pending one!")
+        await error(ws, "there was no pending pawn promotion")
+    except c.InvalidMove as e:
+        print(f"{state=}")
+        print(str(e))
+        await error(ws, "invalid move")
+    except c.NotYourTurn:
+        print("someone tried to make a move when it wasn't their turn")
+        await error(ws, "not your turn!")
+    except c.InvalidState:
+        await error(ws, "haven't chosen promotion piece")
+    except c.Stalemate as e:
+        side = "black" if str(e) == "0" else "white"
+        await game_over(
+            ws, store=store, reason="stalemate", side=side, the_move=the_move
+        )
+    except c.Checkmate as e:
+        winner = "black" if str(e) == "0" else "white"
+        await game_over(
+            ws=ws, store=store, side=winner, reason="checkmate", the_move=the_move
+        )
+    else:
+        recipients = get_all_participants(store, but=ws)
+        board = t.Board.from_FEN(new_state.FEN).to_array()
+        all_possible_moves = q.get_all_legal_moves(new_state, json=True)
+        ws_broadcast(
+            recipients,
+            json.dumps(
+                {
+                    "type": "move",
+                    "move": the_move.to_json(),
+                    "side": "black" if new_state.turn else "white",
+                    "game_state": dc.asdict(new_state),
+                    "board": board,
+                    "possible_moves": all_possible_moves,
+                }
+            ),
+        )
+        move_json = the_move.to_json()
+        print(move_json)
+        await ws.send(
+            json.dumps(
+                {
+                    "type": "success",
+                    "message": "move acknowledged",
+                    "game_state": dc.asdict(new_state),
+                    "move": move_json,
+                }
+            )
+        )
+        await its_your_move(uid, new_state)
 
 
 async def move(ws, event: dict) -> None:
@@ -349,6 +430,13 @@ async def move(ws, event: dict) -> None:
             ws=ws, store=store, side=winner, reason="checkmate", the_move=the_move
         )
     else:
+        if new_state.need_to_choose_pawn_promotion_piece != "":
+            return await pawn_promotion_prompt(
+                ws=ws, 
+                store=store, 
+                need_to_choose=new_state.need_to_choose_pawn_promotion_piece, 
+                move=event,
+            )
         recipients = get_all_participants(store, but=ws)
         board = t.Board.from_FEN(new_state.FEN).to_array()
         all_possible_moves = q.get_all_legal_moves(new_state, json=True)

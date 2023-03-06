@@ -1,6 +1,15 @@
 - [ ] pawn promotion! (websockets and web view)
-  - maybe use native `dialog` [link](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dialog)
+  - [x] maybe use native `dialog` [link](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dialog)
+  - [ ] not in allowed moves
+  - [ ] "whichPIece is not defined" (game.js:34)
 - [ ] threefold repetition
+  - same position
+  - same person's turn as two other occurrences
+  - same en passant state
+  - same castling state
+  - NOT automatic, must be requested by either player _before_ the next move is made
+- [ ] resign
+- [ ] draw
 
 # small UI improvements
   - [ ] shade the selected piece/background

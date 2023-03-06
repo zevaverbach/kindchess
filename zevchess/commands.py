@@ -79,6 +79,10 @@ class NoPendingPawnPromotion(Exception):
     pass
 
 
+class PawnPromotionPending(Exception):
+    pass
+
+
 def choose_promotion_piece(
     uid: str,
     piece_type: typing.Literal["r", "q", "n", "b"],
@@ -104,7 +108,7 @@ class InvalidMove(Exception):
 def make_move_and_persist(
     uid: str,
     move: t.Move,
-    pawn_promotion: str = "",
+    pawn_promotion: typing.Literal["q", "r", "n", "b", "Q", "R", "N", "B", ""] = "",
     state: t.GameState | None = None,
     testing: bool = False,
 ) -> t.GameState:
@@ -124,7 +128,7 @@ def make_move_and_persist(
         state.draw_offered = -1
 
     if not pawn_promotion and state.need_to_choose_pawn_promotion_piece:
-        raise InvalidState("need to choose promotion piece before doing a new move")
+        raise PawnPromotionPending("need to choose promotion piece before doing a new move")
 
     validate_move_arg(move, state.turn)
 
