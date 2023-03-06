@@ -19,11 +19,13 @@
 - [ ] add ethical analytics
 - [ ] load testing
 - [ ] find shortcuts to limit computation and storage
+  - [ ] any advantage in pub/sub for games?
   - [ ] cache possible moves for every board
     - [ ] look in this cache before trying to calculate
   - [ ] persist/serialize the board differently
     - instead of FEN, maybe a hash
     - [bitboard](https://blog.devgenius.io/improve-as-a-software-engineer-by-writing-a-chess-engine-c360109371aa)
+      - there are bit operations in redis, si jamais
   - [ ] if a pawn, king, knight is sufficiently far away, no need to check whether it can put the opposing king in check
 - [ ] game clock
 - [ ] material tracking - points, pieces

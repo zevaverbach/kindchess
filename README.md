@@ -74,11 +74,17 @@ the gains in websocket performance will be offset by the slowness of the engine.
 The point here is "the journey", as I want to learn to measure and improve performance, 
 including strategies beyond code.
 
-# UX
+# Possible Directions
+
+Collaborative chess-playing? For example, if you have the functionality described below where 
+you can save possible moves for the current position, you could give the option for a game's watchers
+to present possible moves, including possibly some annotation/speech about why it might be a good idea.
+
+## UX
 - super low-friction to jumping into a game with people you know, or maybe who are part of a trusted group
 - friendliness, zero tolerance for jerks
 
-# UI 
+## UI 
 - super minimal, fewer widgets than chess.com/lichess
 - emphasis on socializing, including voice
 - thoughtful chess playing, possibly including an optional "minimum time to move"
