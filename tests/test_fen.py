@@ -37,7 +37,7 @@ def test_recalculate_FEN_castling_kingside():
     newFEN = recalculate_FEN(state, move, board)
     assert newFEN == "rnbqkbnr/pppppppp/8/8/5BN1/8/PPPPPPPP/RNBQ1RK1"
 
-    
+
 def test_recalculate_FEN_castling_kingside_2():
     fen = "2kr3r/p2pQ2p/1p2p3/8/5b2/P7/1N3PPP/4K2R"
     state = t.GameState(FEN=fen)

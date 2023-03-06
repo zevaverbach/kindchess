@@ -9,11 +9,11 @@ from rich.pretty import pprint
 PROD = os.getenv("ZEVCHESS_PROD")
 
 match PROD:
-    case 1 | '1':
+    case 1 | "1":
         dotenv_path = ".env"
         REDIS_URL_ENV_VAR = "REDIS_URL"
         DB_HOSTNAME_ENV_VAR = "DB_HOSTNAME"
-    case 0 | '0':
+    case 0 | "0":
         dotenv_path = ".env-dev"
         REDIS_URL_ENV_VAR = "REDIS_URL_PUBLIC"
         DB_HOSTNAME_ENV_VAR = "DB_HOSTNAME_PUBLIC"
@@ -34,7 +34,7 @@ con = psycopg2.connect(
     user=os.getenv("DB_USER"),
     password=os.getenv("DB_PASS"),
     host=DB_HOSTNAME,
-    )
+)
 # TODO: commenting this must create either a memory leak or a hanging DB connection
 #   however, it was somehow getting called on checkmate, which ended up
 #   a) interrupting the front end such that the checkmate isn't indicated in the UI and
@@ -43,24 +43,25 @@ con = psycopg2.connect(
 
 
 def create_completed_games_table() -> None:
-    q = ("create table games ("
-            "uid varchar, "
-            "moves varchar, "
-            "half_moves integer, "
-            "white_can_castle_kingside integer, "
-            "black_can_castle_queenside integer, "
-            "black_can_castle_kingside integer, "
-            "white_can_castle_queenside integer, "
-            "turn integer, "
-            "half_moves_since_last_capture integer, "
-            "en_passant_square varchar, "
-            "its_check integer, "
-            "checkmate integer, "
-            "stalemate integer, "
-            "abandoned integer, "
-            "resigned integer, "
-            "draw integer, "
-            "winner integer"
+    q = (
+        "create table games ("
+        "uid varchar, "
+        "moves varchar, "
+        "half_moves integer, "
+        "white_can_castle_kingside integer, "
+        "black_can_castle_queenside integer, "
+        "black_can_castle_kingside integer, "
+        "white_can_castle_queenside integer, "
+        "turn integer, "
+        "half_moves_since_last_capture integer, "
+        "en_passant_square varchar, "
+        "its_check integer, "
+        "checkmate integer, "
+        "stalemate integer, "
+        "abandoned integer, "
+        "resigned integer, "
+        "draw integer, "
+        "winner integer"
         ")"
     )
     pprint(q)

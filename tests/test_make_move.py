@@ -221,24 +221,23 @@ def test_state_after_move_for_specific_bug_5():
     assert q.its_checkmate(state, t.Board.from_FEN(state.FEN))
 
 
-
 def test_after_move_for_specific_bug_2_more_state():
     state = t.GameState(
-            half_moves=7,
-            black_can_castle_kingside=1,
-            white_can_castle_kingside=1,
-            black_can_castle_queenside=1,
-            white_can_castle_queenside=1,
-            turn=1,
-            half_moves_since_last_capture=1,
-            king_square_white="e1",
-            king_square_black="e8",
-            en_passant_square="",
-            need_to_choose_pawn_promotion_piece="",
-            checkmate=0,
-            stalemate=0,
-            FEN="rnbqkbnr/ppppp2p/5p2/6pQ/3P4/4P3/PPP2PPP/RNB1KBNR",
-        )
+        half_moves=7,
+        black_can_castle_kingside=1,
+        white_can_castle_kingside=1,
+        black_can_castle_queenside=1,
+        white_can_castle_queenside=1,
+        turn=1,
+        half_moves_since_last_capture=1,
+        king_square_white="e1",
+        king_square_black="e8",
+        en_passant_square="",
+        need_to_choose_pawn_promotion_piece="",
+        checkmate=0,
+        stalemate=0,
+        FEN="rnbqkbnr/ppppp2p/5p2/6pQ/3P4/4P3/PPP2PPP/RNB1KBNR",
+    )
     assert q.its_checkmate(state, t.Board.from_FEN(state.FEN))
 
 
@@ -247,12 +246,12 @@ def test_stalemate_bug_4():
     from 'the fastest stalemate', in ten moves
     """
     state = t.GameState(
-            half_moves=19,
-            king_square_white="e1",
-            king_square_black="g6",
-            turn=1,
-            FEN="5bnr/4p1pq/4Qpkr/7p/7P/4P3/PPPP1PP1/RNB1KBNR",
-        )
+        half_moves=19,
+        king_square_white="e1",
+        king_square_black="g6",
+        turn=1,
+        FEN="5bnr/4p1pq/4Qpkr/7p/7P/4P3/PPPP1PP1/RNB1KBNR",
+    )
     assert q.its_stalemate(state, t.Board.from_FEN(state.FEN))
 
 
@@ -279,7 +278,7 @@ def test_make_move_bug_9():
         half_moves=8,
         FEN=fen,
     )
-    move = t.Move(castle='k')
+    move = t.Move(castle="k")
     new_state = c.get_new_state(state, move, t.Board.from_FEN(fen))
     assert new_state.FEN == "2kr3r/p2pQ2p/1p2p3/8/5b2/P7/1N3PPP/5RK1"
     assert new_state.white_can_castle_kingside == 0
@@ -343,7 +342,7 @@ def test_make_move_bug_6():
     new_state = c.get_new_state(state, move, t.Board.from_FEN(state.FEN))
     assert new_state.check == 1
 
-    
+
 def test_state_after_move_for_bug_6():
     state = t.GameState(
         FEN="2kr4/p2p4/1p2p2p/8/8/P7/1N2bPrP/5RK1",
@@ -372,7 +371,7 @@ def test_state_after_move_for_bug_12():
         king_square_black="e8",
     )
     assert q.its_check(state, t.Board.from_FEN(state.FEN))
-    
+
 
 def test_make_move_bug_12():
     state = t.GameState(

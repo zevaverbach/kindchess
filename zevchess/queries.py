@@ -55,7 +55,9 @@ def get_all_legal_moves(
     for piece in pieces:
         possible_moves = piece.get_possible_moves(board, state.en_passant_square)
         for move in possible_moves:
-            if not t.it_would_be_self_check(piece, move, board, king_square if move.piece != K else move.dest):
+            if not t.it_would_be_self_check(
+                piece, move, board, king_square if move.piece != K else move.dest
+            ):
                 moves.append(move)
     moves += get_castling_moves(state, board)
     if json:
@@ -74,7 +76,11 @@ def its_checkmate(state: t.GameState, board) -> bool:
 
 
 def its_check(state: t.GameState, board) -> bool:
-    return t.its_check_for(state.turn, board, state.king_square_black if state.turn else state.king_square_white)
+    return t.its_check_for(
+        state.turn,
+        board,
+        state.king_square_black if state.turn else state.king_square_white,
+    )
 
 
 def its_stalemate(state: t.GameState, board) -> bool:

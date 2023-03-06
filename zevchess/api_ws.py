@@ -125,7 +125,7 @@ async def error(ws, msg: str):
 
 
 async def remove_connection(ws, because_ws_disconnected=True):
-    print('remove_connection')
+    print("remove_connection")
     try:
         store, attribute = CONNECTION_WS_STORE_DICT[ws]
     except KeyError as e:
@@ -190,7 +190,7 @@ async def game_over(
         # the game ended before any moves
         print(f"no game found for uid {store.uid}")
         pass
-    else: 
+    else:
         state_dict = dc.asdict(state)
     recipients = get_all_participants(store)
     if reason not in ("abandoned", "resigned", "draw"):
@@ -199,11 +199,18 @@ async def game_over(
         non_winner_participants = get_all_participants(store, but=getattr(store, side))
         payload = {"type": "move", "move": the_move.to_json()}
         if state:
-            payload["game_state"] = state_dict        
+            payload["game_state"] = state_dict
             ws_broadcast(non_winner_participants, json.dumps(payload))
     ws_broadcast(
-        recipients, 
-        json.dumps({"type": "game_over", "message": msg, "winner": winner, "game_state": state_dict})
+        recipients,
+        json.dumps(
+            {
+                "type": "game_over",
+                "message": msg,
+                "winner": winner,
+                "game_state": state_dict,
+            }
+        ),
     )
 
     if state is not None and reason == "abandoned":
@@ -252,9 +259,7 @@ async def handler(ws):
                     w.exceptions.ConnectionClosedError,
                 ):
                     store = CONNECTIONS[uid]
-                    await game_over(
-                        ws, store, "abandoned", which_side(ws, store)
-                    )
+                    await game_over(ws, store, "abandoned", which_side(ws, store))
             case "move":
                 del event["type"]
                 await move(ws, event)
@@ -267,10 +272,10 @@ async def handler(ws):
                 await draw(ws, uid, event["draw"])
             case "pawn_promote":
                 await pawn_promotion_complete(
-                    ws=ws, 
-                    uid=uid, 
-                    choice=event["choice"], 
-                    move_dict=json.loads(event["move"])
+                    ws=ws,
+                    uid=uid,
+                    choice=event["choice"],
+                    move_dict=json.loads(event["move"]),
                 )
             case _:
                 print(event)
@@ -320,7 +325,9 @@ async def pawn_promotion_complete(ws, uid, choice, move_dict) -> None:
     try:
         new_state = c.choose_promotion_piece(uid, choice, state)
     except c.NoPendingPawnPromotion:
-        print("a pawn promotion was attempted to be copmleted, but there isn't a pending one!")
+        print(
+            "a pawn promotion was attempted to be copmleted, but there isn't a pending one!"
+        )
         await error(ws, "there was no pending pawn promotion")
     except c.InvalidMove as e:
         print(f"{state=}")
@@ -346,7 +353,7 @@ async def pawn_promotion_complete(ws, uid, choice, move_dict) -> None:
         board = t.Board.from_FEN(new_state.FEN).to_array()
         all_possible_moves = q.get_all_legal_moves(new_state, json=True)
         move = the_move.to_json()
-        move['promotion_piece'] = choice.upper() if store.white == ws else choice
+        move["promotion_piece"] = choice.upper() if store.white == ws else choice
         ws_broadcast(
             recipients,
             json.dumps(
@@ -432,9 +439,9 @@ async def move(ws, event: dict) -> None:
     else:
         if new_state.need_to_choose_pawn_promotion_piece != "":
             return await pawn_promotion_prompt(
-                ws=ws, 
-                store=store, 
-                need_to_choose=new_state.need_to_choose_pawn_promotion_piece, 
+                ws=ws,
+                store=store,
+                need_to_choose=new_state.need_to_choose_pawn_promotion_piece,
                 move=event,
             )
         recipients = get_all_participants(store, but=ws)

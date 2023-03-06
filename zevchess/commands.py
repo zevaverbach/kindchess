@@ -40,14 +40,10 @@ def create_game() -> str:
 
 def validate_move_arg(move, turn: int) -> None:
     if move.castle:
-        if any(
-            i is not None for i in (move.piece, move.src, move.dest)
-        ):
+        if any(i is not None for i in (move.piece, move.src, move.dest)):
             raise InvalidArguments
         return
-    if any(
-        i is None for i in (move.piece, move.src, move.dest)
-    ):
+    if any(i is None for i in (move.piece, move.src, move.dest)):
         raise InvalidArguments
     if (turn and move.piece.isupper()) or (not turn and move.piece.islower()):
         raise NotYourTurn
@@ -128,7 +124,9 @@ def make_move_and_persist(
         state.draw_offered = -1
 
     if not pawn_promotion and state.need_to_choose_pawn_promotion_piece:
-        raise PawnPromotionPending("need to choose promotion piece before doing a new move")
+        raise PawnPromotionPending(
+            "need to choose promotion piece before doing a new move"
+        )
 
     validate_move_arg(move, state.turn)
 
@@ -155,7 +153,7 @@ def make_move_and_persist(
     if new_state.checkmate:
         if not testing:
             save_game_to_db(uid, new_state)
-            print('checkmate!')
+            print("checkmate!")
         raise Checkmate(new_state.turn)
     if new_state.stalemate:
         if not testing:
@@ -406,7 +404,9 @@ def get_updated_rank_FEN_after_castling(
     RIGHT_SIDE_TOKENS_AFTER_KING_CASTLE = split_FEN_into_tokens(
         RIGHT_SIDE_FEN_AFTER_KING_CASTLE
     )
-    left_side = split_FEN_into_tokens(rank_src_FEN[:rank_src_FEN.find(RIGHT_SIDE_FEN_BEFORE_KING_CASTLE)])  # "(****)1rk"
+    left_side = split_FEN_into_tokens(
+        rank_src_FEN[: rank_src_FEN.find(RIGHT_SIDE_FEN_BEFORE_KING_CASTLE)]
+    )  # "(****)1rk"
     return rank_src_idx, create_FEN_from_tokens(
         left_side + RIGHT_SIDE_TOKENS_AFTER_KING_CASTLE
     )

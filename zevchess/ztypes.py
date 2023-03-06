@@ -441,7 +441,6 @@ class Pawn(Piece):
     def get_possible_moves(
         self, board: Board, en_passant_square: str = ""
     ) -> list[Move]:
-
         fl, rank_str = self.square
         rank = int(rank_str)
         return (
@@ -453,11 +452,7 @@ class Pawn(Piece):
         )
 
     def get_promotion_moves(self, fl, rank, board):
-        if (
-                (self.color and rank != 7)
-                or
-                (self.color == 0 and rank != 2)
-           ):
+        if (self.color and rank != 7) or (self.color == 0 and rank != 2):
             return []
         moves = []
         one_up = f"{fl}{rank + 1}"
@@ -466,15 +461,12 @@ class Pawn(Piece):
             promotion_pieces = promotion_pieces_str.upper()
         promotion_pieces = list(promotion_pieces_str)
         if getattr(board, one_up) is None:
-            moves += [
-                Move(piece, f"{fl}{rank}", one_up) for piece in promotion_pieces
-            ]
-        capture_moves = self.get_capture_moves(fl, rank, board)            
+            moves += [Move(piece, f"{fl}{rank}", one_up) for piece in promotion_pieces]
+        capture_moves = self.get_capture_moves(fl, rank, board)
         for m in capture_moves:
             for piece in promotion_pieces:
                 moves.append(Move(piece, m.src, m.dest, capture=1))
         return moves
-            
 
 
 def home_row(color: int, rank: int) -> bool:
