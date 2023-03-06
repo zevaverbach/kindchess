@@ -4,9 +4,6 @@ import dataclasses as dc
 import string
 import typing as t
 
-from rich.pretty import pprint
-
-
 Side = t.Literal[0, 1]
 Castle = t.Literal["k", "q"]
 # Piece = t.Literal["q", "k", "b", "n", "r", "p"]
@@ -452,7 +449,32 @@ class Pawn(Piece):
             + self.get_move_up_moves(fl, rank, board)
             + self.get_capture_moves(fl, rank, board)
             + self.get_en_passant_move(en_passant_square, fl, rank)
+            + self.get_promotion_moves(fl, rank, board)
         )
+
+    def get_promotion_moves(self, fl, rank, board):
+        if (
+                (self.color and rank != 7)
+                or
+                (self.color == 0 and rank != 2)
+           ):
+            return []
+        moves = []
+        one_up = f"{fl}{rank + 1}"
+        promotion_pieces_str = "qbnr"
+        if self.color == 0:
+            promotion_pieces = promotion_pieces_str.upper()
+        promotion_pieces = list(promotion_pieces_str)
+        if getattr(board, one_up) is None:
+            moves += [
+                Move(piece, f"{fl}{rank}", one_up) for piece in promotion_pieces
+            ]
+        capture_moves = self.get_capture_moves(fl, rank, board)            
+        for m in capture_moves:
+            for piece in promotion_pieces:
+                moves.append(Move(piece, m.src, m.dest, capture=1))
+        return moves
+            
 
 
 def home_row(color: int, rank: int) -> bool:
@@ -667,7 +689,6 @@ def it_would_be_self_check(
 
 def its_check_for(side: int, board: Board, king_square: str) -> bool:
     if isinstance(side, bool):
-        # print("warning, 'side' is a boolean not an int")
         side = int(side)
     if side:
         opposing_pieces = board.white_pieces()

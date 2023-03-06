@@ -31,7 +31,7 @@ const choosePawnPromotionPieceSelect = choosePawnPromotionPiece.querySelector("s
 
 choosePawnPromotionPieceSelect.addEventListener("change", function(e) {
   pawnPromotionPiece = choosePawnPromotionPieceSelect.value;
-  const pieceLetter = whichPiece === "Knight" ? "n" : pawnPromotionPiece[0].toLowerCase();
+  const pieceLetter = pawnPromotionPiece === "Knight" ? "n" : pawnPromotionPiece[0].toLowerCase();
   const piece = `${side[0]}${pieceLetter}`;
   board.setPiece(pawnPromotionSquare, piece);
 });
@@ -184,16 +184,21 @@ function receiveMessages(ws) {
             board.movePiece(`e${rank}`, `c${rank}`, true)
             board.movePiece(`a${rank}`, `d${rank}`, true)
           }
+        
         } else {
           const enPassant = move.capture === 1 && getPieceAt(move.dest) == null
           board
-            .movePiece(move.src, move.dest, true).then(_ => {
+            .movePiece(move.src, move.dest, true).then(() => {
               if (enPassant) {
                 const [file, rankStr] = move.dest;
                 const rank = parseInt(rankStr);
                 const sq = side === "black" ? `${file}${rank - 1}` : `${file}${rank + 1}`;
                 board.setPiece(sq, null);
-            };
+              } else if (move.promotion_piece) {
+                const pp = move.promotion_piece;
+                const piece = pp.toUpperCase() === pp ? `w${pp.toLowerCase()}` : `b${pp}`;
+                board.setPiece(move.dest, piece);
+              }
           });
         }
         gameState = event.game_state;

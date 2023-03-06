@@ -1,3 +1,5 @@
+- [x] pawn promotion! (websockets and web view)
+  - [x] maybe use native `dialog` [link](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dialog)
 - [x] deploy
   - [x] spin up Redis instances
     - [x] prod

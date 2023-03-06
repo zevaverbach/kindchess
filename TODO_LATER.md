@@ -1,3 +1,7 @@
+- [ ] show what players/watchers are there
+- [ ] add ethical analytics
+- [ ] why does the checkmated player automatically disconnect?
+  - it currently causes a "white abandoned the game" message which has to be ignored on the front end
 - [ ] enforce move limit (draw)
 - [ ] allow refreshing of the browser without destroying the game
   - [ ] do lichess or chess.com allow this?
@@ -12,5 +16,6 @@
   - [ ] UIs
   - [ ] move the extra move validation out of websockets and into a separate interfaces module (not core)
     - [ ] "can't move for another player", "can't move when you're a spectator", etc.
+- [ ] keyboard bindings
+- [ ] collaborative chess
 
-[3]: https://shoelace.style/

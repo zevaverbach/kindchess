@@ -54,9 +54,6 @@ def get_all_legal_moves(
     moves = []
     for piece in pieces:
         possible_moves = piece.get_possible_moves(board, state.en_passant_square)
-        if possible_moves is None:
-            print(piece)
-            raise Exception
         for move in possible_moves:
             if not t.it_would_be_self_check(piece, move, board, king_square if move.piece != K else move.dest):
                 moves.append(move)

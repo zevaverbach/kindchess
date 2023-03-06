@@ -345,12 +345,14 @@ async def pawn_promotion_complete(ws, uid, choice, move_dict) -> None:
         recipients = get_all_participants(store, but=ws)
         board = t.Board.from_FEN(new_state.FEN).to_array()
         all_possible_moves = q.get_all_legal_moves(new_state, json=True)
+        move = the_move.to_json()
+        move['promotion_piece'] = choice.upper() if store.white == ws else choice
         ws_broadcast(
             recipients,
             json.dumps(
                 {
                     "type": "move",
-                    "move": the_move.to_json(),
+                    "move": move,
                     "side": "black" if new_state.turn else "white",
                     "game_state": dc.asdict(new_state),
                     "board": board,
@@ -358,15 +360,13 @@ async def pawn_promotion_complete(ws, uid, choice, move_dict) -> None:
                 }
             ),
         )
-        move_json = the_move.to_json()
-        print(move_json)
         await ws.send(
             json.dumps(
                 {
                     "type": "success",
                     "message": "move acknowledged",
                     "game_state": dc.asdict(new_state),
-                    "move": move_json,
+                    "move": the_move.to_json(),
                 }
             )
         )
@@ -454,7 +454,6 @@ async def move(ws, event: dict) -> None:
             ),
         )
         move_json = the_move.to_json()
-        print(move_json)
         await ws.send(
             json.dumps(
                 {
