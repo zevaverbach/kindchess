@@ -298,15 +298,16 @@ def recalculate_king_position(state: t.GameState, move: t.Move) -> None:
             state.king_square_white = move.dest  # type: ignore
     elif move.castle:
         if state.turn:
+            # black
             if move.castle == "k":
                 state.king_square_black = "g8"
             else:
                 state.king_square_black = "c8"
         else:
             if move.castle == "k":
-                state.king_square_black = "g1"
+                state.king_square_white = "g1"
             else:
-                state.king_square_black = "c1"
+                state.king_square_white = "c1"
 
 
 def recalculate_castling_state(state: t.GameState, move: t.Move) -> None:

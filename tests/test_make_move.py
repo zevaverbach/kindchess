@@ -363,3 +363,36 @@ def test_state_after_move_for_bug_7():
     )
     assert q.its_check(state, t.Board.from_FEN(state.FEN))
 
+
+def test_state_after_move_for_bug_12():
+    state = t.GameState(
+        FEN="rnbqkbnr/p3pppp/8/1B1p4/4P3/1p3N2/P1PP1PPP/RNBQ1RK1",
+        turn=1,
+        king_square_white="g1",
+        king_square_black="e8",
+    )
+    assert q.its_check(state, t.Board.from_FEN(state.FEN))
+    
+
+def test_make_move_bug_12():
+    state = t.GameState(
+        king_square_white="g1",
+        king_square_black="e8",
+        turn=0,
+        FEN="rnbqkbnr/p3pppp/8/3p4/4P3/1p3N2/P1PPBPPP/RNBQ1RK1",
+    )
+    move = t.Move(**{"src": "e2", "dest": "b5", "piece": "B"})
+    new_state = c.get_new_state(state, move, t.Board.from_FEN(state.FEN))
+    assert new_state.check == 1
+
+
+def test_make_move_and_persist_bug_12():
+    state = t.GameState(
+        king_square_white="g1",
+        king_square_black="e8",
+        turn=0,
+        FEN="rnbqkbnr/p3pppp/8/3p4/4P3/1p3N2/P1PPBPPP/RNBQ1RK1",
+    )
+    move = t.Move(**{"src": "e2", "dest": "b5", "piece": "B"})
+    new_state = c.make_move_and_persist(uid="hi", move=move, state=state)
+    assert new_state.check == 1

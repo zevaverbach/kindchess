@@ -136,6 +136,7 @@ function receiveMessages(ws) {
           board.setPiece(sq, null);
         } else {
           const gameState = event.game_state;
+          console.log(gameState);
           if (gameState == undefined) break;
           if ([0, 1].includes(gameState.its_check)) {
             checkedKing = gameState.its_check === 0 ? gameState.king_square_white: gameState.king_square_black;
@@ -171,6 +172,7 @@ function receiveMessages(ws) {
           });
         }
         gameState = event.game_state;
+        console.log(gameState);
         boardArray = event.board;
         possibleMoves = event.possible_moves;
         if (gameState) {
@@ -190,6 +192,7 @@ function receiveMessages(ws) {
         if (gameOver) break;
         const winner = event.winner;
         gameState = event.game_state;
+        console.log(gameState);
         if (winner != null) {
           const checkmatedKingSquare = winner === "black" ? gameState.king_square_white: gameState.king_square_black;
           const selector = `[data-square="${checkmatedKingSquare}"]`;
