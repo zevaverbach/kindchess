@@ -1,3 +1,11 @@
+# Bugs
+- [ ] this should be checkmate: ![should be checkmate](should_be_checkmate.png)
+  - 2k4N/ppp5/5n1p/8/4N2n/3b4/PP1b2r1/5K2
+    - the last move was c2 to d3 (bishop)
+  - there were no console errors in either browser, but the move never got reported to white's browser
+- [ ] there's a bunch of stray UIDs on the home screen, they're getting stuck in Redis 
+
+# Features
 - [ ] resign
 - [ ] draw
   - [ ] make a dialog for accepting/rejecting a draw
@@ -13,9 +21,6 @@
 - [ ] show previous move coloring
 - [ ] don't show the actual UIDs on the main screen, if at all
 - [ ] add instructions for inviting a friend
-
-# Bugs
-- [ ] there's a bunch of stray UIDs on the home screen, they're getting stuck in Redis 
 
 # Next
 - [ ] put it at a domain, even if it's averba.ch/chess
