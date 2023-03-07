@@ -228,8 +228,8 @@ async def game_over(
         except q.NoSuchGame:
             # the game ended before any moves
             pass
-    for p in recipients:
-        await p.close()
+    # for p in recipients:
+        # await p.close()
     if uid in CONNECTIONS:
         del CONNECTIONS[uid]
     # await remove_connection(ws, because_ws_disconnected=False)

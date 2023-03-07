@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from rich.pretty import pprint
 
-from zevchess.db import r, con
+from zevchess.db import r, get_con
 import zevchess.queries as q
 import zevchess.ztypes as t
 
@@ -173,7 +173,7 @@ def store_completed_game(uid: str, moves: list[str], state: t.GameState) -> None
     db_dict_num_entries = len(db_dict)
     field_names = db_dict.keys()
     query = f"insert into games (uid, moves, {', '.join(field_names)}) values(%s, %s, {', '.join(['%s' for _ in range(db_dict_num_entries)])})"
-    with con:
+    with get_con() as con:
         with con.cursor() as cur:
             try:
                 cur.execute(query, (uid, " ".join(moves), *db_dict.values()))

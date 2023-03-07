@@ -243,8 +243,8 @@ function receiveMessages(ws) {
         }
         displayMessage(event.message, false);
         gameOver = true;
-
         window.removeEventListener("beforeunload", beforeUnloadListener);
+        ws.close();
         break;
     }
   });

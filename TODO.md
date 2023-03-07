@@ -1,15 +1,9 @@
 # Bugs
-- [x] this should be checkmate: ![should be checkmate](should_be_checkmate.png)
-  - 2k4N/ppp5/5n1p/8/4N2n/3b4/PP1b2r1/5K2
-  - the board before that: 2k4N/ppp5/5n1p/8/4N2n/8/PPbb2r1/5K2
-    - the last move was c2 to d3 (bishop)
-  - there were no console errors in either browser, but the move never got reported to white's browser
-  - i'm pretty sure this did get registered as checkmate but the server disconnected too fast
-    - for this reason I'm not disconnecting in game_over
 - [ ] there's a bunch of stray UIDs on the home screen, they're getting stuck in Redis 
+- [ ] there's a solid black dot in the first square of pawns, but gray in second, only on white's side!
 
 # Features
-- [ ] initiate closing of connection from client (it's not getting called on the server currently)
+- [x] initiate closing of connection from client (it's not getting called on the server currently)
 - [ ] resign
 - [ ] draw
   - [ ] make a dialog for accepting/rejecting a draw
@@ -25,6 +19,9 @@
 - [ ] show previous move coloring
 - [ ] don't show the actual UIDs on the main screen, if at all
 - [ ] add instructions for inviting a friend
+- [ ] add a spinner when creating a game
+- [ ] make dots smaller
+- [ ] put dots in front of pieces (z-index)
 
 # Next
 - [ ] put it at a domain, even if it's averba.ch/chess
@@ -56,5 +53,6 @@
   - [ ] make a way to walk through a bunch of pre-determined moves for testing purposes
 - [ ] accounts/auth
 - [ ] figure out how to get the message to actually display when being warned about abandoning a game.
+- [ ] dark mode
 
 [3]: https://shoelace.style/

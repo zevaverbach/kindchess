@@ -29,18 +29,13 @@ print(f"{dotenv_path=}")
 
 r = redis.Redis().from_url(REDIS_URL, decode_responses=True)
 
-con = psycopg2.connect(
-    dbname=os.getenv("DB_NAME"),
-    user=os.getenv("DB_USER"),
-    password=os.getenv("DB_PASS"),
-    host=DB_HOSTNAME,
-)
-# TODO: commenting this must create either a memory leak or a hanging DB connection
-#   however, it was somehow getting called on checkmate, which ended up
-#   a) interrupting the front end such that the checkmate isn't indicated in the UI and
-#   b) preventing the game from being saved to the DB
-# atexit.register(lambda: con.close())
-
+def get_con():
+    return psycopg2.connect(
+        dbname=os.getenv("DB_NAME"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASS"),
+        host=DB_HOSTNAME,
+    )
 
 def create_completed_games_table() -> None:
     q = (
@@ -65,12 +60,12 @@ def create_completed_games_table() -> None:
         ")"
     )
     pprint(q)
-    with con:
+    with get_con() as con:
         with con.cursor() as cur:
             cur.execute(q)
 
 
 def truncate_completed_games_table() -> None:
-    with con:
+    with get_con() as con:
         with con.cursor() as cur:
             cur.execute("delete from games")
