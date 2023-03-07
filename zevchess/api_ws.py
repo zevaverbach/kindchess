@@ -124,8 +124,7 @@ async def error(ws, msg: str):
     await ws.send(json.dumps({"type": "error", "message": msg}))
 
 
-async def remove_connection(ws, because_ws_disconnected=True):
-    print("remove_connection")
+async def remove_connection(ws):
     try:
         store, attribute = CONNECTION_WS_STORE_DICT[ws]
     except KeyError as e:
@@ -148,7 +147,7 @@ async def remove_connection(ws, because_ws_disconnected=True):
                     ),
                 )
         del CONNECTION_WS_STORE_DICT[ws]
-    elif because_ws_disconnected:
+    else:
         await game_over(ws=ws, store=store, side=attribute, reason="abandoned")
 
 
@@ -228,62 +227,73 @@ async def game_over(
         except q.NoSuchGame:
             # the game ended before any moves
             pass
-    # for p in recipients:
-        # await p.close()
     if uid in CONNECTIONS:
-        del CONNECTIONS[uid]
-    # await remove_connection(ws, because_ws_disconnected=False)
+        store = CONNECTIONS[uid]
+        await store.white.close()
+        await store.black.close()
+        if store.watchers:
+            for watcher in store.watchers:
+                watcher.close()
+        if uid in CONNECTIONS:
+            del CONNECTIONS[uid]
 
 
 async def handler(ws):
-    async for message in ws:
-        try:
-            event = json.loads(message)
-        except json.decoder.JSONDecodeError:
-            print(message)
-            await error(ws, "invalid event")
-            continue
-        if "uid" not in event or "type" not in event:
-            print(message)
-            await error(ws, "invalid event")
-            continue
-        uid = event["uid"]
-        match event["type"]:
-            case "join":
-                try:
-                    await join(ws, uid)
-                except InvalidUid:
-                    await error(ws, "game not found")
-                except (
-                    w.exceptions.ConnectionClosedOK,
-                    w.exceptions.ConnectionClosedError,
-                ):
-                    store = CONNECTIONS[uid]
-                    await game_over(ws, store, "abandoned", which_side(ws, store))
-            case "move":
-                del event["type"]
-                await move(ws, event)
-            case "resign":
-                await resign(ws, uid)
-            case "draw":
-                if "draw" not in event:
-                    await error(ws, "invalid event")
-                    continue
-                await draw(ws, uid, event["draw"])
-            case "pawn_promote":
-                await pawn_promotion_complete(
-                    ws=ws,
-                    uid=uid,
-                    choice=event["choice"],
-                    move_dict=json.loads(event["move"]),
-                )
-            case _:
-                print(event)
+    try:
+        async for message in ws:
+            try:
+                event = json.loads(message)
+            except json.decoder.JSONDecodeError:
+                print(message)
                 await error(ws, "invalid event")
                 continue
+            if "uid" not in event or "type" not in event:
+                print(message)
+                await error(ws, "invalid event")
+                continue
+            uid = event["uid"]
+            match event["type"]:
+                case "join":
+                    try:
+                        await join(ws, uid)
+                    except InvalidUid:
+                        await error(ws, "game not found")
+                    except (
+                        w.exceptions.ConnectionClosedOK,
+                        w.exceptions.ConnectionClosedError,
+                    ):
+                        store = CONNECTIONS[uid]
+                        await game_over(ws, store, "abandoned", which_side(ws, store))
+                case "move":
+                    del event["type"]
+                    await move(ws, event)
+                case "resign":
+                    await resign(ws, uid)
+                case "draw":
+                    if "draw" not in event:
+                        await error(ws, "invalid event")
+                        continue
+                    await draw(ws, uid, event["draw"])
+                case "pawn_promote":
+                    await pawn_promotion_complete(
+                        ws=ws,
+                        uid=uid,
+                        choice=event["choice"],
+                        move_dict=json.loads(event["move"]),
+                    )
+                case _:
+                    print(event)
+                    await error(ws, "invalid event")
+                    continue
 
-    else:
-        print(f"ws {ws} has disconnected")
+    except (
+        w.exceptions.ConnectionClosedOK,
+        w.exceptions.ConnectionClosedError,
+    ):
+        pass
+
+    print(f"ws {ws} has disconnected")
+    await remove_connection(ws)
 
 
 def get_all_participants(store: ConnectionStore, but: Ws | None = None) -> set[Ws]:

@@ -1,6 +1,7 @@
 # Bugs
-- [ ] there's a bunch of stray UIDs on the home screen, they're getting stuck in Redis 
+- [x] there's a bunch of stray UIDs on the home screen, they're getting stuck in Redis 
 - [ ] there's a solid black dot in the first square of pawns, but gray in second, only on white's side!
+- [ ] "no game found for uid"... when a game is abandoned early on. this implies it's not getting persisted either
 
 # Features
 - [x] initiate closing of connection from client (it's not getting called on the server currently)

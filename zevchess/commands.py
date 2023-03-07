@@ -50,6 +50,7 @@ def validate_move_arg(move, turn: int) -> None:
 
 
 def delete_game_from_redis(uid: str) -> None:
+    print('delet_game_from_redis')
     delete_moves_from_redis(uid)
     delete_state_from_redis(uid)
     r.lrem("existing_uids", 1, uid)
