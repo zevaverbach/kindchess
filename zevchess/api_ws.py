@@ -232,7 +232,7 @@ async def game_over(
         await p.close()
     if uid in CONNECTIONS:
         del CONNECTIONS[uid]
-    await remove_connection(ws, because_ws_disconnected=False)
+    # await remove_connection(ws, because_ws_disconnected=False)
 
 
 async def handler(ws):
@@ -284,10 +284,6 @@ async def handler(ws):
 
     else:
         print(f"ws {ws} has disconnected")
-        try:
-            await remove_connection(ws)
-        except NoSuchConnection:
-            pass
 
 
 def get_all_participants(store: ConnectionStore, but: Ws | None = None) -> set[Ws]:

@@ -395,3 +395,16 @@ def test_make_move_and_persist_bug_12():
     move = t.Move(**{"src": "e2", "dest": "b5", "piece": "B"})
     new_state = c.make_move_and_persist(uid="hi", move=move, state=state)
     assert new_state.check == 1
+
+
+def test_make_move_and_persist_bug_13():
+    state = t.GameState(
+        half_moves=10,
+        king_square_white="f1",
+        king_square_black="c8",
+        turn=1,
+        FEN="2k4N/ppp5/5n1p/8/4N2n/8/PPbb2r1/5K2",
+    )
+    move = t.Move(src="c2", dest="d3", piece="b")
+    with pytest.raises(c.Checkmate):
+        c.make_move_and_persist(uid="hi", move=move, state=state)
