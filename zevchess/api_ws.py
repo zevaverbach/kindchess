@@ -125,12 +125,10 @@ async def error(ws, msg: str):
 
 
 async def remove_connection(ws):
-    try:
-        store, attribute = CONNECTION_WS_STORE_DICT[ws]
-    except KeyError as e:
-        raise NoSuchConnection(
-            f"could not find connection {ws}, so didn't remove it from {CONNECTIONS=}"
-        ) from e
+    if ws not in CONNECTION_WS_STORE_DICT:
+        return
+        
+    store, attribute = CONNECTION_WS_STORE_DICT[ws]
 
     if attribute == "watchers":
         if store.watchers is not None and len(store.watchers) > 0:
@@ -229,8 +227,10 @@ async def game_over(
             pass
     if uid in CONNECTIONS:
         store = CONNECTIONS[uid]
-        await store.white.close()
-        await store.black.close()
+        if store.white:
+            await store.white.close()
+        if store.black:
+            await store.black.close()
         if store.watchers:
             for watcher in store.watchers:
                 watcher.close()

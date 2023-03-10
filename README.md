@@ -29,6 +29,7 @@ related topics.
 - REDIS_NAME
 - REDIS_URL
 - ZEVCHESS_PROD (0/1)
+- AXIOM_KEY
 
 # Deployment
 
