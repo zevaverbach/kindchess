@@ -89,12 +89,13 @@ def choose_promotion_piece(
     state = state or q.get_game_state(uid)
     if state.need_to_choose_pawn_promotion_piece == "":
         raise NoPendingPawnPromotion
+    # f"{src} {dest} {capture: int}"
     src, dest, capture_str = state.need_to_choose_pawn_promotion_piece.split(" ")
     capture = int(capture_str)
     piece = piece_type if state.turn else piece_type.upper()
-    move = t.Move(piece, src=src, dest=dest, capture=capture)
+    move = t.Move(piece, src=src, dest=dest, capture=capture, promote=1)
     return make_move_and_persist(
-        uid, move, pawn_promotion=piece, testing=testing, state=state
+        uid, move, testing=testing, state=state
     )
 
 
@@ -105,7 +106,6 @@ class InvalidMove(Exception):
 def make_move_and_persist(
     uid: str,
     move: t.Move,
-    pawn_promotion: typing.Literal["q", "r", "n", "b", "Q", "R", "N", "B", ""] = "",
     state: t.GameState | None = None,
     testing: bool = False,
 ) -> t.GameState:
@@ -124,7 +124,7 @@ def make_move_and_persist(
     if state.draw_offered != -1:
         state.draw_offered = -1
 
-    if not pawn_promotion and state.need_to_choose_pawn_promotion_piece:
+    if not move.promote and state.need_to_choose_pawn_promotion_piece:
         raise PawnPromotionPending(
             "need to choose promotion piece before doing a new move"
         )
@@ -132,17 +132,12 @@ def make_move_and_persist(
     validate_move_arg(move, state.turn)
 
     board = t.Board.from_FEN(state.FEN)
-    store_move(uid, move, pawn_promotion=pawn_promotion)
+    store_move(uid, move)
 
-    if pawn_promotion:
+    if move.promote:
         state.need_to_choose_pawn_promotion_piece = ""
-        # put the new piece where the pawn had been before its promotion
-        # TODO: this is really awkward
-        state.FEN = recalculate_FEN(
-            state, t.Move(piece=pawn_promotion, src=move.src, dest=move.src), board
-        )
-        board = t.Board.from_FEN(state.FEN)
 
+    # TODO: add all promote moves here (pawn.get_possbile_moves)
     all_possible_moves = q.get_all_legal_moves(state, board)
 
     if move not in all_possible_moves:
@@ -150,6 +145,7 @@ def make_move_and_persist(
         pprint(all_possible_moves)
         raise InvalidMove(f"{move=}")
 
+    # TODO: deal with move.promote == 1
     new_state = get_new_state(state, move, board)
     if new_state.checkmate:
         if not testing:
@@ -345,13 +341,13 @@ def recalculate_castling_state(state: t.GameState, move: t.Move) -> None:
         cant_castle_anymore("q")
 
 
-def store_move(uid: str, move: t.Move, pawn_promotion: str = "") -> None:
+def store_move(uid: str, move: t.Move) -> None:
     # TODO: store moves as a hash maybe?
     if move.castle is not None:
         move_string = "O-o" if move.castle == "k" else "O-o-o"
-    elif pawn_promotion:
-        up = pawn_promotion.isupper()  # type: ignore
-        move_string = f"{'P' if up else 'p'}{move.src}{'x' if move.capture else ''}{move.dest}{pawn_promotion}"
+    elif move.promote:
+        up = move.piece.isupper()  # type: ignore
+        move_string = f"{'P' if up else 'p'}{move.src}{'x' if move.capture else ''}{move.dest}{move.piece}"
     else:
         move_string = f"{move.piece}{move.src}{'x' if move.capture else ''}{move.dest}"
 

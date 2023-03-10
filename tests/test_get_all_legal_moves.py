@@ -326,3 +326,20 @@ def test_get_all_legal_moves_specific_bug_4():
     )
     all_possible_moves = q.get_all_legal_moves(state)
     assert t.Move(**{"src": "c8", "dest": "e6", "piece": "Q"}) in all_possible_moves
+
+
+def test_that_all_pawn_promotion_moves_are_allowed():
+    state = t.GameState(half_moves=20, turn=0, FEN="r1b5/1P6/8/8/8/8/8/8")
+    all_possible_moves = q.get_all_legal_moves(state)
+    assert t.Move(src="b7", dest="b8", piece="Q", promote=1) in all_possible_moves, all_possible_moves
+    assert t.Move(src="b7", dest="b8", piece="B", promote=1) in all_possible_moves
+    assert t.Move(src="b7", dest="b8", piece="R", promote=1) in all_possible_moves
+    assert t.Move(src="b7", dest="b8", piece="N", promote=1) in all_possible_moves
+    assert t.Move(src="b7", dest="a8", piece="Q", capture=1, promote=1) in all_possible_moves
+    assert t.Move(src="b7", dest="a8", piece="B", capture=1, promote=1) in all_possible_moves
+    assert t.Move(src="b7", dest="a8", piece="R", capture=1, promote=1) in all_possible_moves
+    assert t.Move(src="b7", dest="a8", piece="N", capture=1, promote=1) in all_possible_moves
+    assert t.Move(src="b7", dest="c8", piece="Q", capture=1, promote=1) in all_possible_moves
+    assert t.Move(src="b7", dest="c8", piece="B", capture=1, promote=1) in all_possible_moves
+    assert t.Move(src="b7", dest="c8", piece="R", capture=1, promote=1) in all_possible_moves
+    assert t.Move(src="b7", dest="c8", piece="N", capture=1, promote=1) in all_possible_moves

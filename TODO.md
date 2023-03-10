@@ -1,3 +1,8 @@
+# Bugs
+- [ ] pawn promotion needs to be rewritten
+  - [ ] the pawn can't transform into its promotion piece _before_ moving to its destination square,
+    it messed up get_possible_moves
+
 # Features
 - [x] initiate closing of connection from client (it's not getting called on the server currently)
 - [ ] resign
@@ -19,10 +24,6 @@
 - [ ] make dots smaller
 - [ ] put dots in front of pieces (z-index)
 
-# Bugs
-- [x] there's a bunch of stray UIDs on the home screen, they're getting stuck in Redis 
-- [ ] there's a solid black dot in the first square of pawns, but gray in second, only on white's side!
-- [ ] "no game found for uid"... when a game is abandoned early on. this implies it's not getting persisted either
 
 # Next
 - [ ] put it at a domain, even if it's averba.ch/chess

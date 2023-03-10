@@ -1,3 +1,4 @@
+- [x] there's a bunch of stray UIDs on the home screen, they're getting stuck in Redis 
 - [x] this should be checkmate: ![should be checkmate](should_be_checkmate.png)
   - 2k4N/ppp5/5n1p/8/4N2n/3b4/PP1b2r1/5K2
   - the board before that: 2k4N/ppp5/5n1p/8/4N2n/8/PPbb2r1/5K2

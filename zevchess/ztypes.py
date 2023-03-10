@@ -154,6 +154,7 @@ class Move:
     dest: str | None = None
     capture: int = 0
     castle: t.Literal["k", "q"] | None = None
+    promote: int = 0
 
     def to_json(self):
         d = {"piece": self.piece, "src": self.src, "dest": self.dest}
@@ -161,6 +162,8 @@ class Move:
             d["capture"] = 1  # type: ignore
         if self.castle is not None:
             d["castle"] = self.castle
+        if self.promote:
+            d["promote"] = 1
         return d
 
 
@@ -170,8 +173,8 @@ class Piece:
     square: str
     directions: list[str] | None = None
 
-    def move(self, dest: str, capture: int = 0):
-        return Move(piece=self.name(), src=self.square, dest=dest, capture=capture)
+    def move(self, dest: str, capture: int = 0, promote=0):
+        return Move(piece=self.name(), src=self.square, dest=dest, capture=capture, promote=promote)
 
     @abc.abstractmethod
     def name(self) -> str:
@@ -358,11 +361,15 @@ class Pawn(Piece):
 
     def get_move_one_up(self, fl: str, rank: int, board: Board) -> Move | None:
         if self.color:
-            one_square_in_front = f"{fl}{rank - 1}"
+            new_rank = rank - 1
         else:
-            one_square_in_front = f"{fl}{rank + 1}"
+            new_rank = rank + 1
+        one_square_in_front = f"{fl}{new_rank}"
         if no_one_is_there(one_square_in_front, board):
-            return self.move(one_square_in_front)
+            promote = 0
+            if ((self.color and new_rank == 1) or (self.color == 0 and new_rank == 8)):
+                promote = 1
+            return self.move(one_square_in_front, promote=promote)
 
     def get_move_two_up(self, fl: str, rank: int, board: Board) -> Move | None:
         if home_row(self.color, rank):
@@ -373,15 +380,29 @@ class Pawn(Piece):
             if no_one_is_there(two_squares_in_front, board):
                 return self.move(two_squares_in_front)
 
+    def promotion_pieces(self):
+        promotion_pieces_str = "qrbn"
+        if self.color == 0:
+            promotion_pieces_str = promotion_pieces_str.upper()
+        return str(promotion_pieces_str)
+
     def get_move_up_moves(self, fl: str, rank: int, board: Board) -> list[Move] | list:
         possible_moves = []
         move_one_up = self.get_move_one_up(fl, rank, board)
-        if move_one_up is not None:
+        if move_one_up and move_one_up.promote:
+            possible_moves += [
+                Move(piece=pp, src=self.square, dest=move_one_up.dest, promote=1) 
+                for pp in self.promotion_pieces()
+            ]
+        elif move_one_up is not None:
             possible_moves.append(move_one_up)
             move_two_up = self.get_move_two_up(fl, rank, board)
             if move_two_up is not None:
                 possible_moves.append(move_two_up)
         return possible_moves
+
+    def last_rank(self):
+        return 1 if self.color else 8
 
     def get_capture_moves(self, fl, rank, board) -> list[Move] | list:
         possible_moves = []
@@ -391,11 +412,16 @@ class Pawn(Piece):
         except Edge:
             pass
         else:
-            diag_l = f"{prev_fl}{rank + 1 if self.color == 0 else rank - 1}"
-            if an_opponent_is_there(
-                from_piece_perspective=self, square=diag_l, board=board
-            ):
-                possible_moves.append(self.move(diag_l, capture=1))
+            next_rank = rank + 1 if self.color == 0 else rank - 1
+            diag_l = f"{prev_fl}{next_rank}"
+            if an_opponent_is_there(from_piece_perspective=self, square=diag_l, board=board):
+                if next_rank == self.last_rank():
+                    possible_moves += [
+                        Move(piece=pp, src=self.square, dest=diag_l, capture=1, promote=1)
+                        for pp in self.promotion_pieces()
+                    ]
+                else:
+                    possible_moves.append(self.move(diag_l, capture=1))
 
         diag_r = None
         try:
@@ -403,11 +429,18 @@ class Pawn(Piece):
         except Edge:
             pass
         else:
-            diag_r = f"{next_fl}{rank + 1 if self.color == 0 else rank - 1}"
+            next_rank = rank + 1 if self.color == 0 else rank - 1
+            diag_r = f"{next_fl}{next_rank}"
             if an_opponent_is_there(
                 from_piece_perspective=self, square=diag_r, board=board
             ):
-                possible_moves.append(self.move(diag_r, capture=1))
+                if next_rank == self.last_rank():
+                    possible_moves += [
+                        Move(piece=pp, src=self.square, dest=diag_r, capture=1, promote=1)
+                        for pp in self.promotion_pieces()
+                    ]
+                else:
+                    possible_moves.append(self.move(diag_r, capture=1))
         return possible_moves
 
     def get_en_passant_move(
@@ -448,25 +481,8 @@ class Pawn(Piece):
             + self.get_move_up_moves(fl, rank, board)
             + self.get_capture_moves(fl, rank, board)
             + self.get_en_passant_move(en_passant_square, fl, rank)
-            + self.get_promotion_moves(fl, rank, board)
         )
 
-    def get_promotion_moves(self, fl, rank, board):
-        if (self.color and rank != 7) or (self.color == 0 and rank != 2):
-            return []
-        moves = []
-        one_up = f"{fl}{rank + 1}"
-        promotion_pieces_str = "qbnr"
-        if self.color == 0:
-            promotion_pieces = promotion_pieces_str.upper()
-        promotion_pieces = list(promotion_pieces_str)
-        if getattr(board, one_up) is None:
-            moves += [Move(piece, f"{fl}{rank}", one_up) for piece in promotion_pieces]
-        capture_moves = self.get_capture_moves(fl, rank, board)
-        for m in capture_moves:
-            for piece in promotion_pieces:
-                moves.append(Move(piece, m.src, m.dest, capture=1))
-        return moves
 
 
 def home_row(color: int, rank: int) -> bool:
