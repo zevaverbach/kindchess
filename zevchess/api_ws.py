@@ -1,6 +1,8 @@
 import asyncio
 import dataclasses as dc
+import http
 import json
+import signal
 import typing
 
 import websockets as w
@@ -34,10 +36,6 @@ class InvalidUid(Exception):
 
 
 class InvalidArguments(Exception):
-    pass
-
-
-class NoSuchConnection(Exception):
     pass
 
 
@@ -585,9 +583,25 @@ async def draw(
             return await withdraw_draw(ws, uid)
 
 
+
+async def health_check(path, request_headers):
+    if path == "/healthz":
+        return http.HTTPStatus.OK, [], b"OK\n"
+    
+
 async def main():
-    async with ws_serve(handler, "0.0.0.0", 8001):
-        await asyncio.Future()  # run forever
+    # Set the stop condition when receiving SIGTERM.
+    loop = asyncio.get_running_loop()
+    stop = loop.create_future()
+    loop.add_signal_handler(signal.SIGTERM, stop.set_result, None)
+
+    async with w.serve(
+        handler,
+        host="",
+        port=8080,
+        process_request=health_check,
+    ):
+        await stop
 
 
 if __name__ == "__main__":

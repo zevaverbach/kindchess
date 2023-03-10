@@ -10,7 +10,7 @@ import { FEN }
 
 let WEBSOCKET_SERVER_ADDR;
 if (window.location.host === "localhost:8000") {
-  WEBSOCKET_SERVER_ADDR = 'ws://0.0.0.0:8001/'
+  WEBSOCKET_SERVER_ADDR = 'ws://0.0.0.0:8080/'
 } else {
   WEBSOCKET_SERVER_ADDR = 'wss://zevchess-ws-zyr9.onrender.com'
 }
@@ -76,7 +76,7 @@ window.addEventListener('DOMContentLoaded', function () {
     ws.send(JSON.stringify({
       type: "pawn_promote",
       uid,
-      choice: pawnPromotionPiece.toLowerCase()[0],
+      choice: pawnPromotionPiece === "Knight" ? "n" : pawnPromotionPiece.toLowerCase()[0],
       move: JSON.stringify(pawnPromotionMove),
     }));
     pawnPromotionSquare = null;
