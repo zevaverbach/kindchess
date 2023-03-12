@@ -16,12 +16,18 @@
      - made buttons instead
   - [x] erase 'you have offered a draw' when it's been rejected or the other person has moved
   - [x] bug: when white offers a draw, white's buttons are changed instead of black's (from 'offer' to 'accept' and 'decline')
-- [ ] threefold repetition
+- [x] threefold repetition
   - same position
   - same person's turn as two other occurrences
   - same en passant state
   - same castling state
   - NOT automatic, must be requested by either player _before_ the next move is made
+  - [x] create a record of a combination of
+    - [x] board states 
+    - [x] all possible moves for each board state
+  - [x] after each move, check whether the state has occurred twice before
+  - [x] when the game is over, empty this cache as well
+  - [x] deal with `state.draw = 1` in ws logic after `do_move_and_persist`
 
 # small UI improvements
 - [ ] gray out the board when the game is over for a reason other than checkmate/stalemate

@@ -154,7 +154,7 @@ def other_color(color):
 async def game_over(
     ws,
     store: ConnectionStore,
-    reason: typing.Literal["abandoned", "checkmate", "stalemate", "resigned", "draw"],
+    reason: typing.Literal["abandoned", "checkmate", "stalemate", "resigned", "draw", "draw_by_three_repetitions"],
     side: typing.Literal["white", "black"],
     the_move: t.Move | None = None,
 ) -> None:
@@ -173,6 +173,8 @@ async def game_over(
             msg = f"{side} has resigned!"
         case "draw":
             msg = "players have agreed to a draw"
+        case "draw_by_three_repetitions":
+            msg = "it's a draw by threefold repetition"
         case _:
             raise InvalidArguments
 
@@ -188,7 +190,7 @@ async def game_over(
     else:
         state_dict = dc.asdict(state)
     recipients = get_all_participants(store)
-    if reason not in ("abandoned", "resigned", "draw"):
+    if reason not in ("abandoned", "resigned", "draw", "draw_by_three_repetitions"):
         if the_move is None:
             raise InvalidArguments
         non_winner_participants = get_all_participants(store, but=(getattr(store, side),))
@@ -453,6 +455,8 @@ async def move(ws, event: dict) -> None:
                 need_to_choose=new_state.need_to_choose_pawn_promotion_piece,
                 move=event,
             )
+        if new_state.draw:
+            return await draw(ws, uid, "three_repetitions")
         recipients = get_all_participants(store, but=(ws,))
         board = t.Board.from_FEN(new_state.FEN).to_array()
         all_possible_moves = q.get_all_legal_moves(new_state, json=True)
@@ -599,7 +603,7 @@ async def accept_draw(ws, uid: str) -> None:
 
 
 async def draw(
-    ws, uid, draw_action: typing.Literal["offer", "accept", "reject", "withdraw"]
+    ws, uid, draw_action: typing.Literal["offer", "accept", "reject", "withdraw", "three_repetitions"]
 ) -> None:
     match draw_action:
         case "offer":
@@ -610,7 +614,14 @@ async def draw(
             return await reject_draw(ws, uid)
         case "withdraw":
             return await withdraw_draw(ws, uid)
+        case "three_repetitions":
+            return await three_repetitions_draw(ws, uid)
 
+
+async def three_repetitions_draw(ws, uid):
+    store = CONNECTIONS[uid]
+    requester = which_side(ws, store)
+    return await game_over(ws, store=store, reason="draw_by_three_repetitions", side=requester)
 
 
 async def health_check(path, request_headers):

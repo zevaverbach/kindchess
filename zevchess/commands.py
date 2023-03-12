@@ -23,6 +23,10 @@ class InvalidState(Exception):
     pass
 
 
+class ThreeRepetitions(Exception):
+    pass
+
+
 EXISTING_UIDS = "existing_uids"
 TURN = "turn"
 NUM_MOVES = "num_moves"
@@ -53,7 +57,15 @@ def delete_game_from_redis(uid: str) -> None:
     print('delet_game_from_redis')
     delete_moves_from_redis(uid)
     delete_state_from_redis(uid)
+    delete_position_stores_from_redis(uid)
     r.lrem("existing_uids", 1, uid)
+
+
+def delete_position_stores_from_redis(uid):
+    position_store = f"boardpositions-{uid}"
+    repetition_store = f"boardpositionrepetitions-{uid}"
+    r.delete(position_store)
+    r.delete(repetition_store)
 
 
 def delete_state_from_redis(uid):
@@ -117,6 +129,7 @@ def make_move_and_persist(
       - InvalidState
       - InvalidArguments
       - NotYourTurn
+      - ThreeRepetitions
     """
     state = state or q.get_game_state(uid)
 
@@ -145,8 +158,7 @@ def make_move_and_persist(
         pprint(all_possible_moves)
         raise InvalidMove(f"{move=}")
 
-    # TODO: deal with move.promote == 1
-    new_state = get_new_state(state, move, board)
+    new_state = get_new_state(state, move, board, uid)
     if new_state.checkmate:
         if not testing:
             save_game_to_db(uid, new_state)
@@ -238,7 +250,7 @@ def is_pawn_promotion(move: t.Move) -> bool:
     return int(move.dest[1]) == last_rank  # type: ignore
 
 
-def get_new_state(state: t.GameState, move: t.Move, board: t.Board) -> t.GameState:
+def get_new_state(state: t.GameState, move: t.Move, board: t.Board, uid: str) -> t.GameState:
     new_state = copy.deepcopy(state)
     if is_pawn_promotion(move):
         new_state.need_to_choose_pawn_promotion_piece = (
@@ -260,6 +272,13 @@ def get_new_state(state: t.GameState, move: t.Move, board: t.Board) -> t.GameSta
         recalculate_king_position(new_state, move)
 
     new_state.turn = abs(new_state.turn - 1)
+    position_string = make_position_string(new_state)
+    try:
+        add_position_to_position_store(uid, position_string)
+    except ThreeRepetitions:
+        new_state.draw = 1
+        return new_state
+
     board = t.Board.from_FEN(new_state.FEN)
 
     if q.its_checkmate(new_state, board):
@@ -272,6 +291,15 @@ def get_new_state(state: t.GameState, move: t.Move, board: t.Board) -> t.GameSta
     elif q.its_stalemate(new_state, board):
         new_state.stalemate = 1
     return new_state
+
+
+def make_position_string(state: t.GameState) -> str:
+    kingside = state.white_can_castle_kingside
+    queenside = state.white_can_castle_queenside
+    if state.turn:
+        kingside = state.black_can_castle_kingside
+        queenside = state.black_can_castle_queenside
+    return f"{state.FEN} {state.turn} {state.en_passant_square} {kingside} {queenside}"
 
 
 def recalculate_en_passant(state: t.GameState, move: t.Move, board: t.Board) -> None:
@@ -528,3 +556,14 @@ def update_existing_uids_cache(uid: str | list[str]) -> None:
 def remove_all_active_game_uids_from_redis():
     for i in r.lrange("existing_uids", 0, -1):
         r.lrem("existing_uids", 1, i)
+
+
+def add_position_to_position_store(uid: str, position: str) -> None:
+    position_store = f"boardpositions-{uid}"
+    repetition_store = f"boardpositionrepetitions-{uid}"
+    if r.sismember(repetition_store, position):
+        raise ThreeRepetitions
+    if r.sismember(position_store, position):
+        r.sadd(repetition_store, position)
+    else:
+        r.sadd(position_store, position)
