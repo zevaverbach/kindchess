@@ -94,6 +94,7 @@ function hideResignButton() {
   document.getElementById('resign-button').style.display = 'none';
   } catch {
     return null;
+  }
 }
 
 export function showDrawAcceptAndRejectButtons(ws, uid) {
