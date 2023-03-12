@@ -18,4 +18,6 @@
     - [ ] "can't move for another player", "can't move when you're a spectator", etc.
 - [ ] keyboard bindings
 - [ ] collaborative chess
+- [ ] check -> red background
+- [ ] checkmate -> king is crossed out
 

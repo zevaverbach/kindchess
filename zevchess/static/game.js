@@ -1,4 +1,3 @@
-// TODO: break this up into multiple modules
 import {
   Chessboard,
   INPUT_EVENT_TYPE,
@@ -24,8 +23,22 @@ import {
   updateCheckStatus,
   displayMessage,
 } from './domOps.js';
-import { getPieceAt, getKingStartSquare, invalidMove, isCaptureMove, isCastlingMove, isEnPassantMove, isPromotionMove } from './boardOps.js';
-import { doTheMoveReceived, doTheMoveSentEnPassant, doTheMoveSentCastle } from './moveOps.js';
+
+import { 
+  getPieceAt, 
+  getKingStartSquare,
+  invalidMove, 
+  isCaptureMove, 
+  isCastlingMove, 
+  isEnPassantMove, 
+  isPromotionMove 
+} from './boardOps.js';
+
+import { 
+  doTheMoveReceived, 
+  doTheMoveSentEnPassant, 
+  doTheMoveSentCastle 
+} from './moveOps.js';
 
 let WEBSOCKET_SERVER_ADDR;
 if (window.location.host === "localhost:8000") {

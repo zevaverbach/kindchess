@@ -82,11 +82,18 @@ export function hideButtons() {
 }
 
 export function hideDrawButton() {
-  document.getElementById('draw-button').style.display = 'none';
+  try {
+    document.getElementById('draw-button').style.display = 'none';
+  } catch {
+    return null;
+  }
 }
 
 function hideResignButton() {
+  try {
   document.getElementById('resign-button').style.display = 'none';
+  } catch {
+    return null;
 }
 
 export function showDrawAcceptAndRejectButtons(ws, uid) {

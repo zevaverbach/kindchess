@@ -34,8 +34,8 @@
 - [ ] make dots smaller
 - [ ] put dots in front of pieces (z-index)
 
-
 # Next
+- [ ] make sure same-origin policy is getting enforced
 - [ ] put it at a domain, even if it's averba.ch/chess
 - [ ] make "private room" functionality where you can create a room and it's always available
   - [ ] allow room owner to put name tags on for both players
