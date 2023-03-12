@@ -15,6 +15,7 @@ import {
   showResignButton,
   showDrawButton,
   showDrawAcceptAndRejectButtons, 
+  hideShareButton,
   hideDrawAcceptAndRejectButtons, 
   hideDrawButton, 
   hideWithdrawDrawButton,
@@ -227,6 +228,7 @@ function receiveMessages(ws) {
           showStalemate(gameState);
         }
         displayMessage("GAME OVER: " + ev.message, false);
+        hideShareButton();
         gameOver = true;
         board.disableMoveInput();
         window.removeEventListener("beforeunload", beforeUnloadListener);

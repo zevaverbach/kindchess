@@ -145,6 +145,10 @@ export function hideDrawAcceptAndRejectButtons() {
   } return null;
 }
 
+export function hideShareButton() {
+  document.getElementById('share-button').style.display = 'inline';
+}
+
 export function showShareButton(displayMessage) {
   if (document.getElementById('share-button')) return
   const url = window.location.href;
