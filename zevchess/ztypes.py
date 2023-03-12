@@ -381,7 +381,7 @@ class Pawn(Piece):
                 return self.move(two_squares_in_front)
 
     def promotion_pieces(self):
-        promotion_pieces_str = "qrbn"
+        promotion_pieces_str = "qrbnp"
         if self.color == 0:
             promotion_pieces_str = promotion_pieces_str.upper()
         return str(promotion_pieces_str)

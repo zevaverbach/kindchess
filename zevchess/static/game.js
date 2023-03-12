@@ -1,3 +1,4 @@
+// TODO: break this up into multiple modules
 import {
   Chessboard,
   INPUT_EVENT_TYPE,
@@ -8,37 +9,35 @@ import {
 import { FEN } 
   from './node_modules/cm-chessboard/src/cm-chessboard/model/Position.js';
 
+import { showShareButton, showStalemate, showCheckmate, updateCheckStatus } from './domOps.js';
+import { getPieceAt, getKingStartSquare, invalidMove, isCaptureMove, isCastlingMove, isEnPassantMove, isPromotionMove } from './boardOps.js';
+import { doTheMoveReceived, doTheMoveSentEnPassant, doTheMoveSentCastle } from './moveOps.js';
+
 let WEBSOCKET_SERVER_ADDR;
 if (window.location.host === "localhost:8000") {
   WEBSOCKET_SERVER_ADDR = 'ws://0.0.0.0:8080/'
 } else {
   WEBSOCKET_SERVER_ADDR = 'wss://zevchess-ws-zyr9.onrender.com'
 }
-let side, board, messageBox;
+let side, board, messageBox, pawnPromotionSquare, pawnPromotionMove;
 let myTurn = false;
-let gameState = {};
+let testing = false;
 let gameOver = false;
+let gameState = {};
 let boardArray = [];
 let possibleMoves = [];
+
 let checkedKing = "";
-let pawnPromotionSquare;
+function setCheckedKing(val) {
+  checkedKing = val;
+}
+
 let pawnPromotionPiece = "Queen";
-let pawnPromotionMove;
+const uid = window.location.pathname.replace('/', '');
+
+
+
 const main = document.getElementsByTagName('main')[0];
-
-const choosePawnPromotionPiece = document.getElementById("pawn-promote");
-const choosePawnPromotionPieceSelect = choosePawnPromotionPiece.querySelector("select");
-
-choosePawnPromotionPieceSelect.addEventListener("change", function(e) {
-  pawnPromotionPiece = choosePawnPromotionPieceSelect.value;
-  const pieceLetter = pawnPromotionPiece === "Knight" ? "n" : pawnPromotionPiece[0].toLowerCase();
-  const piece = `${side[0]}${pieceLetter}`;
-  board.setPiece(pawnPromotionSquare, piece);
-});
-
-
-let testing = false;
-
 window.addEventListener("beforeunload", beforeUnloadListener);
 
 function beforeUnloadListener(e) {
@@ -51,18 +50,6 @@ if (testing) {
   div.innerHTML = "<textarea readonly id='ws'></textarea>";
   const wsMessageElement = div.firstChild;
 }
-const uid = window.location.pathname.replace('/', '');
-
-function displayMessage(message, timeout = true) {
-  messageBox.innerHTML = message;
-  if (timeout) {
-    setTimeout(function () {
-      messageBox.innerHTML = '';
-    }, 3000);
-  }
-}
-
-function clearMessage() { messageBox.innerHTML = ""; }
 
 window.addEventListener('DOMContentLoaded', function () {
   messageBox = document.getElementById('messagebox');
@@ -103,121 +90,47 @@ function joinGame(ws) {
 function receiveMessages(ws) {
   ws.addEventListener('message', function (message) {
     const event = JSON.parse(message.data);
-    if (testing)
-      wsMessageElement.value =
-        wsMessageElement.value + `\nreceived:\n ${message.data}\n`;
+    if (testing) wsMessageElement.value = wsMessageElement.value + `\nreceived:\n ${message.data}\n`;
+
     switch (event.type) {
+
       case 'join_success':
-        gameState = event.game_state;
-        boardArray = event.board;
-        possibleMoves = event.possible_moves;
-        if (event.game_status === 'waiting') {
-          side = 'white';
-        } else {
-          side = event.side;
-          if (side) {
-            clearMessage();
-            displayMessage('game on!');
-          }
-        }
-        showShareButton();
-        if (side == 'white' && event.game_status === 'ready') {
-          myTurn = true;
-        } else {
-          // game_status is 'waiting', so draw the board this one time.
-          board = new Chessboard(document.getElementById('board'), {
-            position: FEN.start,
-            orientation: side ? side[0] : "w", // if it's a watcher, display from white's POV
-            style: {moveFromMarker: undefined, moveToMarker: undefined}, // disable standard markers
-          });
-          window.board = board;
-        }
-        if (myTurn) sendMoves(ws);
+        updateGlobals(event);
+        handleEventJoinSuccess(event, ws);
         break;
+
       case 'success':
-        if (event.message !== "move acknowledged" || myTurn) break;
-        let enPassant = false;
-        if (event.move.dest) {
-          const [file, rankStr] = event.move.dest;
-          const rank = parseInt(rankStr);
-          const spaceBehindDest = side === "black" ? `${file}${rank + 1}` : `${file}${rank - 1}`;
-          enPassant = (
-            event.move.piece.toLowerCase() == "p" 
-            && event.move.capture === 1 
-            && getPieceAt(spaceBehindDest) == toggleCase(event.move.piece)
-          );
+        // TODO: remove the next four lines 
+        if (event.message !== "move acknowledged" || myTurn) {
+          console.log("there was a message 'success' without the 'move acknowledged' message or !myTurn");
+          break;
         }
+
         if (event.move.castle) {
-          const rank = side === "black" ? 8 : 1; // it's this side that castled
-          if (event.move.castle === "k") {
-            board.movePiece(`h${rank}`, `f${rank}`, true)
-          } else {
-            board.movePiece(`a${rank}`, `d${rank}`, true)
-          }
-        } else if (enPassant) {
-          const [file, rankStr] = event.move.dest;
-          const rank = parseInt(rankStr);
-          const sq = side === "black" ? `${file}${rank + 1}` : `${file}${rank - 1}`;
-          board.setPiece(sq, null);
+          doTheMoveSentCastle(event.move, side, board);
+        } else if (isEnPassantMove(event.move, board, side)) {
+          doTheMoveSentEnPassant(event.move, board, side);
         } else {
           const gameState = event.game_state;
+          // TODO: remove the next five lines 
           console.log(gameState);
-          if (gameState == undefined) break;
-          if ([0, 1].includes(gameState.its_check)) {
-            checkedKing = gameState.its_check === 0 ? gameState.king_square_white: gameState.king_square_black;
-            document.querySelector(`[data-square="${checkedKing}"]`).classList.add("check")
-          } else if (checkedKing) {
-              const query = `[data-square="${checkedKing}"]`
-              document.querySelector(query).classList.remove("check")
-              checkedKing = "";
+          if (gameState == undefined) {
+            console.log('gameState is undefined for some reason');
+            break;
           }
+          updateCheckStatus(gameState, checkedKing, setCheckedKing);
         }
         break;
+
       case 'move':
         const move = event.move;
-        if (move.castle) {
-          const rank = side === "black" ? 1 : 8; // it's the other side that castled
-          if (move.castle === "k") {
-            board.movePiece(`e${rank}`, `g${rank}`, true)
-            board.movePiece(`h${rank}`, `f${rank}`, true)
-          } else {
-            board.movePiece(`e${rank}`, `c${rank}`, true)
-            board.movePiece(`a${rank}`, `d${rank}`, true)
-          }
-        
-        } else {
-          const enPassant = move.capture === 1 && getPieceAt(move.dest) == null
-          board
-            .movePiece(move.src, move.dest, true).then(() => {
-              if (enPassant) {
-                const [file, rankStr] = move.dest;
-                const rank = parseInt(rankStr);
-                const sq = side === "black" ? `${file}${rank - 1}` : `${file}${rank + 1}`;
-                board.setPiece(sq, null);
-              } else if (move.promotion_piece) {
-                const pp = move.promotion_piece;
-                const piece = pp.toUpperCase() === pp ? `w${pp.toLowerCase()}` : `b${pp}`;
-                board.setPiece(move.dest, piece);
-              }
-          });
-        }
-        gameState = event.game_state;
-        console.log(gameState);
-        boardArray = event.board;
-        possibleMoves = event.possible_moves;
-        if (gameState) {
-          if ([0, 1].includes(gameState.its_check)) {
-            checkedKing = gameState.its_check === 0 ? gameState.king_square_white: gameState.king_square_black;
-            document.querySelector(`[data-square="${checkedKing}"]`).classList.add("check")
-          } else if (checkedKing) {
-              const query = `[data-square="${checkedKing}"]`
-              document.querySelector(query).classList.remove("check")
-              checkedKing = "";
-          }
-        }
+        doTheMoveReceived(move, board, side);
+        updateGlobals(event);
+        updateCheckStatus(gameState, checkedKing, setCheckedKing);
         myTurn = true;
         sendMoves(ws);
         break;
+
       case 'input_required':
         if (event.message !== "choose pawn promotion piece") break;
         pawnPromotionSquare = event.dest;
@@ -226,20 +139,19 @@ function receiveMessages(ws) {
         board.setPiece(pawnPromotionSquare, queenPiece);
         choosePawnPromotionPiece.showModal();
         break;
+
       case 'game_over':
-        if (gameOver) break;
+        if (gameOver) { // already gameOver
+          break;
+        }
         const winner = event.winner;
         gameState = event.game_state;
+        // TODO: remove
         console.log(gameState);
         if (winner != null) {
-          const checkmatedKingSquare = winner === "black" ? gameState.king_square_white: gameState.king_square_black;
-          const selector = `[data-square="${checkmatedKingSquare}"]`;
-          document.querySelector(selector).classList.add("mate");
+          showCheckmate(winner, gameState);
         } else if (event.message === "stalemate!") {
-          for (const color of ["white", "black"]) {
-            const selector = `[data-square="${gameState['king_square_' + color]}"]`;
-            document.querySelector(selector).classList.add("stale");
-          }
+          showStalemate(gameState);
         }
         displayMessage(event.message, false);
         gameOver = true;
@@ -250,164 +162,134 @@ function receiveMessages(ws) {
   });
 }
 
-window.addEventListener("beforeunload", function(e) {
-  e.preventDefault();
-  return "are you sure you want to abandon this game?";
-})
-
-
-function showShareButton() {
-  if (document.getElementById('share-button')) return
-  const url = window.location.href;
-  const shareButton = document.createElement("button");
-  shareButton.id = "share-button";
-  shareButton.addEventListener('click', () => {
-    navigator.clipboard.writeText(url);
-    displayMessage(
-      `I've copied the following to your clipboard: ${url}, 
-       feel free to share it with whoever you want to play against. 
-       I'll let you know when they've joined!`, false
-      )    
-  })
-  shareButton.innerText = "share invite URL"
-  main.appendChild(shareButton);
+function handleEventJoinSuccess(event, ws) {
+  if (event.game_status === 'waiting') {
+    side = 'white';
+  } else {
+    side = event.side;
+    // otherwise it's a watcher
+    if (side) {
+      clearMessage();
+      displayMessage('game on!');
+    }
+  }
+  showShareButton(main);
+  if (side == 'white' && event.game_status === 'ready') {
+    myTurn = true;
+    sendMoves(ws);
+  } else {
+    // game_status is 'waiting', so draw the board this one time.
+    board = new Chessboard(document.getElementById('board'), {
+      position: FEN.start,
+      orientation: side ? side[0] : "w", // if it's a watcher, display from white's POV
+      style: {moveFromMarker: undefined, moveToMarker: undefined}, // disable standard markers
+    });
+  }
 }
 
 function sendMoves(ws) {
   if (!myTurn) {
-    board.disableMoveInput();
-  } else {
-    board.enableMoveInput(
-      function (event) {
-        switch (event.type) {
-          case INPUT_EVENT_TYPE.moveInputStarted:
-            event.chessboard.removeMarkers(MARKER_TYPE.dot);
-            let movesFromSquare = [];
-            for (const mv of possibleMoves) {
-              if (mv.src === event.square) {
-                movesFromSquare.push(mv);
-              } else if (mv.castle && getKingStartSquare(side) === event.square) {
-                const rank = side === "black" ? 8 : 1;
-                if (mv.castle === "k") {
-                  movesFromSquare.push({dest: `g${rank}`})
-                } else if (mv.castle === "q") {
-                  movesFromSquare.push({dest: `c${rank}`})
-                }
-              }
-            }
-            for (const move of movesFromSquare) {
-              event.chessboard.addMarker(MARKER_TYPE.dot, move.dest);
-            }
-            return movesFromSquare.length > 0;
-          case INPUT_EVENT_TYPE.moveInputCanceled:
-            event.chessboard.removeMarkers(MARKER_TYPE.dot);
-          case INPUT_EVENT_TYPE.validateMoveInput:
-            const piece = getPieceAt(event.squareFrom);
-            let move = {
-              piece: null,
-              src: null,
-              dest: null,
-            };
-            if (piece.toLowerCase() === "k" && (event.squareFrom[0] === "e" && ["g", "c"].includes(event.squareTo[0]))) {
-              move.castle = event.squareTo[0] === "c" ? "q" : "k";
-            } else {
-              move.piece = piece;
-              move.src = event.squareFrom;
-              move.dest = event.squareTo;
-              const thereIsAPieceAtDest = getPieceAt(event.squareTo);
-              let capture = thereIsAPieceAtDest ? 1 : 0;
-              // check if it's en passant
-              if (!capture && piece.toLowerCase() === "p") {
-                const [fileSource, rankSourceStr] = event.squareFrom;
-                const [fileDest, rankDestStr] = event.squareTo;
-                const fileSourceIndex = "abcdefgh".indexOf(fileSource);
-                const fileDestIndex = "abcdefgh".indexOf(fileDest);
-                const rankSource = parseInt(rankSourceStr);
-                const rankDest = parseInt(rankDestStr);
-                if (Math.abs(fileSourceIndex - fileDestIndex) === 1 
-                    && Math.abs(rankDest - rankSource) === 1) 
-                {
-                  capture = 1;
-                }
-              }
-              if (capture) {
-                move.capture = capture;
-              }
-            }
-            if (
-              !possibleMoves.some(pm => 
-                //  because some of these attributes may be undefined on one side
-                // and null on the other
-                pm.src == move.src && pm.dest == move.dest && pm.piece == move.piece 
-                && pm.capture == move.capture && pm.castle == move.castle
-              )
-            ) {
-              return false;
-            }
-            const msg = JSON.stringify({
-              uid,
-              type: 'move',
-              ...move,
-            });
-            ws.send(msg);
-            if (testing)
-              wsMessageElement.value =
-                wsMessageElement.value + `\nsent:\n ${msg}\n`;
-            myTurn = false;
-            event.chessboard.removeMarkers(MARKER_TYPE.dot);
-            board.disableMoveInput();
-            return true;
-        }
-      },
-      side === 'black' ? COLOR.black : COLOR.white,
-    );
+    return board.disableMoveInput();
   }
+  board.enableMoveInput(
+    function (event) {
+      switch (event.type) {
+        case INPUT_EVENT_TYPE.moveInputStarted:
+          return validateMoveInputStarted(event);
+        case INPUT_EVENT_TYPE.moveInputCanceled:
+          event.chessboard.removeMarkers(MARKER_TYPE.dot);
+          break;
+        case INPUT_EVENT_TYPE.validateMoveInput:
+          return sendMove(event, ws);
+      }
+    },
+    side === 'black' ? COLOR.black : COLOR.white
+  );
 }
 
-function getKingStartSquare(side) {
-  return side === "black" ? "e8" : "e1"
-}
-
-function getPieceAt(src) {
-  const piece = board.getPiece(src);
-  if (piece == null) return null;
-  const [color, pieceName] = piece;
-  return color === "b" ? pieceName : pieceName.toUpperCase();
-}
-
-function doMoves(ws) {
-  // TODO
-}
-
-function movePiece(src, dest, ws) {
-  const piece = getPieceAt(src);
+function sendMove(event, ws) {
+  const piece = getPieceAt(event.squareFrom, board);
   let move = {
     piece: null,
     src: null,
     dest: null,
   };
-  if (piece.toLowerCase() === "k" && (src[0] === "e" && ["g", "c"].includes(dest[0]))) {
-    move.castle = dest[0] === "c" ? "q" : "k";
+
+  if (isCastlingMove(event, piece)) {
+    move.castle = event.squareTo[0] === "c" ? "q" : "k";
   } else {
     move.piece = piece;
-    move.src = src;
-    move.dest = dest;
-    const capture = getPieceAt(move.dest) ? 1 : 0;
-    if (capture) {
-      move.capture = capture;
-    }
+    move.src = event.squareFrom;
+    move.dest = event.squareTo;
+    let capture = isCaptureMove(event, piece, board);
+    if (capture) move.capture = 1;
+    let promote = isPromotionMove(move, side);
+    if (promote) move.promote = 1;
   }
-  const msg = JSON.stringify({
-    uid,
-    type: 'move',
-    ...move,
-  });
+
+  if (invalidMove(move, possibleMoves)) {
+    console.log('invalid move');
+    console.log(move);
+    console.log(possibleMoves);
+    return false
+  }
+
+  const msg = JSON.stringify({uid, type: 'move', ...move});
   ws.send(msg);
+
+  if (testing) wsMessageElement.value = wsMessageElement.value + `\nsent:\n ${msg}\n`;
+
+  myTurn = false;
+  event.chessboard.removeMarkers(MARKER_TYPE.dot);
+  board.disableMoveInput();
+  return true;
 }
 
-function toggleCase(str) {
-  if (str.toUpperCase() === str) {
-    return str.toLowerCase();
+
+function displayMessage(message, timeout = true) {
+  messageBox.innerHTML = message;
+  if (timeout) {
+    setTimeout(function () {
+      messageBox.innerHTML = '';
+    }, 3000);
   }
-  return str.toUpperCase();
+}
+
+function clearMessage() { messageBox.innerHTML = ""; }
+
+const choosePawnPromotionPiece = document.getElementById("pawn-promote");
+const choosePawnPromotionPieceSelect = choosePawnPromotionPiece.querySelector("select");
+choosePawnPromotionPieceSelect.addEventListener("change", function(e) {
+  pawnPromotionPiece = choosePawnPromotionPieceSelect.value;
+  const pieceLetter = pawnPromotionPiece === "Knight" ? "n" : pawnPromotionPiece[0].toLowerCase();
+  const piece = `${side[0]}${pieceLetter}`;
+  board.setPiece(pawnPromotionSquare, piece);
+});
+
+function updateGlobals(event) {
+  gameState = event.game_state;
+  console.log(gameState);
+  boardArray = event.board;
+  possibleMoves = event.possible_moves;
+}
+
+function validateMoveInputStarted(event) {
+  event.chessboard.removeMarkers(MARKER_TYPE.dot);
+  let movesFromSquare = [];
+  for (const mv of possibleMoves) {
+    if (mv.src === event.square) {
+      movesFromSquare.push(mv);
+    } else if (mv.castle && getKingStartSquare() === event.square) {
+      const rank = side === "black" ? 8 : 1;
+      if (mv.castle === "k") {
+        movesFromSquare.push({dest: `g${rank}`})
+      } else if (mv.castle === "q") {
+        movesFromSquare.push({dest: `c${rank}`})
+      }
+    }
+  }
+  for (const move of movesFromSquare) {
+    event.chessboard.addMarker(MARKER_TYPE.dot, move.dest);
+  }
+  return movesFromSquare.length > 0;
 }
