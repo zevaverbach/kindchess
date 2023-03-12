@@ -1,3 +1,4 @@
+- [ ] see 'possible directions' in README.md
 - [ ] show what players/watchers are there
 - [ ] add ethical analytics
 - [ ] why does the checkmated player automatically disconnect?
