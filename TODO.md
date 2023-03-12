@@ -1,13 +1,21 @@
 # Bugs
-- [ ] pawn promotion needs to be rewritten
-  - [ ] the pawn can't transform into its promotion piece _before_ moving to its destination square,
+- [x] pawn promotion needs to be rewritten
+  - [x] the pawn can't transform into its promotion piece _before_ moving to its destination square,
     it messed up get_possible_moves
 
 # Features
 - [x] initiate closing of connection from client (it's not getting called on the server currently)
-- [ ] resign
-- [ ] draw
-  - [ ] make a dialog for accepting/rejecting a draw
+- [x] resign
+- [x] draw
+  - [x] don't allow it until both sides have moved
+  - [x] change message sent from server for
+    - [x] reject
+    - [x] accept
+  - [x] hide 'offer draw' and show 'withdraw draw' when there's a pending one from self
+  - [x] make a dialog for accepting/rejecting a draw
+     - made buttons instead
+  - [x] erase 'you have offered a draw' when it's been rejected or the other person has moved
+  - [x] bug: when white offers a draw, white's buttons are changed instead of black's (from 'offer' to 'accept' and 'decline')
 - [ ] threefold repetition
   - same position
   - same person's turn as two other occurrences
@@ -16,6 +24,8 @@
   - NOT automatic, must be requested by either player _before_ the next move is made
 
 # small UI improvements
+- [ ] gray out the board when the game is over for a reason other than checkmate/stalemate
+  - [ ] or some other visual indication (8-bit GAME OVER?)
 - [ ] shade the selected piece/background
 - [ ] show previous move coloring
 - [ ] don't show the actual UIDs on the main screen, if at all

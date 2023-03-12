@@ -1,18 +1,157 @@
-export function showShareButton(main) {
+export function displayMessage(message, timeout = true) {
+  document.getElementById('messagebox').innerHTML = message;
+  if (timeout) {
+    setTimeout(function () {
+      clearMessage();
+    }, 3000);
+  }
+}
+
+export function clearMessage() {
+  document.getElementById('messagebox').innerHTML = '';
+}
+
+export function showResignButton(uid, ws) {
+  let btn = document.getElementById('resign-button');
+  if (btn && btn.style.display === "inline") return;
+  if (btn) {
+    btn.style.display = "inline";
+  } else {
+    btn = document.createElement("button");
+    btn.id = "resign-button";
+    btn.addEventListener('click', () => {
+      ws.send(JSON.stringify({uid, type: "resign"}));
+    })
+    btn.innerText = "Resign"
+    document.getElementsByTagName('main')[0].appendChild(btn);
+  }
+}
+
+export function showDrawButton(uid, displayMessage, ws, setSelfDrawOffer) {
+  let btn = document.getElementById('draw-button');
+  if (btn && btn.style.display === 'inline') return;
+  if (btn) {
+    btn.style.display = "inline";
+  } else {
+    btn = document.createElement("button");
+    btn.id = "draw-button";
+    btn.addEventListener('click', () => {
+      ws.send(JSON.stringify({uid, type: "draw", draw: "offer"}));
+      hideDrawButton();
+      showWithdrawDrawButton(ws, uid);
+      displayMessage("you have offered a draw.", false);
+      setSelfDrawOffer(true);
+    })
+    btn.innerText = "Offer Draw"
+    document.getElementsByTagName('main')[0].appendChild(btn);
+  }
+}
+
+function showWithdrawDrawButton(ws, uid) {
+  let btn = document.getElementById('draw-withdraw-button');
+  if (btn && btn.style.display === 'inline') return;
+  if (btn) {
+    btn.style.display = "inline";
+  } else {
+    btn = document.createElement("button");
+    btn.id = "draw-withdraw-button";
+    btn.addEventListener('click', () => {
+      ws.send(JSON.stringify({uid, type: "draw", draw: "withdraw"}));
+      hideWithdrawDrawButton();
+      showDrawButton();
+      clearMessage();
+    })
+    btn.innerText = "Withdraw Draw Offer"
+    document.getElementsByTagName('main')[0].appendChild(btn);
+  }
+}
+
+export function hideWithdrawDrawButton() {
+  try {
+    document.getElementById('draw-withdraw-button').style.display = 'none';
+  } catch {
+    return null;
+  }
+}
+
+export function hideButtons() {
+  hideDrawAcceptAndRejectButtons();
+  hideWithdrawDrawButton();
+  hideDrawButton();
+  hideResignButton();
+}
+
+export function hideDrawButton() {
+  document.getElementById('draw-button').style.display = 'none';
+}
+
+function hideResignButton() {
+  document.getElementById('resign-button').style.display = 'none';
+}
+
+export function showDrawAcceptAndRejectButtons(ws, uid) {
+  showDrawAcceptButton(ws, uid);
+  showDrawRejectButton(ws, uid);
+}
+
+function showDrawAcceptButton(ws, uid) {
+  let btn = document.getElementById('draw-accept-button');
+  if (btn && btn.style.display === 'inline') return;
+  if (btn) {
+    btn.style.display = "inline";
+  } else {
+    btn = document.createElement("button");
+    btn.id = "draw-accept-button";
+    btn.addEventListener('click', () => {
+      ws.send(JSON.stringify({uid, type: "draw", draw: "accept"}));
+    })
+    btn.innerText = "Accept Draw"
+    document.getElementsByTagName('main')[0].appendChild(btn);
+  }
+}
+
+function showDrawRejectButton(ws, uid) {
+  let btn = document.getElementById('draw-reject-button');
+  if (btn && btn.style.display === 'inline') return;
+  if (btn) {
+    btn.style.display = "inline";
+  } else {
+    btn = document.createElement("button");
+    btn.id = "draw-reject-button";
+    btn.addEventListener('click', () => {
+      ws.send(JSON.stringify({uid, type: "draw", draw: "reject"}));
+      hideDrawAcceptAndRejectButtons();
+      clearMessage();
+      showDrawButton();
+    })
+    btn.innerText = "Reject Draw"
+    document.getElementsByTagName('main')[0].appendChild(btn);
+  }
+}
+
+export function hideDrawAcceptAndRejectButtons() {
+  try {
+  document.getElementById('draw-accept-button').style.display = 'none';
+  document.getElementById('draw-reject-button').style.display = 'none';
+  } catch {
+  } return null;
+}
+
+export function showShareButton(displayMessage) {
   if (document.getElementById('share-button')) return
   const url = window.location.href;
-  const shareButton = document.createElement("button");
-  shareButton.id = "share-button";
-  shareButton.addEventListener('click', () => {
+  const btn = document.createElement("button");
+  btn.id = "share-button";
+  btn.addEventListener('click', () => {
     navigator.clipboard.writeText(url);
     displayMessage(
       `I've copied the following to your clipboard: ${url}, 
        feel free to share it with whoever you want to play against. 
-       I'll let you know when they've joined!`, false
+       I'll let you know when they've joined!`, true
       )    
   })
-  shareButton.innerText = "share invite URL"
-  main.appendChild(shareButton);
+  btn.innerText = "share invite URL"
+  document.getElementsByTagName('main')[0].appendChild(btn);
 }
 
 export function showStalemate(gameState) {

@@ -120,8 +120,8 @@ def make_move_and_persist(
     """
     state = state or q.get_game_state(uid)
 
-    # draw offer is implicitly rejected if a move is made by either side
-    if state.draw_offered != -1:
+    # draw offer is implicitly rejected if a move is made by the other side
+    if state.draw_offered != -1 and state.turn != state.draw_offered:
         state.draw_offered = -1
 
     if not move.promote and state.need_to_choose_pawn_promotion_piece:

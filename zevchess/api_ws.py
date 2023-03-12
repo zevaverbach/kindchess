@@ -191,7 +191,7 @@ async def game_over(
     if reason not in ("abandoned", "resigned", "draw"):
         if the_move is None:
             raise InvalidArguments
-        non_winner_participants = get_all_participants(store, but=getattr(store, side))
+        non_winner_participants = get_all_participants(store, but=(getattr(store, side),))
         payload = {"type": "move", "move": the_move.to_json()}
         if state:
             payload["game_state"] = state_dict
@@ -204,6 +204,7 @@ async def game_over(
                 "message": msg,
                 "winner": winner,
                 "game_state": state_dict,
+                "reason": reason,
             }
         ),
     )
@@ -294,7 +295,11 @@ async def handler(ws):
     await remove_connection(ws)
 
 
-def get_all_participants(store: ConnectionStore, but: Ws | None = None) -> set[Ws]:
+def get_watchers(store):
+    return get_all_participants(store, but=(store.white, store.black))
+
+
+def get_all_participants(store: ConnectionStore, but: tuple[Ws, ...] | None = None) -> set[Ws]:
     if store.watchers is None:
         ps = set()
     else:
@@ -305,7 +310,7 @@ def get_all_participants(store: ConnectionStore, but: Ws | None = None) -> set[W
         ps.add(store.black)
     if but is None:
         return ps
-    return {p for p in ps if p != but}
+    return {p for p in ps if p not in but}
 
 
 async def pawn_promotion_prompt(ws, store, need_to_choose, move) -> None:
@@ -353,7 +358,7 @@ async def pawn_promotion_complete(ws, uid, choice, move_dict) -> None:
             ws=ws, store=store, side=winner, reason="checkmate", the_move=the_move
         )
     else:
-        recipients = get_all_participants(store, but=ws)
+        recipients = get_all_participants(store, but=(ws,))
         board = t.Board.from_FEN(new_state.FEN).to_array()
         all_possible_moves = q.get_all_legal_moves(new_state, json=True)
         move = the_move.to_json()
@@ -448,7 +453,7 @@ async def move(ws, event: dict) -> None:
                 need_to_choose=new_state.need_to_choose_pawn_promotion_piece,
                 move=event,
             )
-        recipients = get_all_participants(store, but=ws)
+        recipients = get_all_participants(store, but=(ws,))
         board = t.Board.from_FEN(new_state.FEN).to_array()
         all_possible_moves = q.get_all_legal_moves(new_state, json=True)
         ws_broadcast(
@@ -518,13 +523,22 @@ async def offer_draw(ws, uid) -> None:
     if store.white is None or store.black is None:
         return await error(ws, "we don't have two players, can't offer a draw!")
     requester = which_side(ws, store)
-    side = 0 if ws == store.white else 1
     try:
-        c.offer_draw(uid, side)
+        c.offer_draw(uid, 0 if ws == store.white else 1)
     except c.InvalidArguments as e:
         await ws.send(str(e))
     else:
-        ws_broadcast(get_all_participants(store), f"{requester} offers a draw")
+        ws_broadcast(
+            get_watchers(store), 
+            json.dumps({
+                "type": "for_the_watchers",
+                "message": f"{requester} offers a draw",
+            }))
+        other_ws = store.white if ws == store.black else store.black
+        await other_ws.send(json.dumps({
+            "type": "draw_offer", 
+            "message": f"{requester} offers a draw",
+        }))
 
 
 async def withdraw_draw(ws, uid) -> None:
@@ -537,8 +551,16 @@ async def withdraw_draw(ws, uid) -> None:
         await ws.send(str(e))
     else:
         ws_broadcast(
-            get_all_participants(store), f"{requester} has withdrawn their draw offer"
-        )
+            get_watchers(store), 
+            json.dumps({
+                "type": "for_the_watchers",
+                "message": f"{requester} has withdrawn their draw offer"
+            }))
+        other_ws = store.white if ws == store.black else store.black
+        await other_ws.send(json.dumps({
+            "type": "draw_withdraw",
+            "message": f"{requester} has withdrawn their draw offer"
+        }))
 
 
 async def reject_draw(ws, uid) -> None:
@@ -552,9 +574,16 @@ async def reject_draw(ws, uid) -> None:
         await ws.send(str(e))
     else:
         ws_broadcast(
-            get_all_participants(store),
-            f"{requester} has rejected {other}'s draw offer",
-        )
+            get_watchers(store), 
+            json.dumps({
+                "type": "for_the_watchers",
+                "message": f"{requester} has rejected {other}'s draw offer",
+            }))
+        other_ws = store.white if ws == store.black else store.black
+        await other_ws.send(json.dumps({
+            "type": "draw_reject",
+            "message": f"{requester} has rejected {other}'s draw offer",
+        }))
 
 
 async def accept_draw(ws, uid: str) -> None:

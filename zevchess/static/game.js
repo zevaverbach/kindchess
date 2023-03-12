@@ -9,7 +9,21 @@ import {
 import { FEN } 
   from './node_modules/cm-chessboard/src/cm-chessboard/model/Position.js';
 
-import { showShareButton, showStalemate, showCheckmate, updateCheckStatus } from './domOps.js';
+import { 
+  showShareButton, 
+  showStalemate, 
+  showCheckmate, 
+  showResignButton,
+  showDrawButton,
+  showDrawAcceptAndRejectButtons, 
+  hideDrawAcceptAndRejectButtons, 
+  hideDrawButton, 
+  hideWithdrawDrawButton,
+  hideButtons,
+  clearMessage,
+  updateCheckStatus,
+  displayMessage,
+} from './domOps.js';
 import { getPieceAt, getKingStartSquare, invalidMove, isCaptureMove, isCastlingMove, isEnPassantMove, isPromotionMove } from './boardOps.js';
 import { doTheMoveReceived, doTheMoveSentEnPassant, doTheMoveSentCastle } from './moveOps.js';
 
@@ -19,7 +33,7 @@ if (window.location.host === "localhost:8000") {
 } else {
   WEBSOCKET_SERVER_ADDR = 'wss://zevchess-ws-zyr9.onrender.com'
 }
-let side, board, messageBox, pawnPromotionSquare, pawnPromotionMove;
+let side, board, pawnPromotionSquare, pawnPromotionMove;
 let myTurn = false;
 let testing = false;
 let gameOver = false;
@@ -32,12 +46,14 @@ function setCheckedKing(val) {
   checkedKing = val;
 }
 
+let selfDrawOffer = false;
+function setSelfDrawOffer(val) {
+  selfDrawOffer = val;
+}
+let otherDrawOffer = false;
+
 let pawnPromotionPiece = "Queen";
 const uid = window.location.pathname.replace('/', '');
-
-
-
-const main = document.getElementsByTagName('main')[0];
 window.addEventListener("beforeunload", beforeUnloadListener);
 
 function beforeUnloadListener(e) {
@@ -52,7 +68,6 @@ if (testing) {
 }
 
 window.addEventListener('DOMContentLoaded', function () {
-  messageBox = document.getElementById('messagebox');
   const ws = new WebSocket(WEBSOCKET_SERVER_ADDR);
   joinGame(ws);
   receiveMessages(ws);
@@ -89,29 +104,39 @@ function joinGame(ws) {
 
 function receiveMessages(ws) {
   ws.addEventListener('message', function (message) {
-    const event = JSON.parse(message.data);
+    let ev;
+    try {
+      ev = JSON.parse(message.data);
+    } catch (e) {
+      console.log(message.data);
+      throw e;
+    }
     if (testing) wsMessageElement.value = wsMessageElement.value + `\nreceived:\n ${message.data}\n`;
 
-    switch (event.type) {
+    switch (ev.type) {
 
       case 'join_success':
-        updateGlobals(event);
-        handleEventJoinSuccess(event, ws);
+        updateGlobals(ev);
+        handleEventJoinSuccess(ev, ws);
+        break;
+
+      case 'for_the_watchers':
+        displayMessage(ev.message);
         break;
 
       case 'success':
         // TODO: remove the next four lines 
-        if (event.message !== "move acknowledged" || myTurn) {
+        if (ev.message !== "move acknowledged" || myTurn) {
           console.log("there was a message 'success' without the 'move acknowledged' message or !myTurn");
           break;
         }
 
-        if (event.move.castle) {
-          doTheMoveSentCastle(event.move, side, board);
-        } else if (isEnPassantMove(event.move, board, side)) {
-          doTheMoveSentEnPassant(event.move, board, side);
+        if (ev.move.castle) {
+          doTheMoveSentCastle(ev.move, side, board);
+        } else if (isEnPassantMove(ev.move, board, side)) {
+          doTheMoveSentEnPassant(ev.move, board, side);
         } else {
-          const gameState = event.game_state;
+          const gameState = ev.game_state;
           // TODO: remove the next five lines 
           console.log(gameState);
           if (gameState == undefined) {
@@ -123,18 +148,50 @@ function receiveMessages(ws) {
         break;
 
       case 'move':
-        const move = event.move;
+        const move = ev.move;
+        if (selfDrawOffer) {
+          selfDrawOffer = false;
+          hideWithdrawDrawButton();
+          showDrawButton();
+          clearMessage();
+        }
         doTheMoveReceived(move, board, side);
-        updateGlobals(event);
+        updateGlobals(ev);
+        if (gameState.half_moves == 2) {
+          showDrawButton(uid, displayMessage, ws, setSelfDrawOffer);
+        }
         updateCheckStatus(gameState, checkedKing, setCheckedKing);
         myTurn = true;
         sendMoves(ws);
         break;
 
+      case 'draw_offer':
+        hideDrawButton();
+        showDrawAcceptAndRejectButtons(ws, uid);
+        displayMessage(ev.message, false);
+        otherDrawOffer = true;
+        break;
+
+      case 'draw_withdraw':
+        showDrawButton();
+        hideDrawAcceptAndRejectButtons();
+        clearMessage();
+        displayMessage(ev.message);
+        otherDrawOffer = false;
+        break;
+
+      case 'draw_reject':
+        showDrawButton();
+        hideWithdrawDrawButton();
+        showDrawButton();
+        selfDrawOffer = false;
+        displayMessage(ev.message);
+        break;
+
       case 'input_required':
-        if (event.message !== "choose pawn promotion piece") break;
-        pawnPromotionSquare = event.dest;
-        pawnPromotionMove = event.move;
+        if (ev.message !== "choose pawn promotion piece") break;
+        pawnPromotionSquare = ev.dest;
+        pawnPromotionMove = ev.move;
         const queenPiece = `${side[0]}q`;
         board.setPiece(pawnPromotionSquare, queenPiece);
         choosePawnPromotionPiece.showModal();
@@ -144,17 +201,21 @@ function receiveMessages(ws) {
         if (gameOver) { // already gameOver
           break;
         }
-        const winner = event.winner;
-        gameState = event.game_state;
+        const winner = ev.winner;
+        gameState = ev.game_state;
         // TODO: remove
         console.log(gameState);
-        if (winner != null) {
+        console.log('winner:', winner);
+        console.log('event:', ev);
+        hideButtons();
+        if (winner != null && ev.reason === "checkmate") {
           showCheckmate(winner, gameState);
-        } else if (event.message === "stalemate!") {
+        } else if (ev.message === "stalemate!") {
           showStalemate(gameState);
         }
-        displayMessage(event.message, false);
+        displayMessage("GAME OVER: " + ev.message, false);
         gameOver = true;
+        board.disableMoveInput();
         window.removeEventListener("beforeunload", beforeUnloadListener);
         ws.close();
         break;
@@ -167,13 +228,14 @@ function handleEventJoinSuccess(event, ws) {
     side = 'white';
   } else {
     side = event.side;
-    // otherwise it's a watcher
     if (side) {
+      // otherwise it's a watcher
       clearMessage();
+      showResignButton(uid, ws);
       displayMessage('game on!');
     }
   }
-  showShareButton(main);
+  showShareButton(displayMessage);
   if (side == 'white' && event.game_status === 'ready') {
     myTurn = true;
     sendMoves(ws);
@@ -234,9 +296,17 @@ function sendMove(event, ws) {
     return false
   }
 
+  if (otherDrawOffer) {
+    otherDrawOffer = false;
+    hideDrawAcceptAndRejectButtons();
+    showDrawButton();
+    clearMessage();
+  }
+  if (gameState.half_moves == 1) {
+    showDrawButton(uid, displayMessage, ws, setSelfDrawOffer);
+  }
   const msg = JSON.stringify({uid, type: 'move', ...move});
   ws.send(msg);
-
   if (testing) wsMessageElement.value = wsMessageElement.value + `\nsent:\n ${msg}\n`;
 
   myTurn = false;
@@ -244,18 +314,6 @@ function sendMove(event, ws) {
   board.disableMoveInput();
   return true;
 }
-
-
-function displayMessage(message, timeout = true) {
-  messageBox.innerHTML = message;
-  if (timeout) {
-    setTimeout(function () {
-      messageBox.innerHTML = '';
-    }, 3000);
-  }
-}
-
-function clearMessage() { messageBox.innerHTML = ""; }
 
 const choosePawnPromotionPiece = document.getElementById("pawn-promote");
 const choosePawnPromotionPieceSelect = choosePawnPromotionPiece.querySelector("select");
