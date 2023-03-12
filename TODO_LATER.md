@@ -13,7 +13,6 @@
   - [ ] core
       - [ ] pieces
       - [ ] ...
-  - [ ] UIs
   - [ ] move the extra move validation out of websockets and into a separate interfaces module (not core)
     - [ ] "can't move for another player", "can't move when you're a spectator", etc.
 - [ ] keyboard bindings

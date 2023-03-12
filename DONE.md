@@ -1,3 +1,34 @@
+# Bugs
+- [x] pawn promotion needs to be rewritten
+  - [x] the pawn can't transform into its promotion piece _before_ moving to its destination square,
+    it messed up get_possible_moves
+- [x] the black king, when eligible to castle, doesn't have a dot in the right place for that
+
+# Features
+- [x] initiate closing of connection from client (it's not getting called on the server currently)
+- [x] resign
+- [x] draw
+  - [x] don't allow it until both sides have moved
+  - [x] change message sent from server for
+    - [x] reject
+    - [x] accept
+  - [x] hide 'offer draw' and show 'withdraw draw' when there's a pending one from self
+  - [x] make a dialog for accepting/rejecting a draw
+     - made buttons instead
+  - [x] erase 'you have offered a draw' when it's been rejected or the other person has moved
+  - [x] bug: when white offers a draw, white's buttons are changed instead of black's (from 'offer' to 'accept' and 'decline')
+- [x] threefold repetition
+  - same position
+  - same person's turn as two other occurrences
+  - same en passant state
+  - same castling state
+  - NOT automatic, must be requested by either player _before_ the next move is made
+  - [x] create a record of a combination of
+    - [x] board states 
+    - [x] all possible moves for each board state
+  - [x] after each move, check whether the state has occurred twice before
+  - [x] when the game is over, empty this cache as well
+  - [x] deal with `state.draw = 1` in ws logic after `do_move_and_persist`
 - [x] there's a bunch of stray UIDs on the home screen, they're getting stuck in Redis 
 - [x] this should be checkmate: ![should be checkmate](should_be_checkmate.png)
   - 2k4N/ppp5/5n1p/8/4N2n/3b4/PP1b2r1/5K2

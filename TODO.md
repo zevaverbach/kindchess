@@ -1,48 +1,24 @@
 # Bugs
-- [x] pawn promotion needs to be rewritten
-  - [x] the pawn can't transform into its promotion piece _before_ moving to its destination square,
-    it messed up get_possible_moves
 
-# Features
-- [x] initiate closing of connection from client (it's not getting called on the server currently)
-- [x] resign
-- [x] draw
-  - [x] don't allow it until both sides have moved
-  - [x] change message sent from server for
-    - [x] reject
-    - [x] accept
-  - [x] hide 'offer draw' and show 'withdraw draw' when there's a pending one from self
-  - [x] make a dialog for accepting/rejecting a draw
-     - made buttons instead
-  - [x] erase 'you have offered a draw' when it's been rejected or the other person has moved
-  - [x] bug: when white offers a draw, white's buttons are changed instead of black's (from 'offer' to 'accept' and 'decline')
-- [x] threefold repetition
-  - same position
-  - same person's turn as two other occurrences
-  - same en passant state
-  - same castling state
-  - NOT automatic, must be requested by either player _before_ the next move is made
-  - [x] create a record of a combination of
-    - [x] board states 
-    - [x] all possible moves for each board state
-  - [x] after each move, check whether the state has occurred twice before
-  - [x] when the game is over, empty this cache as well
-  - [x] deal with `state.draw = 1` in ws logic after `do_move_and_persist`
 
 # small UI improvements
-- [ ] gray out the board when the game is over for a reason other than checkmate/stalemate
-  - [ ] or some other visual indication (8-bit GAME OVER?)
 - [ ] shade the selected piece/background
 - [ ] show previous move coloring
-- [ ] don't show the actual UIDs on the main screen, if at all
+- [ ] change color of target piece when it's in the path of the selected piece 
+  - [ ] instead of a dot
+- [ ] support landscape mode on mobile (fill the screen ,no scrolling)
 - [ ] add instructions for inviting a friend
 - [ ] add a spinner when creating a game
-- [ ] make dots smaller
-- [ ] put dots in front of pieces (z-index)
+- [x] make dots smaller
+- [ ] don't show the actual UIDs on the main screen, if at all
+- [ ] gray out the board when the game is over for a reason other than checkmate/stalemate
+  - [ ] or some other visual indication (8-bit GAME OVER?)
 
 # Next
 - [ ] make sure same-origin policy is getting enforced
 - [ ] put it at a domain, even if it's averba.ch/chess
+- [ ] add a feedback box
+- [ ] add a newsletter signup
 - [ ] make "private room" functionality where you can create a room and it's always available
   - [ ] allow room owner to put name tags on for both players
 - [ ] load testing

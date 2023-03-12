@@ -41,12 +41,14 @@ import {
   doTheMoveSentCastle 
 } from './moveOps.js';
 
+// TODO: get this from environment
 let WEBSOCKET_SERVER_ADDR;
 if (window.location.host === "localhost:8000") {
   WEBSOCKET_SERVER_ADDR = 'ws://0.0.0.0:8080/'
 } else {
   WEBSOCKET_SERVER_ADDR = 'wss://zevchess-ws-zyr9.onrender.com'
 }
+
 let side, board, pawnPromotionSquare, pawnPromotionMove;
 let myTurn = false;
 let testing = false;
@@ -54,6 +56,7 @@ let gameOver = false;
 let gameState = {};
 let boardArray = [];
 let possibleMoves = [];
+let pawnPromotionPiece = "Queen";
 
 let checkedKing = "";
 function setCheckedKing(val) {
@@ -66,7 +69,6 @@ function setSelfDrawOffer(val) {
 }
 let otherDrawOffer = false;
 
-let pawnPromotionPiece = "Queen";
 const uid = window.location.pathname.replace('/', '');
 window.addEventListener("beforeunload", beforeUnloadListener);
 
@@ -151,12 +153,6 @@ function receiveMessages(ws) {
           doTheMoveSentEnPassant(ev.move, board, side);
         } else {
           const gameState = ev.game_state;
-          // TODO: remove the next five lines 
-          console.log(gameState);
-          if (gameState == undefined) {
-            console.log('gameState is undefined for some reason');
-            break;
-          }
           updateCheckStatus(gameState, checkedKing, setCheckedKing);
         }
         break;
@@ -217,10 +213,6 @@ function receiveMessages(ws) {
         }
         const winner = ev.winner;
         gameState = ev.game_state;
-        // TODO: remove
-        console.log(gameState);
-        console.log('winner:', winner);
-        console.log('event:', ev);
         hideButtons();
         if (winner != null && ev.reason === "checkmate") {
           showCheckmate(winner, gameState);
@@ -305,9 +297,6 @@ function sendMove(event, ws) {
   }
 
   if (invalidMove(move, possibleMoves)) {
-    console.log('invalid move');
-    console.log(move);
-    console.log(possibleMoves);
     return false
   }
 
@@ -341,7 +330,6 @@ choosePawnPromotionPieceSelect.addEventListener("change", function(e) {
 
 function updateGlobals(event) {
   gameState = event.game_state;
-  console.log(gameState);
   boardArray = event.board;
   possibleMoves = event.possible_moves;
 }
@@ -352,12 +340,12 @@ function validateMoveInputStarted(event) {
   for (const mv of possibleMoves) {
     if (mv.src === event.square) {
       movesFromSquare.push(mv);
-    } else if (mv.castle && getKingStartSquare() === event.square) {
+    } else if (mv.castle && getKingStartSquare(side) === event.square) {
       const rank = side === "black" ? 8 : 1;
       if (mv.castle === "k") {
         movesFromSquare.push({dest: `g${rank}`})
       } else if (mv.castle === "q") {
-        movesFromSquare.push({dest: `c${rank}`})
+        movesFromSquare.push({dest: `c${rank}`});
       }
     }
   }
