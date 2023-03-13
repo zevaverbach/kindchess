@@ -275,7 +275,7 @@ function sendMoves(ws) {
         case INPUT_EVENT_TYPE.moveInputStarted:
           return validateMoveInputStarted(event);
         case INPUT_EVENT_TYPE.moveInputCanceled:
-          event.chessboard.removeMarkers(MARKER_TYPE.dot);
+          board.removeDots();
           break;
         case INPUT_EVENT_TYPE.validateMoveInput:
           return sendMove(event, ws);
@@ -326,7 +326,7 @@ function sendMove(event, ws) {
   if (testing) wsMessageElement.value = wsMessageElement.value + `\nsent:\n ${msg}\n`;
 
   myTurn = false;
-  event.chessboard.removeMarkers(MARKER_TYPE.dot);
+  board.removeDots();
   board.disableMoveInput();
   return true;
 }
@@ -347,7 +347,7 @@ function updateGlobals(event) {
 }
 
 function validateMoveInputStarted(event) {
-  event.chessboard.removeMarkers(MARKER_TYPE.dot);
+  board.removeDots();
   let movesFromSquare = [];
   for (const mv of possibleMoves) {
     if (mv.src === event.square) {
@@ -362,7 +362,7 @@ function validateMoveInputStarted(event) {
     }
   }
   for (const move of movesFromSquare) {
-    event.chessboard.addMarker(MARKER_TYPE.dot, move.dest);
+    board.addDot(move.dest);
   }
   return movesFromSquare.length > 0;
 }

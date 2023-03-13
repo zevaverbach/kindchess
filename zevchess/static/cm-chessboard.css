@@ -19,9 +19,9 @@
   fill: dodgerblue;
   opacity: 0.3; }
 
-.cm-chessboard .markers .marker.markerDot, .cm-chessboard .markers .marker.marker-dot {
-  fill: black;
-  opacity: 0.3; }
+.marker.markerDot, .marker.marker-dot {
+  fill: dodgerblue;
+  opacity: 1.0; }
 
 .cm-chessboard .markers .marker.markerCircle, .cm-chessboard .markers .marker.marker-circle {
   stroke: #000055;
