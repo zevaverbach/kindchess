@@ -14,7 +14,9 @@
   - [ ] or some other visual indication (8-bit GAME OVER?)
 
 # Next
-- [ ] make sure same-origin policy is getting enforced
+- [x] make sure same-origin policy is getting enforced
+- [ ] some basic rate limiting/IP-banning
+  - [ ] alternatively, require invites to actually use it, with shareable invite codes
 - [ ] add a feedback box
 - [ ] add a newsletter signup
 - [ ] put it at a domain, even if it's averba.ch/chess
@@ -39,10 +41,9 @@
 - [ ] game clock
 - [ ] material tracking - points, pieces
 - [ ] build out the site, make it look nice
-  - consider using [these web components][3] for straightforward, buildless dev.
+  - consider using [these web components](https://shoelace.style/) for straightforward, buildless dev.
 - [ ] move history
-- [ ] accounts/auth
+- [ ] accounts/auth [link](https://websockets.readthedocs.io/en/10.4/topics/authentication.html#sending-credentials)
 - [ ] figure out how to get the message to actually display when being warned about abandoning a game.
 - [ ] dark mode
 
-[3]: https://shoelace.style/

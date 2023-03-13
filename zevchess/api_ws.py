@@ -25,6 +25,9 @@ class ConnectionStore:
     watchers: set[Ws] | None = None
 
 
+VALID_ORIGINS = ("http://localhost:8000",)
+if int(q.PROD):
+    VALID_ORIGINS = ("https://zevchess-ws.onrender.com",)
 CONNECTIONS = {}
 CONNECTION_WS_STORE_DICT: dict[
     str, tuple[ConnectionStore, typing.Literal["black", "white", "watchers"]]
@@ -639,6 +642,7 @@ async def main():
         handler,
         host="",
         port=8080,
+        origins=VALID_ORIGINS,
         process_request=health_check,
     ):
         await stop
