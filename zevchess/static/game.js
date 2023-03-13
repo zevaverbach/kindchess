@@ -47,7 +47,7 @@ let WEBSOCKET_SERVER_ADDR;
 if (window.location.host === "localhost:8000") {
   WEBSOCKET_SERVER_ADDR = 'ws://0.0.0.0:8080/'
 } else {
-  WEBSOCKET_SERVER_ADDR = 'wss://zevchess-ws-zyr9.onrender.com'
+  WEBSOCKET_SERVER_ADDR = 'wss://ws.kindchess.com'
 }
 
 let side, board, pawnPromotionSquare, pawnPromotionMove;
