@@ -51,11 +51,12 @@ related topics.
 - unit testing (in process via test-driven development)
 
 # Cost
-- $32/month as of feb 27 2023
-  - postgres $7 (dev $0)
-  - redis $10 (dev $0)
-  - websocket server $7 (dev $0)
-  - web API server $7 (dev $0)
+- $382/year as of feb 27 2023
+  - domain $10
+  - postgres $84 (dev $0)
+  - redis $120 (dev $0)
+  - websocket server $84 (dev $0)
+  - web API server $84 (dev $0)
 
 # Roadmap
 Once there's a functional, not-too-buggy web API and web client, I'll load test and profile it 
@@ -92,6 +93,7 @@ to present possible moves, including possibly some annotation/speech about why i
 - ability to jump ahead and imagine moves by both sides while a) waiting for opponent to move or b) figuring out how to move.
   - store moves in a list and choose from them when ready
     - only for the very next move at first, not multiple
+- optional subtle, playful animations
 
 # Resources Used
 - [generate FEN from board](http://www.netreal.de/Forsyth-Edwards-Notation/index.php)

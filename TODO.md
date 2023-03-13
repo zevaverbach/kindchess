@@ -1,8 +1,8 @@
 # Bugs
 
 # small UI improvements
-- [ ] shade the selected piece/background
-- [ ] show previous move coloring
+- [x] shade the selected piece/background
+- [x] show previous move coloring
 - [ ] change color of target piece when it's in the path of the selected piece 
   - [ ] instead of a dot
 - [ ] support landscape mode on mobile (fill the screen ,no scrolling)
@@ -19,7 +19,7 @@
   - [ ] alternatively, require invites to actually use it, with shareable invite codes
 - [ ] add a feedback box
 - [ ] add a newsletter signup
-- [ ] put it at a domain, even if it's averba.ch/chess
+- [x] put it at a domain, even if it's averba.ch/chess
 - [ ] make "private room" functionality where you can create a room and it's always available
   - [ ] allow room owner to put name tags on for both players
   - [ ] what would be cool is chess.org/myname/friendname

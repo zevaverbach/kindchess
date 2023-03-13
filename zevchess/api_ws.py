@@ -27,7 +27,7 @@ class ConnectionStore:
 
 VALID_ORIGINS = ("http://localhost:8000",)
 if int(q.PROD):
-    VALID_ORIGINS = ("https://zevchess-ws.onrender.com",)
+    VALID_ORIGINS = ("https://zevchess-ws.onrender.com", "https://zevchess.com")
 CONNECTIONS = {}
 CONNECTION_WS_STORE_DICT: dict[
     str, tuple[ConnectionStore, typing.Literal["black", "white", "watchers"]]

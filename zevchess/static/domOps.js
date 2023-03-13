@@ -1,3 +1,5 @@
+import { MARKER_TYPE } from './node_modules/cm-chessboard/src/cm-chessboard/Chessboard.js';
+
 export function displayMessage(message, timeout = true) {
   document.getElementById('messagebox').innerHTML = message;
   if (timeout) {
@@ -5,6 +7,14 @@ export function displayMessage(message, timeout = true) {
       clearMessage();
     }, 3000);
   }
+}
+
+export function highlightPrevMove(from, to, fromWas, toWas, setPrevMove, board) {
+  setPrevMove(from, to);
+  board.removeMarkers(MARKER_TYPE.squarePrevMove, fromWas);
+  board.removeMarkers(MARKER_TYPE.squarePrevMove, toWas);
+  board.addMarker(MARKER_TYPE.squarePrevMove, from);
+  board.addMarker(MARKER_TYPE.squarePrevMove, to);
 }
 
 export function clearMessage() {

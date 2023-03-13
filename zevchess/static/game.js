@@ -23,6 +23,7 @@ import {
   clearMessage,
   updateCheckStatus,
   displayMessage,
+  highlightPrevMove,
 } from './domOps.js';
 
 import { 
@@ -57,6 +58,12 @@ let gameState = {};
 let boardArray = [];
 let possibleMoves = [];
 let pawnPromotionPiece = "Queen";
+let prevMoveOrigin;
+let prevMoveDest;
+function setPrevMove(orig, dest) {
+  prevMoveOrigin = orig;
+  prevMoveDest = dest;
+}
 
 let checkedKing = "";
 function setCheckedKing(val) {
@@ -165,7 +172,8 @@ function receiveMessages(ws) {
           showDrawButton();
           clearMessage();
         }
-        doTheMoveReceived(move, board, side);
+        const [from, to] = doTheMoveReceived(move, board, side);
+        highlightPrevMove(from, to, prevMoveOrigin, prevMoveDest, setPrevMove, board);
         updateGlobals(ev);
         if (gameState.half_moves == 2) {
           showDrawButton(uid, displayMessage, ws, setSelfDrawOffer);
@@ -251,8 +259,9 @@ function handleEventJoinSuccess(event, ws) {
     board = new Chessboard(document.getElementById('board'), {
       position: FEN.start,
       orientation: side ? side[0] : "w", // if it's a watcher, display from white's POV
-      style: {moveFromMarker: undefined, moveToMarker: undefined}, // disable standard markers
+      style: {moveFromMarker: MARKER_TYPE.square, moveToMarker: MARKER_TYPE.square}, // disable standard markers
     });
+    window.B = board;
   }
 }
 
@@ -284,12 +293,14 @@ function sendMove(event, ws) {
     dest: null,
   };
 
+  let to, from;
   if (isCastlingMove(event, piece)) {
     move.castle = event.squareTo[0] === "c" ? "q" : "k";
+    [to, from] = [event.squareTo, event.squareFrom];
   } else {
     move.piece = piece;
-    move.src = event.squareFrom;
-    move.dest = event.squareTo;
+    from = move.src = event.squareFrom;
+    to = move.dest = event.squareTo;
     let capture = isCaptureMove(event, piece, board);
     if (capture) move.capture = 1;
     let promote = isPromotionMove(move, side);
@@ -311,6 +322,7 @@ function sendMove(event, ws) {
   }
   const msg = JSON.stringify({uid, type: 'move', ...move});
   ws.send(msg);
+  highlightPrevMove(from, to, prevMoveOrigin, prevMoveDest, setPrevMove, board);
   if (testing) wsMessageElement.value = wsMessageElement.value + `\nsent:\n ${msg}\n`;
 
   myTurn = false;

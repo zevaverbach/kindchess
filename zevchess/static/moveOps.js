@@ -17,20 +17,24 @@ export function doTheMoveSentEnPassant(move, board, side) {
 }
 
 export function doTheMoveReceived(move, board, side) {
+  let from, to;
   if (move.castle) {
     const rank = side === "black" ? 1 : 8; // it's the other side that castled
     if (move.castle === "k") {
-      board.movePiece(`e${rank}`, `g${rank}`, true)
+      [from, to] = [`e${rank}`, `g${rank}`];
+      board.movePiece(from, to, true)
       board.movePiece(`h${rank}`, `f${rank}`, true)
     } else {
-      board.movePiece(`e${rank}`, `c${rank}`, true)
+      [from, to] = [`e${rank}`, `c${rank}`];
+      board.movePiece(from, to, true)
       board.movePiece(`a${rank}`, `d${rank}`, true)
     }
-    return
+    return [from, to]
   }
-  const enPassant = move.capture === 1 && getPieceAt(move.dest, board) == null
+  [from, to] = [move.src, move.dest];
+  const enPassant = move.capture === 1 && getPieceAt(to, board) == null
   board
-    .movePiece(move.src, move.dest, true).then(() => {
+    .movePiece(from, to, true).then(() => {
       if (enPassant) {
         const [file, rankStr] = move.dest;
         const rank = parseInt(rankStr);
@@ -43,4 +47,5 @@ export function doTheMoveReceived(move, board, side) {
         board.setPiece(move.dest, piece);
       }
   });
+  return [from, to];
 }
