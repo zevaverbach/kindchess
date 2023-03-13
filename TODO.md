@@ -1,22 +1,22 @@
 # Bugs
 
 # small UI improvements
-- [x] shade the selected piece/background
-- [x] show previous move coloring
 - [ ] show dot on top of possbile target piece (possible moves)
+  - z-index doesn't cut it for this so far
+  - [ ] might be just as much work to change the color of the piece/background
 - [ ] support landscape mode on mobile (fill the screen ,no scrolling)
 - [ ] add instructions for inviting a friend
 - [ ] add a spinner when creating a game
-- [x] make dots smaller
 - [ ] don't show the actual UIDs on the main screen, if at all
+- [x] make dots smaller
+- [x] shade the selected piece/background
+- [x] show previous move coloring
 
 # Next
-- [x] make sure same-origin policy is getting enforced
 - [ ] some basic rate limiting/IP-banning
   - [ ] alternatively, require invites to actually use it, with shareable invite codes
 - [ ] add a feedback box
 - [ ] add a newsletter signup
-- [x] put it at a domain, even if it's averba.ch/chess
 - [ ] make "private room" functionality where you can create a room and it's always available
   - [ ] allow room owner to put name tags on for both players
   - [ ] what would be cool is chess.org/myname/friendname
@@ -47,4 +47,6 @@
 - [ ] change color of target piece when it's in the path of the selected piece 
   - [ ] instead of a dot
 - [ ] dark mode
+- [x] put it at a domain, even if it's averba.ch/chess
+- [x] make sure same-origin policy is getting enforced
 
