@@ -3,15 +3,12 @@
 # small UI improvements
 - [x] shade the selected piece/background
 - [x] show previous move coloring
-- [ ] change color of target piece when it's in the path of the selected piece 
-  - [ ] instead of a dot
+- [ ] show dot on top of possbile target piece (possible moves)
 - [ ] support landscape mode on mobile (fill the screen ,no scrolling)
 - [ ] add instructions for inviting a friend
 - [ ] add a spinner when creating a game
 - [x] make dots smaller
 - [ ] don't show the actual UIDs on the main screen, if at all
-- [ ] gray out the board when the game is over for a reason other than checkmate/stalemate
-  - [ ] or some other visual indication (8-bit GAME OVER?)
 
 # Next
 - [x] make sure same-origin policy is getting enforced
@@ -45,5 +42,9 @@
 - [ ] move history
 - [ ] accounts/auth [link](https://websockets.readthedocs.io/en/10.4/topics/authentication.html#sending-credentials)
 - [ ] figure out how to get the message to actually display when being warned about abandoning a game.
+- [ ] gray out the board when the game is over for a reason other than checkmate/stalemate
+  - [ ] or some other visual indication (8-bit GAME OVER?)
+- [ ] change color of target piece when it's in the path of the selected piece 
+  - [ ] instead of a dot
 - [ ] dark mode
 
