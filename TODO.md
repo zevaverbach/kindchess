@@ -1,10 +1,8 @@
 # Bugs
 
 # small UI improvements
-- [ ] support landscape mode on mobile (fill the screen ,no scrolling)
-- [ ] add instructions for inviting a friend
+- [x] support landscape mode on mobile (fill the screen ,no scrolling)
 - [ ] add a spinner when creating a game
-- [ ] don't show the actual UIDs on the main screen, if at all
 - [x] make dots smaller
 - [x] shade the selected piece/background
 - [x] show previous move coloring
@@ -12,6 +10,11 @@
   - z-index doesn't cut it for this so far
 
 # Next
+- [ ] enable reconnecting instead of 'abandoned' when you leave
+- [ ] anonymous matchups
+- [ ] move history
+- [ ] stockfish
+- [ ] add instructions
 - [ ] some basic rate limiting/IP-banning
   - [ ] alternatively, require invites to actually use it, with shareable invite codes
 - [ ] add a feedback box
@@ -38,7 +41,6 @@
 - [ ] material tracking - points, pieces
 - [ ] build out the site, make it look nice
   - consider using [these web components](https://shoelace.style/) for straightforward, buildless dev.
-- [ ] move history
 - [ ] accounts/auth [link](https://websockets.readthedocs.io/en/10.4/topics/authentication.html#sending-credentials)
 - [ ] figure out how to get the message to actually display when being warned about abandoning a game.
 - [ ] use promotion dialog that's built into cm-chessboard

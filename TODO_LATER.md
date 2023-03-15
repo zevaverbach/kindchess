@@ -16,6 +16,7 @@
       - [ ] ...
   - [ ] move the extra move validation out of websockets and into a separate interfaces module (not core)
     - [ ] "can't move for another player", "can't move when you're a spectator", etc.
+- [ ] make the colors customizable and/or varying, kind of rainbow-y
 - [ ] keyboard bindings
 - [ ] collaborative chess
 - [ ] check -> red background
