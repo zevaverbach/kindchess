@@ -1,19 +1,29 @@
 # Bugs
+- [ ] can't click on a space if you're hovering over the blue dot
+- [ ] if you click an ineligible square (no dots) after selecting a piece, it doesn't remove the dots but it un-highlights the piece and makes it so you can't click on a dot to move the piece
+- [x] clicking on 'offer draw' results in a 'ws is null' error
+
 
 # small UI improvements
+- [x] prevent modals from being dismissed via 'escape'
 - [x] support landscape mode on mobile (fill the screen ,no scrolling)
 - [x] make the board centered
 - [x] make it so the buttons don't go off the page (board a bit smaller?)
-- [ ] add a spinner when creating a game
-- [ ] make the messages (game on, game over, etc.) modals which hover over the center of the board
+- [x] add a spinner when creating a game
+- [x] make the messages (game on, game over, etc.) modals which hover over the center of the board
+  - [x] make modal
+  - [x] on second thought, only use the modal for game over
+- [ ] make room for non-game over messages, use colors
 - [x] make dots smaller
 - [x] shade the selected piece/background
 - [x] show previous move coloring
-- [x] show dot on top of possbile target piece (possible moves)
+- [x] show dot on top of possible target piece (possible moves)
   - z-index doesn't cut it for this so far
 
 # Next
 - [ ] enable reconnecting instead of 'abandoned' when you leave
+  - [ ] use cookies for each game
+  - [ ] deliver the HTML + JS with the current state of the game when getting a reconnect request
 - [ ] anonymous matchups
 - [ ] move history
 - [ ] stockfish
@@ -40,7 +50,9 @@
     - instead of FEN, maybe a hash
     - [bitboard](https://blog.devgenius.io/improve-as-a-software-engineer-by-writing-a-chess-engine-c360109371aa)
       - there are bit operations in redis, si jamais
+  - [ ] use a CDN
 - [ ] game clock
+  - [ ] need to send an 'ack'(knowledged) message when the curernt player receives the previous move of the other player
 - [ ] material tracking - points, pieces
 - [ ] build out the site, make it look nice
   - consider using [these web components](https://shoelace.style/) for straightforward, buildless dev.

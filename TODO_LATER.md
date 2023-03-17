@@ -1,3 +1,5 @@
+- [ ] cache spinner instead of loading from CDN
+- [ ] make unique boards and pieces
 - [ ] see 'possible directions' in README.md
 - [ ] show what players/watchers are there
 - [ ] add ethical analytics

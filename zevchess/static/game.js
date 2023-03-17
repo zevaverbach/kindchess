@@ -23,6 +23,8 @@ import {
   clearMessage,
   updateCheckStatus,
   displayMessage,
+  displayModal,
+  hideModal,
   highlightPrevMove,
 } from './domOps.js';
 
@@ -77,6 +79,19 @@ function setSelfDrawOffer(val) {
 let otherDrawOffer = false;
 
 const uid = window.location.pathname.replace('/', '');
+
+const choosePawnPromotionPiece = document.getElementById("pawn-promote");
+choosePawnPromotionPiece.addEventListener('cancel', event => {
+  event.preventDefault();
+});
+const choosePawnPromotionPieceSelect = choosePawnPromotionPiece.querySelector("select");
+choosePawnPromotionPieceSelect.addEventListener("change", function(e) {
+  pawnPromotionPiece = choosePawnPromotionPieceSelect.value;
+  const pieceLetter = pawnPromotionPiece === "Knight" ? "n" : pawnPromotionPiece[0].toLowerCase();
+  const piece = `${side[0]}${pieceLetter}`;
+  board.setPiece(pawnPromotionSquare, piece);
+});
+
 window.addEventListener("beforeunload", beforeUnloadListener);
 
 function beforeUnloadListener(e) {
@@ -90,13 +105,20 @@ if (testing) {
   const wsMessageElement = div.firstChild;
 }
 
+document.onreadystatechange = function() {
+  if (document.readyState !== "complete") {
+    document.querySelector("main").style.visibility = "hidden";
+    document.querySelector("#loader").style.visibility = "visible";
+  } else {
+    document.querySelector("#loader").style.display = "none";
+    document.querySelector("main").style.visibility = "visible";
+  }
+};
+
 window.addEventListener('DOMContentLoaded', function() {
   const ws = new WebSocket(WEBSOCKET_SERVER_ADDR);
   joinGame(ws);
   receiveMessages(ws);
-  if (side) {
-    displayMessage('waiting for black to join', false);
-  }
   choosePawnPromotionPiece.addEventListener("close", function() {
     ws.send(JSON.stringify({
       type: "pawn_promote",
@@ -144,6 +166,7 @@ function receiveMessages(ws) {
         break;
 
       case 'for_the_watchers':
+
         displayMessage(ev.message);
         break;
 
@@ -176,7 +199,7 @@ function receiveMessages(ws) {
         highlightPrevMove(from, to, prevMoveOrigin, prevMoveDest, setPrevMove, board);
         updateGlobals(ev);
         if (gameState.half_moves == 2) {
-          showDrawButton(uid, displayMessage, ws, setSelfDrawOffer);
+          showDrawButton(uid, ws, setSelfDrawOffer);
         }
         updateCheckStatus(gameState, checkedKing, setCheckedKing);
         myTurn = true;
@@ -227,7 +250,7 @@ function receiveMessages(ws) {
         } else if (ev.message === "stalemate!") {
           showStalemate(gameState);
         }
-        displayMessage("GAME OVER: " + ev.message, false);
+        displayModal("GAME OVER: " + ev.message);
         hideShareButton();
         gameOver = true;
         board.disableMoveInput();
@@ -247,10 +270,19 @@ function handleEventJoinSuccess(event, ws) {
       // otherwise it's a watcher
       clearMessage();
       showResignButton(uid, ws);
+      if (side === "white") {
+        hideModal();
+      }
       displayMessage('game on!');
     }
   }
-  showShareButton(displayMessage);
+  showShareButton();
+  if (event.game_status === 'waiting' && side && side === 'white') {
+    console.log('displaying modal hopefully');
+    displayModal('waiting for black to join');
+  } else {
+    console.log("didn't display modal because side is", side);
+  }
   if (side == 'white' && event.game_status === 'ready') {
     myTurn = true;
     sendMoves(ws);
@@ -318,7 +350,7 @@ function sendMove(event, ws) {
     clearMessage();
   }
   if (gameState.half_moves == 1) {
-    showDrawButton(uid, displayMessage, ws, setSelfDrawOffer);
+    showDrawButton(uid, ws, setSelfDrawOffer);
   }
   const msg = JSON.stringify({ uid, type: 'move', ...move });
   ws.send(msg);
@@ -330,15 +362,6 @@ function sendMove(event, ws) {
   board.disableMoveInput();
   return true;
 }
-
-const choosePawnPromotionPiece = document.getElementById("pawn-promote");
-const choosePawnPromotionPieceSelect = choosePawnPromotionPiece.querySelector("select");
-choosePawnPromotionPieceSelect.addEventListener("change", function(e) {
-  pawnPromotionPiece = choosePawnPromotionPieceSelect.value;
-  const pieceLetter = pawnPromotionPiece === "Knight" ? "n" : pawnPromotionPiece[0].toLowerCase();
-  const piece = `${side[0]}${pieceLetter}`;
-  board.setPiece(pawnPromotionSquare, piece);
-});
 
 function updateGlobals(event) {
   gameState = event.game_state;

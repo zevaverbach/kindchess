@@ -1,9 +1,24 @@
 import { MARKER_TYPE } from './node_modules/cm-chessboard/src/cm-chessboard/Chessboard.js';
 
+const modal = document.getElementById('modal');
+modal.addEventListener('cancel', event => {
+  event.preventDefault();
+});
+
+export function displayModal(message) {
+  modal.innerHTML = message;
+  modal.showModal();
+}
+
+export function hideModal() {
+  modal.close();
+}
+
 export function displayMessage(message, timeout = true) {
-  document.getElementById('messagebox').innerHTML = message;
+  const messageBox = document.getElementById('messagebox');
+  messageBox.innerHTML = message;
   if (timeout) {
-    setTimeout(function () {
+    setTimeout(function() {
       clearMessage();
     }, 3000);
   }
@@ -18,7 +33,8 @@ export function highlightPrevMove(from, to, fromWas, toWas, setPrevMove, board) 
 }
 
 export function clearMessage() {
-  document.getElementById('messagebox').innerHTML = '';
+  const messageBox = document.getElementById('messagebox');
+  messageBox.innerHTML = "";
 }
 
 export function showResignButton(uid, ws) {
@@ -30,14 +46,14 @@ export function showResignButton(uid, ws) {
     btn = document.createElement("button");
     btn.id = "resign-button";
     btn.addEventListener('click', () => {
-      ws.send(JSON.stringify({uid, type: "resign"}));
+      ws.send(JSON.stringify({ uid, type: "resign" }));
     })
     btn.innerText = "Resign"
     document.getElementById('buttons-container').appendChild(btn);
   }
 }
 
-export function showDrawButton(uid, displayMessage, ws, setSelfDrawOffer) {
+export function showDrawButton(uid, ws, setSelfDrawOffer) {
   let btn = document.getElementById('draw-button');
   if (btn && btn.style.display === 'inline') return;
   if (btn) {
@@ -46,7 +62,7 @@ export function showDrawButton(uid, displayMessage, ws, setSelfDrawOffer) {
     btn = document.createElement("button");
     btn.id = "draw-button";
     btn.addEventListener('click', () => {
-      ws.send(JSON.stringify({uid, type: "draw", draw: "offer"}));
+      ws.send(JSON.stringify({ uid, type: "draw", draw: "offer" }));
       hideDrawButton();
       showWithdrawDrawButton(ws, uid);
       displayMessage("you have offered a draw.", false);
@@ -66,7 +82,7 @@ function showWithdrawDrawButton(ws, uid) {
     btn = document.createElement("button");
     btn.id = "draw-withdraw-button";
     btn.addEventListener('click', () => {
-      ws.send(JSON.stringify({uid, type: "draw", draw: "withdraw"}));
+      ws.send(JSON.stringify({ uid, type: "draw", draw: "withdraw" }));
       hideWithdrawDrawButton();
       showDrawButton();
       clearMessage();
@@ -89,6 +105,7 @@ export function hideButtons() {
   hideWithdrawDrawButton();
   hideDrawButton();
   hideResignButton();
+  hideShareButton();
 }
 
 export function hideDrawButton() {
@@ -101,7 +118,7 @@ export function hideDrawButton() {
 
 function hideResignButton() {
   try {
-  document.getElementById('resign-button').style.display = 'none';
+    document.getElementById('resign-button').style.display = 'none';
   } catch {
     return null;
   }
@@ -121,7 +138,7 @@ function showDrawAcceptButton(ws, uid) {
     btn = document.createElement("button");
     btn.id = "draw-accept-button";
     btn.addEventListener('click', () => {
-      ws.send(JSON.stringify({uid, type: "draw", draw: "accept"}));
+      ws.send(JSON.stringify({ uid, type: "draw", draw: "accept" }));
     })
     btn.innerText = "Accept Draw"
     document.getElementById('buttons-container').appendChild(btn);
@@ -137,7 +154,7 @@ function showDrawRejectButton(ws, uid) {
     btn = document.createElement("button");
     btn.id = "draw-reject-button";
     btn.addEventListener('click', () => {
-      ws.send(JSON.stringify({uid, type: "draw", draw: "reject"}));
+      ws.send(JSON.stringify({ uid, type: "draw", draw: "reject" }));
       hideDrawAcceptAndRejectButtons();
       clearMessage();
       showDrawButton();
@@ -149,17 +166,17 @@ function showDrawRejectButton(ws, uid) {
 
 export function hideDrawAcceptAndRejectButtons() {
   try {
-  document.getElementById('draw-accept-button').style.display = 'none';
-  document.getElementById('draw-reject-button').style.display = 'none';
+    document.getElementById('draw-accept-button').style.display = 'none';
+    document.getElementById('draw-reject-button').style.display = 'none';
   } catch {
   } return null;
 }
 
 export function hideShareButton() {
-  document.getElementById('share-button').style.display = 'inline';
+  document.getElementById('share-button').style.display = 'none';
 }
 
-export function showShareButton(displayMessage) {
+export function showShareButton() {
   if (document.getElementById('share-button')) return
   const url = window.location.href;
   const btn = document.createElement("button");
@@ -170,7 +187,7 @@ export function showShareButton(displayMessage) {
       `I've copied the following to your clipboard: ${url}, 
        feel free to share it with whoever you want to play against. 
        I'll let you know when they've joined!`, true
-      )    
+    )
   })
   btn.innerText = "share invite URL"
   document.getElementById('buttons-container').appendChild(btn);
@@ -184,20 +201,20 @@ export function showStalemate(gameState) {
 }
 
 export function showCheckmate(winner, gameState) {
-  const checkmatedKingSquare = winner === "black" ? gameState.king_square_white: gameState.king_square_black;
+  const checkmatedKingSquare = winner === "black" ? gameState.king_square_white : gameState.king_square_black;
   const selector = `[data-square="${checkmatedKingSquare}"]`;
   document.querySelector(selector).classList.add("mate");
 }
 
 export function updateCheckStatus(gameState, alreadyCheckedKing, setCheckedKing) {
   if ([0, 1].includes(gameState.its_check)) {
-    let checkedKing = gameState.its_check === 0 ? gameState.king_square_white: gameState.king_square_black;
+    let checkedKing = gameState.its_check === 0 ? gameState.king_square_white : gameState.king_square_black;
     setCheckedKing(checkedKing);
     document.querySelector(`[data-square="${checkedKing}"]`).classList.add("check")
   } else if (alreadyCheckedKing) {
-      const query = `[data-square="${alreadyCheckedKing}"]`
-      document.querySelector(query).classList.remove("check")
-      setCheckedKing("");
+    const query = `[data-square="${alreadyCheckedKing}"]`
+    document.querySelector(query).classList.remove("check")
+    setCheckedKing("");
   }
 }
 

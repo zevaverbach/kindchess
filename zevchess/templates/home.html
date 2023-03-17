@@ -1,40 +1,49 @@
 <!doctype html>
 <html>
-    <head>
-        <title>
-            ZevChess
-        </title>
-        <style>
-            button {
-                margin-top: 2em;
-            }
-        </style>
 
-    </head>
-    <body>
+<head>
+  <title>
+    ZevChess
+  </title>
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+  <script type="module"
+    src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.3.0/dist/components/spinner/spinner.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.3.0/dist/themes/light.css" />
 
-        {% if active_games %}
-            <h1>Active Games</h1>
-            <div id="active-games">
-                {% for uid in active_games %}
-                <div>
-                    <a href="{{ url_for('game', uid=uid, _external=True) }}">game {{ uid }}</a>
-                </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-        <button>Create A Game</button>
-        <script>
-            const activeGamesElement = document.getElementById("active-games");
-            const button = document.querySelector('button');
-            button.addEventListener('click', async function() {
-                console.log('creating a game!')
-                const response = await fetch('/create_game', {method: "POST"});
-                jsonBody = await response.json()
-                const gameURL= "{{ url_for('home', _external=True) }}"
-                const uid = jsonBody.uid;
-                window.location.href = `${gameURL}${uid}`;
-            });
-        </script>
-    </body>
+</head>
+
+<body>
+
+  <div id="loader" style="display: none;">
+    <sl-spinner style="font-size: 50px; --track-width: 10px; --track-color: dodgerblue;"></sl-spinner>
+  </div>
+  <main>
+    {% if active_games %}
+    <h1>Active Games</h1>
+    <div id="active-games">
+      {% for uid in active_games %}
+      <div>
+        <a href="{{ url_for('game', uid=uid, _external=True) }}">game {{ uid }}</a>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <button>Create A Game</button>
+  </main>
+  <script>
+    const activeGamesElement = document.getElementById("active-games");
+    const button = document.querySelector('button');
+    button.addEventListener('click', async function () {
+      document.querySelector("main").style.display = "none";
+      document.querySelector("#loader").style.display = "flex";
+      console.log('creating a game!')
+      const response = await fetch('/create_game', {method: "POST"});
+      jsonBody = await response.json()
+      const gameURL = "{{ url_for('home', _external=True) }}"
+      const uid = jsonBody.uid;
+      window.location.href = `${gameURL}${uid}`;
+    });
+  </script>
+</body>
+
 </html>
