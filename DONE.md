@@ -5,6 +5,21 @@
 - [x] the black king, when eligible to castle, doesn't have a dot in the right place for that
 
 # Features
+- [x] prevent modals from being dismissed via 'escape'
+- [x] support landscape mode on mobile (fill the screen ,no scrolling)
+- [x] make the board centered
+- [x] make it so the buttons don't go off the page (board a bit smaller?)
+- [x] add a spinner when creating a game
+- [x] make the messages (game on, game over, etc.) modals which hover over the center of the board
+  - [x] make modal
+  - [x] on second thought, only use the modal for game over
+- [x] make dots smaller
+- [x] shade the selected piece/background
+- [x] show previous move coloring
+- [x] show dot on top of possible target piece (possible moves)
+  - z-index doesn't cut it for this so far
+- [x] put it at a domain, even if it's averba.ch/chess
+- [x] make sure same-origin policy is getting enforced
 - [x] initiate closing of connection from client (it's not getting called on the server currently)
 - [x] resign
 - [x] draw
