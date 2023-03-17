@@ -1,6 +1,6 @@
 button {
-  padding: .5em;
-  margin: .5em;
+  font-size: calc(1em + 1.2vw);
+  margin: 1em .3em;
 }
 
 textarea {

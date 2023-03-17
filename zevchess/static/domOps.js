@@ -105,7 +105,6 @@ export function hideButtons() {
   hideWithdrawDrawButton();
   hideDrawButton();
   hideResignButton();
-  hideShareButton();
 }
 
 export function hideDrawButton() {
@@ -170,27 +169,6 @@ export function hideDrawAcceptAndRejectButtons() {
     document.getElementById('draw-reject-button').style.display = 'none';
   } catch {
   } return null;
-}
-
-export function hideShareButton() {
-  document.getElementById('share-button').style.display = 'none';
-}
-
-export function showShareButton() {
-  if (document.getElementById('share-button')) return
-  const url = window.location.href;
-  const btn = document.createElement("button");
-  btn.id = "share-button";
-  btn.addEventListener('click', () => {
-    navigator.clipboard.writeText(url);
-    displayMessage(
-      `I've copied the following to your clipboard: ${url}, 
-       feel free to share it with whoever you want to play against. 
-       I'll let you know when they've joined!`, true
-    )
-  })
-  btn.innerText = "share invite URL"
-  document.getElementById('buttons-container').appendChild(btn);
 }
 
 export function showStalemate(gameState) {

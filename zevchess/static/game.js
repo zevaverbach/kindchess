@@ -9,13 +9,11 @@ import { FEN }
   from './node_modules/cm-chessboard/src/cm-chessboard/model/Position.js';
 
 import {
-  showShareButton,
   showStalemate,
   showCheckmate,
   showResignButton,
   showDrawButton,
   showDrawAcceptAndRejectButtons,
-  hideShareButton,
   hideDrawAcceptAndRejectButtons,
   hideDrawButton,
   hideWithdrawDrawButton,
@@ -251,7 +249,6 @@ function receiveMessages(ws) {
           showStalemate(gameState);
         }
         displayModal("GAME OVER: " + ev.message);
-        hideShareButton();
         gameOver = true;
         board.disableMoveInput();
         window.removeEventListener("beforeunload", beforeUnloadListener);
@@ -276,7 +273,6 @@ function handleEventJoinSuccess(event, ws) {
       displayMessage('game on!');
     }
   }
-  showShareButton();
   if (event.game_status === 'waiting' && side && side === 'white') {
     console.log('displaying modal hopefully');
     displayModal('waiting for black to join');

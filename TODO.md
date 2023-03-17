@@ -1,16 +1,17 @@
 # Bugs
 - [ ] can't click on a space if you're hovering over the blue dot
-- [ ] if you click an ineligible square (no dots) after selecting a piece, it doesn't remove the dots but it un-highlights the piece and makes it so you can't click on a dot to move the piece
+- [ ] if you click an ineligible square (no dots) after selecting a piece, 
+      it doesn't remove the dots but it un-highlights the piece and makes it so you can't click on a dot to move the piece
 
 # Front End
-- [ ] make the 'create game' button bigger on mobile
-- [ ] maybe get rid of the 'share url' button altogether
-- [ ] show some options (back to lobby, etc.) when the game is over
-- [ ] use promotion dialog that's built into cm-chessboard
-- [ ] build out the site, make it look nice
 - [ ] make room for non-game-over messages, use colors
 - [ ] figure out how to get the message to actually display when being warned about abandoning a game.
 - [ ] add ethical analytics
+- [ ] use promotion dialog that's built into cm-chessboard
+- [ ] build out the site, make it look nice
+  - [ ] nav bar
+- [x] maybe get rid of the 'share url' button altogether
+- [x] make the 'create game' button bigger on mobile
 
 # Features
 - [ ] enable reconnecting instead of 'abandoned' when you leave
