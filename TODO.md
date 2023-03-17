@@ -2,7 +2,10 @@
 
 # small UI improvements
 - [x] support landscape mode on mobile (fill the screen ,no scrolling)
+- [x] make the board centered
+- [x] make it so the buttons don't go off the page (board a bit smaller?)
 - [ ] add a spinner when creating a game
+- [ ] make the messages (game on, game over, etc.) modals which hover over the center of the board
 - [x] make dots smaller
 - [x] shade the selected piece/background
 - [x] show previous move coloring

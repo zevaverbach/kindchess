@@ -1,0 +1,32 @@
+button {
+  padding: .5em;
+  margin: .5em;
+}
+
+textarea {
+  position: absolute;
+  right: 25vw;
+  width: 40vw;
+  height: 40vh;
+}
+
+#buttons-container {
+  margin: 0 auto;
+  width: min(85vh, 85vw);
+}
+
+#board-container {
+  margin: 0 auto;
+  margin-top: min(5vh, 5vw);
+  width: min(85vh, 85vw);
+  min-width: 400px;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#board {
+  height: 100%;
+  width: 100%;
+}

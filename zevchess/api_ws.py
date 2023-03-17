@@ -27,7 +27,8 @@ class ConnectionStore:
 
 VALID_ORIGINS = ("http://localhost:8000",)
 if int(q.PROD):
-    VALID_ORIGINS = ("https://zevchess-ws.onrender.com", "https://kindchess.com")
+    VALID_ORIGINS = ("https://zevchess-ws.onrender.com",
+                     "https://kindchess.com")
 CONNECTIONS = {}
 CONNECTION_WS_STORE_DICT: dict[
     str, tuple[ConnectionStore, typing.Literal["black", "white", "watchers"]]
@@ -128,7 +129,7 @@ async def error(ws, msg: str):
 async def remove_connection(ws):
     if ws not in CONNECTION_WS_STORE_DICT:
         return
-        
+
     store, attribute = CONNECTION_WS_STORE_DICT[ws]
 
     if attribute == "watchers":
@@ -196,7 +197,8 @@ async def game_over(
     if reason not in ("abandoned", "resigned", "draw", "draw_by_three_repetitions"):
         if the_move is None:
             raise InvalidArguments
-        non_winner_participants = get_all_participants(store, but=(getattr(store, side),))
+        non_winner_participants = get_all_participants(
+            store, but=(getattr(store, side),))
         payload = {"type": "move", "move": the_move.to_json()}
         if state:
             payload["game_state"] = state_dict
@@ -367,7 +369,8 @@ async def pawn_promotion_complete(ws, uid, choice, move_dict) -> None:
         board = t.Board.from_FEN(new_state.FEN).to_array()
         all_possible_moves = q.get_all_legal_moves(new_state, json=True)
         move = the_move.to_json()
-        move["promotion_piece"] = choice.upper() if store.white == ws else choice
+        move["promotion_piece"] = choice.upper(
+        ) if store.white == ws else choice
         ws_broadcast(
             recipients,
             json.dumps(
@@ -430,7 +433,8 @@ async def move(ws, event: dict) -> None:
 
     the_move = t.Move(**event)
     try:
-        new_state = c.make_move_and_persist(uid=uid, move=the_move, state=state)
+        new_state = c.make_move_and_persist(
+            uid=uid, move=the_move, state=state)
     except c.InvalidMove as e:
         print(f"{state=}")
         print(str(e))
@@ -536,14 +540,14 @@ async def offer_draw(ws, uid) -> None:
         await ws.send(str(e))
     else:
         ws_broadcast(
-            get_watchers(store), 
+            get_watchers(store),
             json.dumps({
                 "type": "for_the_watchers",
                 "message": f"{requester} offers a draw",
             }))
         other_ws = store.white if ws == store.black else store.black
         await other_ws.send(json.dumps({
-            "type": "draw_offer", 
+            "type": "draw_offer",
             "message": f"{requester} offers a draw",
         }))
 
@@ -558,7 +562,7 @@ async def withdraw_draw(ws, uid) -> None:
         await ws.send(str(e))
     else:
         ws_broadcast(
-            get_watchers(store), 
+            get_watchers(store),
             json.dumps({
                 "type": "for_the_watchers",
                 "message": f"{requester} has withdrawn their draw offer"
@@ -581,7 +585,7 @@ async def reject_draw(ws, uid) -> None:
         await ws.send(str(e))
     else:
         ws_broadcast(
-            get_watchers(store), 
+            get_watchers(store),
             json.dumps({
                 "type": "for_the_watchers",
                 "message": f"{requester} has rejected {other}'s draw offer",
@@ -630,7 +634,7 @@ async def three_repetitions_draw(ws, uid):
 async def health_check(path, request_headers):
     if path == "/healthz":
         return http.HTTPStatus.OK, [], b"OK\n"
-    
+
 
 async def main():
     # Set the stop condition when receiving SIGTERM.

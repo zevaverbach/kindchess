@@ -5,19 +5,19 @@ import {
   COLOR,
 } from './node_modules/cm-chessboard/src/cm-chessboard/Chessboard.js';
 
-import { FEN } 
+import { FEN }
   from './node_modules/cm-chessboard/src/cm-chessboard/model/Position.js';
 
-import { 
-  showShareButton, 
-  showStalemate, 
-  showCheckmate, 
+import {
+  showShareButton,
+  showStalemate,
+  showCheckmate,
   showResignButton,
   showDrawButton,
-  showDrawAcceptAndRejectButtons, 
+  showDrawAcceptAndRejectButtons,
   hideShareButton,
-  hideDrawAcceptAndRejectButtons, 
-  hideDrawButton, 
+  hideDrawAcceptAndRejectButtons,
+  hideDrawButton,
   hideWithdrawDrawButton,
   hideButtons,
   clearMessage,
@@ -26,20 +26,20 @@ import {
   highlightPrevMove,
 } from './domOps.js';
 
-import { 
-  getPieceAt, 
+import {
+  getPieceAt,
   getKingStartSquare,
-  invalidMove, 
-  isCaptureMove, 
-  isCastlingMove, 
-  isEnPassantMove, 
-  isPromotionMove 
+  invalidMove,
+  isCaptureMove,
+  isCastlingMove,
+  isEnPassantMove,
+  isPromotionMove
 } from './boardOps.js';
 
-import { 
-  doTheMoveReceived, 
-  doTheMoveSentEnPassant, 
-  doTheMoveSentCastle 
+import {
+  doTheMoveReceived,
+  doTheMoveSentEnPassant,
+  doTheMoveSentCastle
 } from './moveOps.js';
 
 // TODO: get this from environment
@@ -90,7 +90,7 @@ if (testing) {
   const wsMessageElement = div.firstChild;
 }
 
-window.addEventListener('DOMContentLoaded', function () {
+window.addEventListener('DOMContentLoaded', function() {
   const ws = new WebSocket(WEBSOCKET_SERVER_ADDR);
   joinGame(ws);
   receiveMessages(ws);
@@ -111,7 +111,7 @@ window.addEventListener('DOMContentLoaded', function () {
 });
 
 function joinGame(ws) {
-  ws.addEventListener('open', function (event) {
+  ws.addEventListener('open', function(event) {
     const message = JSON.stringify({
       type: 'join',
       uid,
@@ -121,12 +121,12 @@ function joinGame(ws) {
       wsMessageElement.value =
         wsMessageElement.value + `\nsent:\n ${message}\n`;
   });
-  ws.addEventListener('close', function (event) {
+  ws.addEventListener('close', function(event) {
   })
 }
 
 function receiveMessages(ws) {
-  ws.addEventListener('message', function (message) {
+  ws.addEventListener('message', function(message) {
     let ev;
     try {
       ev = JSON.parse(message.data);
@@ -259,7 +259,7 @@ function handleEventJoinSuccess(event, ws) {
     board = new Chessboard(document.getElementById('board'), {
       position: FEN.start,
       orientation: side ? side[0] : "w", // if it's a watcher, display from white's POV
-      style: {moveFromMarker: MARKER_TYPE.square, moveToMarker: MARKER_TYPE.square}, // disable standard markers
+      style: { moveFromMarker: MARKER_TYPE.square, moveToMarker: MARKER_TYPE.square }, // disable standard markers
     });
     window.B = board;
   }
@@ -270,7 +270,7 @@ function sendMoves(ws) {
     return board.disableMoveInput();
   }
   board.enableMoveInput(
-    function (event) {
+    function(event) {
       switch (event.type) {
         case INPUT_EVENT_TYPE.moveInputStarted:
           return validateMoveInputStarted(event);
@@ -320,7 +320,7 @@ function sendMove(event, ws) {
   if (gameState.half_moves == 1) {
     showDrawButton(uid, displayMessage, ws, setSelfDrawOffer);
   }
-  const msg = JSON.stringify({uid, type: 'move', ...move});
+  const msg = JSON.stringify({ uid, type: 'move', ...move });
   ws.send(msg);
   highlightPrevMove(from, to, prevMoveOrigin, prevMoveDest, setPrevMove, board);
   if (testing) wsMessageElement.value = wsMessageElement.value + `\nsent:\n ${msg}\n`;
@@ -355,9 +355,9 @@ function validateMoveInputStarted(event) {
     } else if (mv.castle && getKingStartSquare(side) === event.square) {
       const rank = side === "black" ? 8 : 1;
       if (mv.castle === "k") {
-        movesFromSquare.push({dest: `g${rank}`})
+        movesFromSquare.push({ dest: `g${rank}` })
       } else if (mv.castle === "q") {
-        movesFromSquare.push({dest: `c${rank}`});
+        movesFromSquare.push({ dest: `c${rank}` });
       }
     }
   }

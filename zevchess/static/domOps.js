@@ -33,7 +33,7 @@ export function showResignButton(uid, ws) {
       ws.send(JSON.stringify({uid, type: "resign"}));
     })
     btn.innerText = "Resign"
-    document.getElementsByTagName('main')[0].appendChild(btn);
+    document.getElementById('buttons-container').appendChild(btn);
   }
 }
 
@@ -53,7 +53,7 @@ export function showDrawButton(uid, displayMessage, ws, setSelfDrawOffer) {
       setSelfDrawOffer(true);
     })
     btn.innerText = "Offer Draw"
-    document.getElementsByTagName('main')[0].appendChild(btn);
+    document.getElementById('buttons-container').appendChild(btn);
   }
 }
 
@@ -72,7 +72,7 @@ function showWithdrawDrawButton(ws, uid) {
       clearMessage();
     })
     btn.innerText = "Withdraw Draw Offer"
-    document.getElementsByTagName('main')[0].appendChild(btn);
+    document.getElementById('buttons-container').appendChild(btn);
   }
 }
 
@@ -124,7 +124,7 @@ function showDrawAcceptButton(ws, uid) {
       ws.send(JSON.stringify({uid, type: "draw", draw: "accept"}));
     })
     btn.innerText = "Accept Draw"
-    document.getElementsByTagName('main')[0].appendChild(btn);
+    document.getElementById('buttons-container').appendChild(btn);
   }
 }
 
@@ -143,7 +143,7 @@ function showDrawRejectButton(ws, uid) {
       showDrawButton();
     })
     btn.innerText = "Reject Draw"
-    document.getElementsByTagName('main')[0].appendChild(btn);
+    document.getElementById('buttons-container').appendChild(btn);
   }
 }
 
@@ -173,7 +173,7 @@ export function showShareButton(displayMessage) {
       )    
   })
   btn.innerText = "share invite URL"
-  document.getElementsByTagName('main')[0].appendChild(btn);
+  document.getElementById('buttons-container').appendChild(btn);
 }
 
 export function showStalemate(gameState) {

@@ -1,57 +1,41 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>ZevChess!</title>
-        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='cm-chessboard.css') }}">
-        <style>
-            button {
-                padding: .5em;
-                margin: .5em;
-            }
-            textarea {
-                position: absolute;
-                right: 25vw;
-                width: 40vw;
-                height: 40vh;
-            }
 
-            #board-container {
-                width: min(95vh, 95vw);
-            }
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ZevChess!</title>
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='cm-chessboard.css') }}">
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+  <script type="module" src="{{ url_for('static', filename='game.js') }}">
+  </script>
+</head>
 
-            #board {
-              height: 100%;
-              width: 100%;
-            }
-        </style>
-        <script type="module" src="{{ url_for('static', filename='game.js') }}">
-        </script>
-    </head>
-    <body>
-        <main>
-            <div id="board-container">
-                <div id="board"></div>
-            </div>
-            <div id="watcher-count"></div>
-            <div id="messagebox"></div>
-            <dialog id="pawn-promote">
-              <form method="dialog">
-                <p>
-                  <label>Pawn becomes:
-                    <select>
-                      <option>Queen</option>
-                      <option>Rook</option>
-                      <option>Bishop</option>
-                      <option>Knight</option>
-                    </select>
-                  </label>
-                </p>
-                <div>
-                  <button id="pawn-confirm-btn" value="default">Confirm</button>
-                </div>
-              </form>
-            </dialog>
-        </main>
-    </body>
+<body>
+  <main>
+    <div id="board-container">
+      <div id="board"></div>
+    </div>
+    <div id="buttons-container"></div>
+    <div id="watcher-count"></div>
+    <div id="messagebox"></div>
+    <dialog id="pawn-promote">
+      <form method="dialog">
+        <p>
+          <label>Pawn becomes:
+            <select>
+              <option>Queen</option>
+              <option>Rook</option>
+              <option>Bishop</option>
+              <option>Knight</option>
+            </select>
+          </label>
+        </p>
+        <div>
+          <button id="pawn-confirm-btn" value="default">Confirm</button>
+        </div>
+      </form>
+    </dialog>
+  </main>
+</body>
+
 </html>
