@@ -3,10 +3,14 @@
 - [ ] if you click an ineligible square (no dots) after selecting a piece, it doesn't remove the dots but it un-highlights the piece and makes it so you can't click on a dot to move the piece
 
 # Front End
+- [ ] make the 'create game' button bigger on mobile
+- [ ] maybe get rid of the 'share url' button altogether
+- [ ] show some options (back to lobby, etc.) when the game is over
 - [ ] use promotion dialog that's built into cm-chessboard
 - [ ] build out the site, make it look nice
 - [ ] make room for non-game-over messages, use colors
 - [ ] figure out how to get the message to actually display when being warned about abandoning a game.
+- [ ] add ethical analytics
 
 # Features
 - [ ] enable reconnecting instead of 'abandoned' when you leave
@@ -21,13 +25,14 @@
 - [ ] material tracking - points, pieces
   - consider using [these web components](https://shoelace.style/) for straightforward, buildless dev.
 - [ ] accounts/auth [link](https://websockets.readthedocs.io/en/10.4/topics/authentication.html#sending-credentials)
+- [ ] enforce move limit (draw)
 
 # Optimization
 - [ ] add some kind of analytics/logging
   - [ ] number of concurrent games
   - [ ] memory usage with alerts
 - [ ] load testing
-- [ ] find shortcuts to limit computation and storage
+- [ ] find shortcuts to limit computation, storage, and bytes over the wire
   - [ ] profile the running code
     - [ ] number of computations for each move
     - [ ] how long does it take to process a move?
