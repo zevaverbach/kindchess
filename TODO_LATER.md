@@ -1,3 +1,4 @@
+- [ ] any other rules missing? there are a lot of random ones
 - [ ] see 'possible directions' in README.md
 - [ ] why does the checkmated player automatically disconnect?
   - it currently causes a "white abandoned the game" message which has to be ignored on the front end
