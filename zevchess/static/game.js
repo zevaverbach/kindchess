@@ -336,7 +336,8 @@ function sendMove(event, ws) {
   }
 
   if (invalidMove(move, possibleMoves)) {
-    return false
+    board.removeDots();
+    return false;
   }
 
   if (otherDrawOffer) {
