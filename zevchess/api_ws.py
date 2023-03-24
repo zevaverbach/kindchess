@@ -5,16 +5,16 @@ import json
 import signal
 import typing
 
-import websockets as w
+import websockets as ws
 from websockets.legacy.protocol import (
-    broadcast as ws_broadcast,
     WebSocketCommonProtocol as Ws,
+    broadcast as ws_broadcast,
 )
-from websockets.legacy.server import serve as ws_serve
 
 from zevchess import commands as c
 from zevchess import queries as q
 from zevchess import ztypes as t
+
 
 
 @dc.dataclass
@@ -26,7 +26,7 @@ class ConnectionStore:
 
 
 VALID_ORIGINS = ("http://localhost:8000",)
-if int(q.PROD):
+if q.PROD is not None and int(q.PROD):
     VALID_ORIGINS = ("https://zevchess-ws.onrender.com",
                      "https://kindchess.com")
 CONNECTIONS = {}
@@ -148,7 +148,7 @@ async def remove_connection(ws):
                 )
         del CONNECTION_WS_STORE_DICT[ws]
     else:
-        await game_over(ws=ws, store=store, side=attribute, reason="abandoned")
+        await game_over(store=store, side=attribute, reason="abandoned")
 
 
 def other_color(color):
@@ -156,7 +156,6 @@ def other_color(color):
 
 
 async def game_over(
-    ws,
     store: ConnectionStore,
     reason: typing.Literal["abandoned", "checkmate", "stalemate", "resigned", "draw", "draw_by_three_repetitions"],
     side: typing.Literal["white", "black"],
@@ -221,7 +220,7 @@ async def game_over(
         # field was already set in the core logic
         state.abandoned = 1
         state.winner = 0 if winner == "white" else 1
-    elif reason == "resigned":
+    elif state is not None and reason == "resigned":
         state.resigned = 1
         state.winner = 0 if winner == "white" else 1
     c.remove_game_from_cache(uid)
@@ -265,11 +264,11 @@ async def handler(ws):
                     except InvalidUid:
                         await error(ws, "game not found")
                     except (
-                        w.exceptions.ConnectionClosedOK,
-                        w.exceptions.ConnectionClosedError,
+                        ws.exceptions.ConnectionClosedOK,
+                        ws.exceptions.ConnectionClosedError,
                     ):
                         store = CONNECTIONS[uid]
-                        await game_over(ws, store, "abandoned", which_side(ws, store))
+                        await game_over(store, "abandoned", which_side(ws, store))
                 case "move":
                     del event["type"]
                     await move(ws, event)
@@ -293,8 +292,8 @@ async def handler(ws):
                     continue
 
     except (
-        w.exceptions.ConnectionClosedOK,
-        w.exceptions.ConnectionClosedError,
+        ws.exceptions.ConnectionClosedOK,
+        ws.exceptions.ConnectionClosedError,
     ):
         pass
 
@@ -320,7 +319,7 @@ def get_all_participants(store: ConnectionStore, but: tuple[Ws, ...] | None = No
     return {p for p in ps if p not in but}
 
 
-async def pawn_promotion_prompt(ws, store, need_to_choose, move) -> None:
+async def pawn_promotion_prompt(ws, need_to_choose, move) -> None:
     _, dest, _ = need_to_choose.split(" ")
     return await ws.send(
         json.dumps(
@@ -357,12 +356,12 @@ async def pawn_promotion_complete(ws, uid, choice, move_dict) -> None:
     except c.Stalemate as e:
         side = "black" if str(e) == "0" else "white"
         await game_over(
-            ws, store=store, reason="stalemate", side=side, the_move=the_move
+            store=store, reason="stalemate", side=side, the_move=the_move
         )
     except c.Checkmate as e:
         winner = "black" if str(e) == "0" else "white"
         await game_over(
-            ws=ws, store=store, side=winner, reason="checkmate", the_move=the_move
+            store=store, side=winner, reason="checkmate", the_move=the_move
         )
     else:
         recipients = get_all_participants(store, but=(ws,))
@@ -447,18 +446,17 @@ async def move(ws, event: dict) -> None:
     except c.Stalemate as e:
         side = "black" if str(e) == "0" else "white"
         await game_over(
-            ws, store=store, reason="stalemate", side=side, the_move=the_move
+            store=store, reason="stalemate", side=side, the_move=the_move
         )
     except c.Checkmate as e:
         winner = "black" if str(e) == "0" else "white"
         await game_over(
-            ws=ws, store=store, side=winner, reason="checkmate", the_move=the_move
+            store=store, side=winner, reason="checkmate", the_move=the_move
         )
     else:
         if new_state.need_to_choose_pawn_promotion_piece != "":
             return await pawn_promotion_prompt(
                 ws=ws,
-                store=store,
                 need_to_choose=new_state.need_to_choose_pawn_promotion_piece,
                 move=event,
             )
@@ -526,7 +524,7 @@ async def resign(ws, uid: str) -> None:
     if store.white is None or store.black is None:
         return await error(ws, "we don't have two players, can't resign!")
     requester = which_side(ws, store)
-    return await game_over(ws, reason="resigned", store=store, side=requester)
+    return await game_over(reason="resigned", store=store, side=requester)
 
 
 async def offer_draw(ws, uid) -> None:
@@ -606,7 +604,7 @@ async def accept_draw(ws, uid: str) -> None:
     except c.InvalidArguments as e:
         await ws.send(str(e))
     else:
-        return await game_over(ws, store=store, reason="draw", side=requester)
+        return await game_over(store=store, reason="draw", side=requester)
 
 
 async def draw(
@@ -628,10 +626,10 @@ async def draw(
 async def three_repetitions_draw(ws, uid):
     store = CONNECTIONS[uid]
     requester = which_side(ws, store)
-    return await game_over(ws, store=store, reason="draw_by_three_repetitions", side=requester)
+    return await game_over(store=store, reason="draw_by_three_repetitions", side=requester)
 
 
-async def health_check(path, request_headers):
+async def health_check(path, _):
     if path == "/healthz":
         return http.HTTPStatus.OK, [], b"OK\n"
 
@@ -642,7 +640,7 @@ async def main():
     stop = loop.create_future()
     loop.add_signal_handler(signal.SIGTERM, stop.set_result, None)
 
-    async with w.serve(
+    async with ws.serve( # type: ignore
         handler,
         host="",
         port=8080,

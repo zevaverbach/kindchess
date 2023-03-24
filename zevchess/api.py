@@ -16,7 +16,7 @@ application = flask.Flask(__name__)
 @application.route("/")
 def home() -> str:
     print("home")
-    active_games = q.get_active_game_uids()
+    active_games = q.get_active_game_uids_ok()
     print(f"{active_games=}")
     return flask.render_template("home.html", active_games=active_games)
 
@@ -25,7 +25,7 @@ def home() -> str:
 def game(uid: str) -> str:
     print(f"{uid=}")
     if uid.strip() == "":
-        active_games = q.get_active_game_uids()
+        active_games = q.get_active_game_uids_ok()
         print(f"{active_games=}")
         return flask.render_template("home.html", active_games=active_games)
     if not q.uid_exists_and_is_an_active_game(uid):
@@ -65,4 +65,4 @@ def dated_url_for(endpoint, **values):
 
 def main():
     # cache the UIDs of active games
-    c.update_existing_uids_cache(*q.get_active_game_uids())
+    c.update_existing_uids_cache(*q.get_active_game_uids_ok())

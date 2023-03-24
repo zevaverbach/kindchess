@@ -1,5 +1,5 @@
 .cm-chessboard .board.input-enabled .square {
-  cursor: pointer;
+    cursor: pointer;
 }
 
 .cm-chessboard .markers .marker.markerFrame,

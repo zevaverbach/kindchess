@@ -18,7 +18,7 @@ import {
   hideDrawButton,
   hideWithdrawDrawButton,
   hideButtons,
-  clearMessage,
+  clearMessagePlease,
   updateCheckStatus,
   displayMessage,
   displayModal,
@@ -49,6 +49,14 @@ if (window.location.host === "localhost:8000") {
 } else {
   WEBSOCKET_SERVER_ADDR = 'wss://ws.kindchess.com'
 }
+
+// hopefully prevents pinch to zoom
+document.addEventListener('touchmove', e => {
+  if (e.touches.length > 1) {  
+     e.preventDefault();
+  }
+}, {passive: false})
+
 
 let side, board, pawnPromotionSquare, pawnPromotionMove;
 let myTurn = false;
@@ -191,7 +199,7 @@ function receiveMessages(ws) {
           selfDrawOffer = false;
           hideWithdrawDrawButton();
           showDrawButton();
-          clearMessage();
+          clearMessagePlease();
         }
         const [from, to] = doTheMoveReceived(move, board, side);
         highlightPrevMove(from, to, prevMoveOrigin, prevMoveDest, setPrevMove, board);
@@ -214,7 +222,7 @@ function receiveMessages(ws) {
       case 'draw_withdraw':
         showDrawButton();
         hideDrawAcceptAndRejectButtons();
-        clearMessage();
+        clearMessagePlease();
         displayMessage(ev.message);
         otherDrawOffer = false;
         break;
@@ -265,7 +273,7 @@ function handleEventJoinSuccess(event, ws) {
     side = event.side;
     if (side) {
       // otherwise it's a watcher
-      clearMessage();
+      clearMessagePlease();
       showResignButton(uid, ws);
       if (side === "white") {
         hideModal();
@@ -344,7 +352,7 @@ function sendMove(event, ws) {
     otherDrawOffer = false;
     hideDrawAcceptAndRejectButtons();
     showDrawButton();
-    clearMessage();
+    clearMessagePlease();
   }
   if (gameState.half_moves == 1) {
     showDrawButton(uid, ws, setSelfDrawOffer);
