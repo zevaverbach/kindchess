@@ -39,4 +39,12 @@ textarea {
   width: 100vw;
 }
 
-#message-box {}
+#messagebox {
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10vw;
+  pointer-events: none;
+  color: dodgerblue;
+}

@@ -4,13 +4,11 @@
       it doesn't remove the dots but it un-highlights the piece and makes it so you can't click on a dot to move the piece
 
 # Front End
-- [x] disable pinch to zoom
-- [ ] "your turn"
-- [ ] make room for non-game-over messages, use colors
+- [x] make room for non-game-over messages, use colors
 - [ ] use promotion dialog that's built into cm-chessboard
 - [ ] build out the site, make it look nice
   - [ ] nav bar
-- [ ] change title when game is over
+- [x] disable pinch to zoom
 - [x] add ethical analytics
 - [x] maybe get rid of the 'share url' button altogether
 - [x] make the 'create game' button bigger on mobile

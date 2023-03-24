@@ -24,8 +24,7 @@
 
 .cm-chessboard .markers .marker.markerSquarePrev,
 .cm-chessboard .markers .marker.marker-square-prev {
-  fill: dodgerblue;
-  opacity: 0.3;
+  fill: #bbddff;
 }
 
 .marker.markerDot,

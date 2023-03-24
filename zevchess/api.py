@@ -16,7 +16,7 @@ application = flask.Flask(__name__)
 @application.route("/")
 def home() -> str:
     print("home")
-    active_games = q.get_active_game_uids_ok()
+    active_games = q.get_active_game_uids()
     print(f"{active_games=}")
     return flask.render_template("home.html", active_games=active_games)
 

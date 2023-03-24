@@ -18,7 +18,7 @@ import {
   hideDrawButton,
   hideWithdrawDrawButton,
   hideButtons,
-  clearMessagePlease,
+  clearMessage,
   updateCheckStatus,
   displayMessage,
   displayModal,
@@ -199,7 +199,7 @@ function receiveMessages(ws) {
           selfDrawOffer = false;
           hideWithdrawDrawButton();
           showDrawButton();
-          clearMessagePlease();
+          clearMessage();
         }
         const [from, to] = doTheMoveReceived(move, board, side);
         highlightPrevMove(from, to, prevMoveOrigin, prevMoveDest, setPrevMove, board);
@@ -222,7 +222,7 @@ function receiveMessages(ws) {
       case 'draw_withdraw':
         showDrawButton();
         hideDrawAcceptAndRejectButtons();
-        clearMessagePlease();
+        clearMessage();
         displayMessage(ev.message);
         otherDrawOffer = false;
         break;
@@ -251,6 +251,7 @@ function receiveMessages(ws) {
         const winner = ev.winner;
         gameState = ev.game_state;
         hideButtons();
+        clearMessage()
         if (winner != null && ev.reason === "checkmate") {
           showCheckmate(winner, gameState);
         } else if (ev.message === "stalemate!") {
@@ -273,7 +274,7 @@ function handleEventJoinSuccess(event, ws) {
     side = event.side;
     if (side) {
       // otherwise it's a watcher
-      clearMessagePlease();
+      clearMessage();
       showResignButton(uid, ws);
       if (side === "white") {
         hideModal();
@@ -352,7 +353,7 @@ function sendMove(event, ws) {
     otherDrawOffer = false;
     hideDrawAcceptAndRejectButtons();
     showDrawButton();
-    clearMessagePlease();
+    clearMessage();
   }
   if (gameState.half_moves == 1) {
     showDrawButton(uid, ws, setSelfDrawOffer);
