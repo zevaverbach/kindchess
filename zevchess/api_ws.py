@@ -2,10 +2,12 @@ import asyncio
 import dataclasses as dc
 import http
 import json
+import os
 import signal
 import typing
 
-import websockets as ws
+from dotenv import load_dotenv
+import websockets as w
 from websockets.legacy.protocol import (
     WebSocketCommonProtocol as Ws,
     broadcast as ws_broadcast,
@@ -25,10 +27,13 @@ class ConnectionStore:
     watchers: set[Ws] | None = None
 
 
-VALID_ORIGINS = ("http://localhost:8000",)
-if q.PROD is not None and int(q.PROD):
+VALID_ORIGINS = ("http://localhost:8000", 'http://127.0.0.1:5000')
+
+load_dotenv()
+if os.getenv("ZEVCHESS_ENVIRONMENT") == "prod":
     VALID_ORIGINS = ("https://zevchess-ws.onrender.com",
                      "https://kindchess.com")
+
 CONNECTIONS = {}
 CONNECTION_WS_STORE_DICT: dict[
     str, tuple[ConnectionStore, typing.Literal["black", "white", "watchers"]]
@@ -264,8 +269,8 @@ async def handler(ws):
                     except InvalidUid:
                         await error(ws, "game not found")
                     except (
-                        ws.exceptions.ConnectionClosedOK,
-                        ws.exceptions.ConnectionClosedError,
+                        w.exceptions.ConnectionClosedOK,
+                        w.exceptions.ConnectionClosedError,
                     ):
                         store = CONNECTIONS[uid]
                         await game_over(store, "abandoned", which_side(ws, store))
@@ -292,8 +297,8 @@ async def handler(ws):
                     continue
 
     except (
-        ws.exceptions.ConnectionClosedOK,
-        ws.exceptions.ConnectionClosedError,
+        w.exceptions.ConnectionClosedOK,
+        w.exceptions.ConnectionClosedError,
     ):
         pass
 
@@ -640,10 +645,10 @@ async def main():
     stop = loop.create_future()
     loop.add_signal_handler(signal.SIGTERM, stop.set_result, None)
 
-    async with ws.serve( # type: ignore
+    async with w.serve( # type: ignore
         handler,
-        host="",
-        port=8080,
+        host="0.0.0.0",
+        port=8765,
         origins=VALID_ORIGINS,
         process_request=health_check,
     ):
