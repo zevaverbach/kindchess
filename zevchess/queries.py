@@ -1,4 +1,4 @@
-from zevchess.db import r, PROD
+from zevchess.db import r
 import zevchess.ztypes as t
 
 
