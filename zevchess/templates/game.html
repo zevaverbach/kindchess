@@ -8,8 +8,8 @@
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
   <script type="module" src="{{ url_for('static', filename='game.js') }}"></script>
   <script type="module"
-    src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.3.0/dist/components/spinner/spinner.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.3.0/dist/themes/light.css" />
+    src="{{ url_for('static', filename='node_modules/@shoelace-style/shoelace/dist/components/spinner/spinner.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='node_modules/@shoelace-style/shoelace/dist/themes/light.css') }}" />
 </head>
 
 <body>
