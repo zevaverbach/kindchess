@@ -1,39 +1,69 @@
-import atexit
 import os
+import sys
 
 from dotenv import load_dotenv
 import psycopg2
 import redis
 from rich.pretty import pprint
 
-PROD = os.getenv("ZEVCHESS_PROD")
+ENVIRONMENT = os.getenv("ZEVCHESS_ENVIRONMENT")
+if ENVIRONMENT is None:
+    print("ZEVCHESS_ENVIRONMENT not set")
+    sys.exit(1)
 
-match PROD:
-    case 1 | "1":
+match ENVIRONMENT:
+    case "local":
+        dotenv_path = ".env-local"
+        REDIS_URL_ENV_VAR = "REDIS_URL"
+        DB_HOSTNAME_ENV_VAR = "DB_HOSTNAME"
+    case "prod":
         dotenv_path = ".env"
         REDIS_URL_ENV_VAR = "REDIS_URL"
         DB_HOSTNAME_ENV_VAR = "DB_HOSTNAME"
-    case 0 | "0":
-        dotenv_path = ".env-dev"
-        REDIS_URL_ENV_VAR = "REDIS_URL_PUBLIC"
-        DB_HOSTNAME_ENV_VAR = "DB_HOSTNAME_PUBLIC"
     case _:
         raise Exception
 
-load_dotenv(dotenv_path)
+load_dotenv(dotenv_path, override=True)
 REDIS_URL = os.getenv(REDIS_URL_ENV_VAR)
 DB_HOSTNAME = os.getenv(DB_HOSTNAME_ENV_VAR)
-print(f"{PROD=}")
-print(f"{REDIS_URL}")
-print(f"{dotenv_path=}")
 
-r = redis.Redis().from_url(REDIS_URL, decode_responses=True)
+gotta_exit = False
+
+if REDIS_URL is None:
+    print("REDIS_URL not set")
+    gotta_exit = True
+else:
+    r = redis.Redis().from_url(REDIS_URL, decode_responses=True)
+
+if DB_HOSTNAME is None:
+    print("DB_HOSTNAME not set")
+    gotta_exit = True
+
+DB_NAME = os.getenv("DB_NAME")
+DB_USER = os.getenv("DB_USER")
+DB_PASS = os.getenv("DB_PASS")
+
+if DB_NAME is None:
+    print("DB_NAME not set")
+    gotta_exit = True
+
+if DB_USER is None:
+    print("DB_USER not set")
+    gotta_exit = True
+
+if DB_PASS is None:
+    print("DB_PASS not set")
+    gotta_exit = True
+
+if gotta_exit:
+    sys.exit(1)
+
 
 def get_con():
     return psycopg2.connect(
-        dbname=os.getenv("DB_NAME"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASS"),
+        dbname=DB_NAME,
+        user=DB_USER,
+        password=DB_PASS,
         host=DB_HOSTNAME,
     )
 
