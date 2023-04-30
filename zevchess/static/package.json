@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@shoelace-style/shoelace": "^2.4.0",
     "cm-chessboard": "^5.4.8"
   }
 }
