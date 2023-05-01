@@ -196,21 +196,28 @@ function receiveMessages(ws) {
                 } else {
                     const gameState = ev.game_state;
                     updateCheckStatus(gameState, checkedKing, setCheckedKing);
+                    let rejectButton = document.getElementById('draw-reject-button');
+                    if ((!rejectButton || rejectButton.style.display === 'inline') && gameState.can_offer_draw_white && side === "white" || gameState.can_offer_draw_black && side === "black") {
+                        showDrawButton(uid, ws, setSelfDrawOffer, gameState.can_offer_draw_white && side === "white" || gameState.can_offer_draw_black && side === "black");
+                    }
                 }
                 break;
 
             case 'move':
                 const move = ev.move;
+                updateGlobals(ev);
+                let rejectButton = document.getElementById('draw-reject-button');
                 if (selfDrawOffer) {
                     selfDrawOffer = false;
                     hideWithdrawDrawButton();
-                    showDrawButton();
+                    if ((!rejectButton || rejectButton.style.display === 'inline') && gameState.can_offer_draw_white && side === "white" || gameState.can_offer_draw_black && side === "black") {
+                        showDrawButton();
+                    }
                     clearMessage();
                 }
                 const [from, to] = doTheMoveReceived(move, board, side);
                 highlightPrevMove(from, to, prevMoveOrigin, prevMoveDest, setPrevMove, board);
-                updateGlobals(ev);
-                if (gameState.half_moves == 2) {
+                if ((!rejectButton || rejectButton.style.display === 'inline') && gameState.can_offer_draw_white && side === "white" || gameState.can_offer_draw_black && side === "black") {
                     showDrawButton(uid, ws, setSelfDrawOffer);
                 }
                 updateCheckStatus(gameState, checkedKing, setCheckedKing);
@@ -220,13 +227,15 @@ function receiveMessages(ws) {
 
             case 'draw_offer':
                 hideDrawButton();
-                showDrawAcceptAndRejectButtons(ws, uid);
+                showDrawAcceptAndRejectButtons(ws, uid, gameState.can_offer_draw_white && side === "white" || gameState.can_offer_draw_black && side === "black");
                 displayMessage(ev.message, false);
                 otherDrawOffer = true;
                 break;
 
             case 'draw_withdraw':
-                showDrawButton();
+                if (gameState.can_offer_draw_white && side === "white" || gameState.can_offer_draw_black && side === "black") {
+                    showDrawButton();
+                }
                 hideDrawAcceptAndRejectButtons();
                 clearMessage();
                 displayMessage(ev.message);
@@ -234,9 +243,10 @@ function receiveMessages(ws) {
                 break;
 
             case 'draw_reject':
-                showDrawButton();
+                if (!selfDrawOffer && gameState.can_offer_draw_white && side === "white" || gameState.can_offer_draw_black && side === "black") {
+                    showDrawButton();
+                }
                 hideWithdrawDrawButton();
-                showDrawButton();
                 selfDrawOffer = false;
                 displayMessage(ev.message);
                 break;
@@ -290,8 +300,6 @@ function handleEventJoinSuccess(event, ws) {
     }
     if (event.game_status === 'waiting' && side && side === 'white') {
         displayModal('waiting for black to join');
-    } else {
-        console.log("didn't display modal because side is", side);
     }
     if (side == 'white' && event.game_status === 'ready') {
         myTurn = true;
@@ -360,11 +368,10 @@ function sendMove(event, ws) {
     if (otherDrawOffer) {
         otherDrawOffer = false;
         hideDrawAcceptAndRejectButtons();
-        showDrawButton();
+        if (gameState.can_offer_draw_white && side === "white" || gameState.can_offer_draw_black && side === "black") {
+            showDrawButton();
+        }
         clearMessage();
-    }
-    if (gameState.half_moves == 1) {
-        showDrawButton(uid, ws, setSelfDrawOffer);
     }
     const msg = JSON.stringify({
         uid,
