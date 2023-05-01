@@ -539,7 +539,7 @@ async def offer_draw(ws, uid) -> None:
     requester = which_side(ws, store)
     try:
         c.offer_draw(uid, 0 if ws == store.white else 1)
-    except c.InvalidArguments as e:
+    except (c.InvalidArguments, c.NoMoreDraws) as e:
         await ws.send(str(e))
     else:
         ws_broadcast(
