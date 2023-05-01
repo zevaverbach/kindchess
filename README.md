@@ -23,13 +23,9 @@ related topics.
 - DB_PASS
 - DB_NAME
 - DB_HOSTNAME
-- DB_URL
-- DB_URL_PUBLIC
-- PSQL_COMMAND
 - REDIS_NAME
 - REDIS_URL
-- ZEVCHESS_PROD (0/1)
-- AXIOM_KEY
+- KINDCHESS_ENVIRONMENT ("prod"/"local")
 
 # Deployment
 

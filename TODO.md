@@ -18,8 +18,7 @@
       before completing a further six moves be entitled to make another offer. 
 - [ ] No player shall be entitled to offer more than three draws in any one game.
 - [ ] enable reconnecting instead of 'abandoned' when you leave
-  - [ ] use cookies for each game
-  - [ ] deliver the HTML + JS with the current state of the game when getting a reconnect request
+  - [ ] use SocketIO, it includes reconnecting
 - [ ] anonymous matchups
 - [ ] move history
 - [ ] stockfish

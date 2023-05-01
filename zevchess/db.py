@@ -6,9 +6,9 @@ import psycopg2
 import redis
 from rich.pretty import pprint
 
-ENVIRONMENT = os.getenv("ZEVCHESS_ENVIRONMENT")
+ENVIRONMENT = os.getenv("KINDCHESS_ENVIRONMENT")
 if ENVIRONMENT is None:
-    print("ZEVCHESS_ENVIRONMENT not set")
+    print("KINDCHESS_ENVIRONMENT not set")
     sys.exit(1)
 
 match ENVIRONMENT:

@@ -30,7 +30,7 @@ class ConnectionStore:
 VALID_ORIGINS = ("http://localhost:8000", 'http://127.0.0.1:5000')
 
 load_dotenv()
-if os.getenv("ZEVCHESS_ENVIRONMENT") == "prod":
+if os.getenv("KINDCHESS_ENVIRONMENT") == "prod":
     VALID_ORIGINS = ("https://zevchess-ws.onrender.com",
                      "https://kindchess.com")
 
