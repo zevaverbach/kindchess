@@ -15,7 +15,7 @@ related topics.
 
 ## Development 
 - all of the above, substituting `requirements-dev.txt` for `requirements.txt`.
-- `websocat` or another websocket client (`> brew install websocat`)
+- For testing the websocket server, use `websocat` or another websocket client (`> brew install websocat`)
   - for testing: `> websocat localhost:8001`
 
 ## Environment Variables
@@ -27,11 +27,17 @@ related topics.
 - REDIS_URL
 - KINDCHESS_ENVIRONMENT ("prod"/"local")
 
+# Local Dev Environment
+1) start a local Redis server using default port (`$ redis-server`)
+1) activate the virtual environment (`cd kindchess && source env/bin/activate`)
+1) `$ flask run`
+1) open another tab, activate the venv and `$ python ws_server.py`
+
 # Deployment
 
 ## New Service/Infra
 - create the service in render.com dashboard
-  - associate the appropriate env group (`zevchess` or `zevchess-dev`)
+  - associate the `zevchess` env group
   - use the default `pip install -r requirements.txt`
   - for web API, `gunicorn -w 2 <or however many> app:application`
   - for websocket server, `python ws_server.py`
@@ -41,10 +47,14 @@ related topics.
 ## Code Updates
 - simply push to the monorepo, then either wait 1-10 mins to mirror to Github or manually sync (https://code.averba.ch/Zev/zevchess/settings)
 
+### Schema Changes
+- if there's a change to `zevchess.GameState.to_db_dict()`'s keys, make sure to re-initialize the DB in order to add those fields. However, once the server is truly in 'production' with more than a few users, it'd be better to a) use DB migrations and b) make sure not to break ongoing games.
+
+- since the ongoing games' states are stored in Redis (schema-less/NoSQL), there aren't any changes needed for attribute changes on `GameState` which don't appear in `to_db_dict()`'s output. Nevertheless, it will be important not to break ongoing games with such changes.
 
 # Testing
 - load testing (TODO as of March 3 2023)
-- unit testing (in process via test-driven development)
+- unit testing (see `tests/`)
 
 # Cost
 - $382/year as of feb 27 2023

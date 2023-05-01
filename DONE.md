@@ -4,6 +4,13 @@
     it messed up get_possible_moves
 - [x] the black king, when eligible to castle, doesn't have a dot in the right place for that
 
+# Front End
+- [x] make room for non-game-over messages, use colors
+- [x] disable pinch to zoom
+- [x] add ethical analytics
+- [x] maybe get rid of the 'share url' button altogether
+- [x] make the 'create game' button bigger on mobile
+
 # Features
 - [x] prevent modals from being dismissed via 'escape'
 - [x] support landscape mode on mobile (fill the screen ,no scrolling)
