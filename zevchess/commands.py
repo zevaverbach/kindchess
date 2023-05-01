@@ -10,6 +10,8 @@ from zevchess.db import r, get_con
 import zevchess.queries as q
 import zevchess.ztypes as t
 
+MAX_DRAW_OFFERS = 3
+CAN_OFFER_DRAW_AFTER_NUM_MOVES = 6
 
 class InvalidArguments(Exception):
     pass
@@ -24,6 +26,10 @@ class InvalidState(Exception):
 
 
 class ThreeRepetitions(Exception):
+    pass
+
+
+class NoMoreDraws(Exception):
     pass
 
 
@@ -133,10 +139,6 @@ def make_move_and_persist(
     """
     state = state or q.get_game_state(uid)
 
-    # draw offer is implicitly rejected if a move is made by the other side
-    if state.draw_offered != -1 and state.turn != state.draw_offered:
-        state.draw_offered = -1
-
     if not move.promote and state.need_to_choose_pawn_promotion_piece:
         raise PawnPromotionPending(
             "need to choose promotion piece before doing a new move"
@@ -216,7 +218,19 @@ def offer_draw(uid: str, side: int) -> None:
     if state.draw_offered == int(not side):
         raise InvalidArguments(
             "your opponent has already offered a draw, accept it if you want"
-        )
+            )
+    if side == 0:
+        if state.num_draws_offered_white == MAX_DRAW_OFFERS:
+            raise NoMoreDraws("you have already offered 3 draws")
+        state.num_draws_offered_white += 1
+        state.can_offer_draw_white = 0
+        state.moves_since_draw_offer_white = 0
+    if side == 1:
+        if state.num_draws_offered_black == MAX_DRAW_OFFERS:
+            raise NoMoreDraws("you have already offered 3 draws")
+        state.num_draws_offered_black += 1
+        state.can_offer_draw_black = 0
+        state.moves_since_draw_offer_black = 0
     state.draw_offered = side
     store_state(uid, state)
 
@@ -254,8 +268,8 @@ def get_new_state(state: t.GameState, move: t.Move, board: t.Board, uid: str) ->
     new_state = copy.deepcopy(state)
     if is_pawn_promotion(move):
         new_state.need_to_choose_pawn_promotion_piece = (
-            f"{move.src} {move.dest} {move.capture}"
-        )
+                f"{move.src} {move.dest} {move.capture}"
+                )
         return new_state
 
     if move.capture:
@@ -265,13 +279,14 @@ def get_new_state(state: t.GameState, move: t.Move, board: t.Board, uid: str) ->
     recalculate_en_passant(new_state, move, board)
     new_state.FEN = recalculate_FEN(new_state, move, board)
     new_state.half_moves += 1
-
     if new_state.half_moves >= 6:
         # first three moves of the game, impossible to castle
         recalculate_castling_state(new_state, move)
         recalculate_king_position(new_state, move)
 
     new_state.turn = abs(new_state.turn - 1)
+    # TODO: should this be moved above the turn change?
+    update_draw_offer_state(new_state)
     position_string = make_position_string(new_state)
     try:
         add_position_to_position_store(uid, position_string)
@@ -291,6 +306,44 @@ def get_new_state(state: t.GameState, move: t.Move, board: t.Board, uid: str) ->
     elif q.its_stalemate(new_state, board):
         new_state.stalemate = 1
     return new_state
+
+
+def update_draw_offer_state(state: t.GameState) -> None:
+    if state.half_moves < 2:
+        return
+    if state.half_moves == 2:
+        state.can_offer_draw_black = 1
+        state.can_offer_draw_white = 1
+        state.moves_since_draw_offer_white += 1
+        state.moves_since_draw_offer_black += 1
+        return
+    if state.turn == 0:
+        if state.draw_offered == 1:
+            # draw offer is implicitly rejected if a move is made by the other side
+            state.draw_offered = -1
+        elif state.draw_offered == 0:
+            return
+        if state.num_draws_offered_white == MAX_DRAW_OFFERS:
+            return
+        if state.can_offer_draw_white == 1:
+            return
+        state.moves_since_draw_offer_white += 1
+        if state.moves_since_draw_offer_white == CAN_OFFER_DRAW_AFTER_NUM_MOVES:
+            state.can_offer_draw_white = 1
+    else:
+        if state.draw_offered == 0:
+            # draw offer is implicitly rejected if a move is made by the other side
+            state.draw_offered = -1
+        elif state.draw_offered == 1:
+            return
+        if state.num_draws_offered_black == MAX_DRAW_OFFERS:
+            return
+        if state.can_offer_draw_black == 1:
+            return
+        state.moves_since_draw_offer_black += 1
+        if state.moves_since_draw_offer_black == CAN_OFFER_DRAW_AFTER_NUM_MOVES:
+            state.can_offer_draw_black = 1
+
 
 
 def make_position_string(state: t.GameState) -> str:
@@ -410,31 +463,31 @@ def create_FEN_from_tokens(tokens: list[str]) -> str:
 
 
 def get_updated_rank_FEN_after_castling(
-    state: t.GameState, castle_side: t.Castle, ranks: list[str]
-) -> tuple[int, str]:
+        state: t.GameState, castle_side: t.Castle, ranks: list[str]
+        ) -> tuple[int, str]:
     rank_src_idx = 0 if state.turn == 0 else 7
     rank_src_FEN = ranks[rank_src_idx]
     if castle_side == "q":
         LEFT_SIDE_FEN_AFTER_QUEEN_CASTLE = "2kr1" if state.turn == 1 else "2KR1"
         LEFT_SIDE_TOKENS_AFTER_QUEEN_CASTLE = split_FEN_into_tokens(
-            LEFT_SIDE_FEN_AFTER_QUEEN_CASTLE
-        )
+                LEFT_SIDE_FEN_AFTER_QUEEN_CASTLE
+                )
         right_side = split_FEN_into_tokens(rank_src_FEN[3:])  # "2kr(*****)"
         return rank_src_idx, create_FEN_from_tokens(
-            LEFT_SIDE_TOKENS_AFTER_QUEEN_CASTLE + right_side
-        )
+                LEFT_SIDE_TOKENS_AFTER_QUEEN_CASTLE + right_side
+                )
 
     RIGHT_SIDE_FEN_BEFORE_KING_CASTLE = "k2r" if state.turn == 1 else "K2R"
     RIGHT_SIDE_FEN_AFTER_KING_CASTLE = "1rk1" if state.turn == 1 else "1RK1"
     RIGHT_SIDE_TOKENS_AFTER_KING_CASTLE = split_FEN_into_tokens(
-        RIGHT_SIDE_FEN_AFTER_KING_CASTLE
-    )
+            RIGHT_SIDE_FEN_AFTER_KING_CASTLE
+            )
     left_side = split_FEN_into_tokens(
-        rank_src_FEN[: rank_src_FEN.find(RIGHT_SIDE_FEN_BEFORE_KING_CASTLE)]
-    )  # "(****)1rk"
+            rank_src_FEN[: rank_src_FEN.find(RIGHT_SIDE_FEN_BEFORE_KING_CASTLE)]
+            )  # "(****)1rk"
     return rank_src_idx, create_FEN_from_tokens(
-        left_side + RIGHT_SIDE_TOKENS_AFTER_KING_CASTLE
-    )
+            left_side + RIGHT_SIDE_TOKENS_AFTER_KING_CASTLE
+            )
 
 
 def get_updated_FEN_src_rank(fen: str, src_file_idx: int, en_passant: str = "") -> str:

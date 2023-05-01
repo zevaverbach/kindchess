@@ -3,6 +3,9 @@
   - [x] the pawn can't transform into its promotion piece _before_ moving to its destination square,
     it messed up get_possible_moves
 - [x] the black king, when eligible to castle, doesn't have a dot in the right place for that
+- [x] can't click on a space if you're hovering over the blue dot
+- [x] if you click an ineligible square (no dots) after selecting a piece, 
+      it doesn't remove the dots but it un-highlights the piece and makes it so you can't click on a dot to move the piece
 
 # Front End
 - [x] make room for non-game-over messages, use colors
