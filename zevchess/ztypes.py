@@ -104,8 +104,10 @@ class GameState:
     FEN: str = STARTING_FEN
     num_draws_offered_white: int = 0
     num_draws_offered_black: int = 0
-    half_moves_since_draw_offer_white: int = -1
-    half_moves_since_draw_offer_black: int = -1
+    moves_since_draw_offer_white: int = -1
+    moves_since_draw_offer_black: int = -1
+    can_offer_draw_white: int = 0
+    can_offer_draw_black: int = 0
 
     def to_db_dict(self) -> dict:
         return dict(
