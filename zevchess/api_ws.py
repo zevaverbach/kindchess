@@ -34,9 +34,9 @@ if os.getenv("KINDCHESS_ENVIRONMENT") == "prod":
     VALID_ORIGINS = ("https://zevchess-ws.onrender.com",
                      "https://kindchess.com")
 
-CONNECTIONS = {}
+CONNECTIONS: dict[str, ConnectionStore] = {}
 CONNECTION_WS_STORE_DICT: dict[
-    str, tuple[ConnectionStore, typing.Literal["black", "white", "watchers"]]
+    Ws, tuple[ConnectionStore, typing.Literal["black", "white", "watchers"]]
 ] = {}
 
 
@@ -53,75 +53,77 @@ class InvalidMoveEvent(Exception):
 
 
 async def join(ws, uid: str):
-    if uid in CONNECTIONS:
+    # this is true if it's the second or greater joiner
+    if uid not in CONNECTIONS:
+        if not q.uid_exists_and_is_an_active_game(uid):
+            raise InvalidUid
+        CONNECTIONS[uid] = ConnectionStore(uid)
         st = CONNECTIONS[uid]
-        game_state = q.get_game_state(uid)
-        all_possible_moves = q.get_all_legal_moves(game_state, json=True)
-        game_state_dict = dc.asdict(game_state)
-        board = t.Board.from_FEN(game_state.FEN).to_array()
-        if st.white and st.black and ws not in (st.white, st.black):
-            if st.watchers is None:
-                st.watchers = {ws}
-            else:
-                st.watchers.add(ws)
-            print(f"{st.watchers=}")
-            CONNECTION_WS_STORE_DICT[ws] = (st, "watchers")
-            print(f"watcher #{len(st.watchers)} has joined")
-            return await ws.send(
-                json.dumps(
-                    {
-                        "type": "join_success",
-                        "message": f"you're watching game {uid}, you're joined"
-                        f" by {len(st.watchers) - 1} others",
-                        "game_state": game_state_dict,
-                        "game_status": "ready",
-                        "board": board,
-                        "possible_moves": all_possible_moves,
-                    }
-                )
-            )
-        st.black = ws
-        print("second player has joined the game")
-        CONNECTION_WS_STORE_DICT[ws] = (st, "black")
-        await ws.send(
+        st.white = ws
+        print("first player has joined the game")
+        # how does this work?
+        CONNECTION_WS_STORE_DICT[ws] = (st, "white")
+        return await ws.send(
             json.dumps(
                 {
                     "type": "join_success",
-                    "message": "you are player two, you're playing the black pieces",
-                    "side": "black",
-                    "game_status": "ready",
-                    "game_state": game_state_dict,
-                    "board": board,
-                    "possible_moves": all_possible_moves,
+                    "message": "you are player one, you're playing the white pieces",
+                    "game_status": "waiting",
                 }
             )
         )
-        return await st.white.send(
-            json.dumps(
-                {
-                    "type": "join_success",
-                    "message": "okay, let's start! it's your turn.",
-                    "side": "white",
-                    "game_status": "ready",
-                    "game_state": game_state_dict,
-                    "board": board,
-                    "possible_moves": all_possible_moves,
-                }
-            )
-        )
-    if not q.uid_exists_and_is_an_active_game(uid):
-        raise InvalidUid
-    CONNECTIONS[uid] = ConnectionStore(uid)
+
     st = CONNECTIONS[uid]
-    st.white = ws
-    print("first player has joined the game")
-    CONNECTION_WS_STORE_DICT[ws] = (st, "white")
+    game_state = q.get_game_state(uid)
+    all_possible_moves = q.get_all_legal_moves(game_state, json=True)
+    game_state_dict = dc.asdict(game_state)
+    board = t.Board.from_FEN(game_state.FEN).to_array()
+    if st.white and st.black and ws not in (st.white, st.black):
+        if st.watchers is None:
+            st.watchers = {ws}
+        else:
+            st.watchers.add(ws)
+        CONNECTION_WS_STORE_DICT[ws] = (st, "watchers")
+        print(f"watcher #{len(st.watchers)} has joined")
+        return await ws.send(
+            json.dumps(
+                {
+                    "type": "join_success",
+                    "message": f"you're watching game {uid}, you're joined"
+                    f" by {len(st.watchers) - 1} others",
+                    "game_state": game_state_dict,
+                    "game_status": "ready",
+                    "board": board,
+                    "possible_moves": all_possible_moves,
+                }
+            )
+        )
+    st.black = ws
+    print("second player has joined the game")
+    CONNECTION_WS_STORE_DICT[ws] = (st, "black")
     await ws.send(
         json.dumps(
             {
                 "type": "join_success",
-                "message": "you are player one, you're playing the white pieces",
-                "game_status": "waiting",
+                "message": "you are player two, you're playing the black pieces",
+                "side": "black",
+                "game_status": "ready",
+                "game_state": game_state_dict,
+                "board": board,
+                "possible_moves": all_possible_moves,
+            }
+        )
+    )
+    return await st.white.send(
+        json.dumps(
+            {
+                "type": "join_success",
+                "message": "okay, let's start! it's your turn.",
+                "side": "white",
+                "game_status": "ready",
+                "game_state": game_state_dict,
+                "board": board,
+                "possible_moves": all_possible_moves,
             }
         )
     )
@@ -140,7 +142,6 @@ async def remove_connection(ws):
     if attribute == "watchers":
         if store.watchers is not None and len(store.watchers) > 0:
             store.watchers.remove(ws)
-            print(f"{store.watchers=}")
             if len(store.watchers) > 0:
                 ws_broadcast(
                     store.watchers,
@@ -254,11 +255,11 @@ async def handler(ws):
             try:
                 event = json.loads(message)
             except json.decoder.JSONDecodeError:
-                print(message)
+                print(message, "invalid event")
                 await error(ws, "invalid event")
                 continue
             if "uid" not in event or "type" not in event:
-                print(message)
+                print(message, "invalid event")
                 await error(ws, "invalid event")
                 continue
             uid = event["uid"]
@@ -292,13 +293,13 @@ async def handler(ws):
                         move_dict=json.loads(event["move"]),
                     )
                 case _:
-                    print(event)
+                    print(event, "invalid event")
                     await error(ws, "invalid event")
                     continue
 
     except (
-        w.exceptions.ConnectionClosedOK,
-        w.exceptions.ConnectionClosedError,
+        w.exceptions.ConnectionClosedOK, # type: ignore
+        w.exceptions.ConnectionClosedError, # type: ignore 
     ):
         pass
 
@@ -648,7 +649,7 @@ async def main():
     async with w.serve( # type: ignore
         handler,
         host="0.0.0.0",
-        port=8765,
+        port=8080,
         origins=VALID_ORIGINS,
         process_request=health_check,
     ):
