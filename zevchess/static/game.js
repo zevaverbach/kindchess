@@ -11,6 +11,11 @@ import {
 from './node_modules/cm-chessboard/src/cm-chessboard/model/Position.js';
 
 import {
+    store,
+    initializeStore
+} from './store.js';
+
+import {
     showStalemate,
     showCheckmate,
     showResignButton,
@@ -47,19 +52,10 @@ import {
 // TODO: get this from environment
 let WEBSOCKET_SERVER_ADDR;
 if (["127.0.0.1:5000", "localhost:8000"].includes(window.location.host)) {
-    WEBSOCKET_SERVER_ADDR = 'ws://0.0.0.0:8765/';
+    WEBSOCKET_SERVER_ADDR = 'ws://0.0.0.0:8080/';
 } else {
     WEBSOCKET_SERVER_ADDR = 'wss://ws.kindchess.com';
 }
-
-// hopefully prevents pinch to zoom
-document.addEventListener('touchmove', e => {
-    if (e.touches.length > 1) {
-        e.preventDefault();
-    }
-}, {
-    passive: false
-})
 
 
 let side, board, pawnPromotionSquare, pawnPromotionMove;
@@ -94,56 +90,12 @@ let otherDrawOffer = false;
 const uid = window.location.pathname.replace('/', '');
 
 const choosePawnPromotionPiece = document.getElementById("pawn-promote");
-choosePawnPromotionPiece.addEventListener('cancel', event => {
-    event.preventDefault();
-});
 const choosePawnPromotionPieceSelect = choosePawnPromotionPiece.querySelector("select");
-choosePawnPromotionPieceSelect.addEventListener("change", function(e) {
-    pawnPromotionPiece = choosePawnPromotionPieceSelect.value;
-    const pieceLetter = pawnPromotionPiece === "Knight" ? "n" : pawnPromotionPiece[0].toLowerCase();
-    const piece = `${side[0]}${pieceLetter}`;
-    board.setPiece(pawnPromotionSquare, piece);
-});
-
-window.addEventListener("beforeunload", beforeUnloadListener);
-
-function beforeUnloadListener(e) {
-    e.preventDefault();
-    return "are you sure you want to abandon this game?";
-}
-
 if (testing) {
     const div = document.createElement('div');
     div.innerHTML = "<textarea readonly id='ws'></textarea>";
     const wsMessageElement = div.firstChild;
 }
-
-document.onreadystatechange = function() {
-    if (document.readyState !== "complete") {
-        document.querySelector("main").style.visibility = "hidden";
-        document.querySelector("#loader").style.visibility = "visible";
-    } else {
-        document.querySelector("#loader").style.display = "none";
-        document.querySelector("main").style.visibility = "visible";
-    }
-};
-
-window.addEventListener('DOMContentLoaded', function() {
-    const ws = new WebSocket(WEBSOCKET_SERVER_ADDR);
-    joinGame(ws);
-    receiveMessages(ws);
-    choosePawnPromotionPiece.addEventListener("close", function() {
-        ws.send(JSON.stringify({
-            type: "pawn_promote",
-            uid,
-            choice: pawnPromotionPiece === "Knight" ? "n" : pawnPromotionPiece.toLowerCase()[0],
-            move: JSON.stringify(pawnPromotionMove),
-        }));
-        pawnPromotionSquare = null;
-        pawnPromotionPiece = "Queen";
-        pawnPromotionMove = null;
-    });
-});
 
 function joinGame(ws) {
     ws.addEventListener('open', function(event) {
@@ -183,12 +135,6 @@ function receiveMessages(ws) {
                 break;
 
             case 'success':
-                // TODO: remove the next four lines 
-                if (ev.message !== "move acknowledged" || myTurn) {
-                    console.log("there was a message 'success' without the 'move acknowledged' message or !myTurn");
-                    break;
-                }
-
                 if (ev.move.castle) {
                     doTheMoveSentCastle(ev.move, side, board);
                 } else if (isEnPassantMove(ev.move, board, side)) {
@@ -417,4 +363,59 @@ function validateMoveInputStarted(event) {
         board.addDot(move.dest);
     }
     return movesFromSquare.length > 0;
+}
+
+// loading spinner
+document.onreadystatechange = function() {
+    if (document.readyState !== "complete") {
+        document.querySelector("main").style.visibility = "hidden";
+        document.querySelector("#loader").style.visibility = "visible";
+    } else {
+        document.querySelector("#loader").style.display = "none";
+        document.querySelector("main").style.visibility = "visible";
+    }
+};
+
+window.addEventListener('DOMContentLoaded', function() {
+    const ws = new WebSocket(WEBSOCKET_SERVER_ADDR);
+    joinGame(ws);
+    receiveMessages(ws);
+    choosePawnPromotionPiece.addEventListener("close", function() {
+        ws.send(JSON.stringify({
+            type: "pawn_promote",
+            uid,
+            choice: pawnPromotionPiece === "Knight" ? "n" : pawnPromotionPiece.toLowerCase()[0],
+            move: JSON.stringify(pawnPromotionMove),
+        }));
+        pawnPromotionSquare = null;
+        pawnPromotionPiece = "Queen";
+        pawnPromotionMove = null;
+    });
+});
+
+
+// hopefully prevents pinch to zoom
+document.addEventListener('touchmove', e => {
+    if (e.touches.length > 1) {
+        e.preventDefault();
+    }
+}, {
+    passive: false
+})
+
+choosePawnPromotionPiece.addEventListener('cancel', event => {
+    event.preventDefault();
+});
+choosePawnPromotionPieceSelect.addEventListener("change", function(e) {
+    pawnPromotionPiece = choosePawnPromotionPieceSelect.value;
+    const pieceLetter = pawnPromotionPiece === "Knight" ? "n" : pawnPromotionPiece[0].toLowerCase();
+    const piece = `${side[0]}${pieceLetter}`;
+    board.setPiece(pawnPromotionSquare, piece);
+});
+
+window.addEventListener("beforeunload", beforeUnloadListener);
+
+function beforeUnloadListener(e) {
+    e.preventDefault();
+    return "are you sure you want to abandon this game?";
 }
