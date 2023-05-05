@@ -1,16 +1,19 @@
 # Bugs
 
 # Features
-- [ ] limits to draw offers
+- [x] limits to draw offers
     - [x] A player who has offered a draw shall not, before completing a further six moves be entitled to make another offer. 
     - [x] No player shall be entitled to offer more than three draws in any one game.
     - [x] bug: black can't offer a draw until after -three- half moves, should be two
-    - [ ] bug: black's 'offer draw' button disappears after rejecting a draw offer from white
+    - bug: black's 'offer draw' button disappears after rejecting a draw offer from white
       - ONLY when white's offer was sent during white's turn
       - ONLY in the first couple moves
-    - [ ] bug: black's 'offer draw' button reappears after white rejects a draw offer
+    - bug: black's 'offer draw' button reappears after white rejects a draw offer
       - ONLY when black's offer was sent during black's turn
-      - if you do it a second time, the 'offer draw' won't reapear
+      - if you do it a second time, the 'offer draw' won't reappear
+    - [x] remove most of the parameters from `gameOps` functions, in favor of events (pub/sub) which elements can react to
+      - [x] show/hide draw-related buttons
+      - https://gomakethings.com/simple-reactive-data-stores-with-vanilla-javascript-and-proxies/
 - [ ] brief instructions in 'waiting for black to join' modal about sharing the game URL
 - [ ] make "page doesnt exist html
 - [ ] revert coloring of recent move squares so that white and black squares are differentiated
@@ -52,3 +55,6 @@
     - [bitboard](https://blog.devgenius.io/improve-as-a-software-engineer-by-writing-a-chess-engine-c360109371aa)
       - there are bit operations in redis, si jamais
   - [ ] use a CDN
+- [ ] distribute across many services
+  - [ ] move the two CONNECTION stores in `ws_server.py` distributable, not sure how! (keep them in a load balancer?)
+  - [ ] more practically, [use a message queue](https://stackoverflow.com/a/44428469)

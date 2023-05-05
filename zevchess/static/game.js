@@ -12,7 +12,6 @@ from './node_modules/cm-chessboard/src/cm-chessboard/model/Position.js';
 
 import {
     store,
-    initializeStore
 } from './store.js';
 
 import {
@@ -20,9 +19,8 @@ import {
     showCheckmate,
     showResignButton,
     showDrawButton,
-    showDrawAcceptAndRejectButtons,
+    hideDrawOfferButton,
     hideDrawAcceptAndRejectButtons,
-    hideDrawButton,
     hideWithdrawDrawButton,
     hideButtons,
     clearMessage,
@@ -52,13 +50,22 @@ import {
 // TODO: get this from environment
 let WEBSOCKET_SERVER_ADDR;
 if (["127.0.0.1:5000", "localhost:8000"].includes(window.location.host)) {
-    WEBSOCKET_SERVER_ADDR = 'ws://0.0.0.0:8080/';
+    WEBSOCKET_SERVER_ADDR = 'ws://0.0.0.0:8081/';
 } else {
     WEBSOCKET_SERVER_ADDR = 'wss://ws.kindchess.com';
 }
 
+// hopefully prevents pinch to zoom
+document.addEventListener('touchmove', e => {
+    if (e.touches.length > 1) {
+        e.preventDefault();
+    }
+}, {
+    passive: false
+})
 
-let side, board, pawnPromotionSquare, pawnPromotionMove;
+
+let board, pawnPromotionSquare, pawnPromotionMove;
 let myTurn = false;
 let testing = false;
 let gameOver = false;
@@ -79,40 +86,105 @@ let checkedKing = "";
 function setCheckedKing(val) {
     checkedKing = val;
 }
+store.side = null;
+store.otherSide = null;
+store.selfDrawOffer = false;
+store.otherDrawOffer = false;
+store.canOfferDraw = false;
 
-let selfDrawOffer = false;
-
-function setSelfDrawOffer(val) {
-    selfDrawOffer = val;
-}
-let otherDrawOffer = false;
-
-const uid = window.location.pathname.replace('/', '');
+store.uid = window.location.pathname.replace('/', '');
 
 const choosePawnPromotionPiece = document.getElementById("pawn-promote");
+choosePawnPromotionPiece.addEventListener('cancel', event => {
+    event.preventDefault();
+});
 const choosePawnPromotionPieceSelect = choosePawnPromotionPiece.querySelector("select");
-if (testing) {
-    const div = document.createElement('div');
-    div.innerHTML = "<textarea readonly id='ws'></textarea>";
-    const wsMessageElement = div.firstChild;
+choosePawnPromotionPieceSelect.addEventListener("change", function(_) {
+    pawnPromotionPiece = choosePawnPromotionPieceSelect.value;
+    const pieceLetter = pawnPromotionPiece === "Knight" ? "n" : pawnPromotionPiece[0].toLowerCase();
+    const piece = `${store.side[0]}${pieceLetter}`;
+    board.setPiece(pawnPromotionSquare, piece);
+});
+
+window.addEventListener("beforeunload", beforeUnloadListener);
+
+function beforeUnloadListener(e) {
+    e.preventDefault();
+    return "are you sure you want to abandon this game?";
 }
 
-function joinGame(ws) {
-    ws.addEventListener('open', function(event) {
+document.onreadystatechange = function() {
+    if (document.readyState !== "complete") {
+        document.querySelector("main").style.visibility = "hidden";
+        document.querySelector("#loader").style.visibility = "visible";
+    } else {
+        document.querySelector("#loader").style.display = "none";
+        document.querySelector("main").style.visibility = "visible";
+    }
+};
+
+window.addEventListener('DOMContentLoaded', function() {
+    store.ws = new WebSocket(WEBSOCKET_SERVER_ADDR);
+    joinGame();
+    receiveMessages();
+    choosePawnPromotionPiece.addEventListener("close", function() {
+        store.ws.send(JSON.stringify({
+            type: "pawn_promote",
+            'uid': store.uid,
+            choice: pawnPromotionPiece === "Knight" ? "n" : pawnPromotionPiece.toLowerCase()[0],
+            move: JSON.stringify(pawnPromotionMove),
+        }));
+        pawnPromotionSquare = null;
+        pawnPromotionPiece = "Queen";
+        pawnPromotionMove = null;
+    });
+});
+
+function joinGame() {
+    store.ws.addEventListener('open', function(_) {
         const message = JSON.stringify({
             type: 'join',
-            uid,
+            'uid': store.uid,
         });
-        ws.send(message);
+        store.ws.send(message);
         if (testing)
             wsMessageElement.value =
             wsMessageElement.value + `\nsent:\n ${message}\n`;
     });
-    ws.addEventListener('close', function(event) {})
+    store.ws.addEventListener('close', function(_) {})
 }
 
-function receiveMessages(ws) {
-    ws.addEventListener('message', function(message) {
+function updateAbilityToOfferDraw() {
+    const canOfferDrawAttrib = store.side === "white" ? "can_offer_draw_white" : "can_offer_draw_black";
+    if (store.canOfferDraw != gameState[canOfferDrawAttrib]) {
+        store.canOfferDraw = gameState[canOfferDrawAttrib];
+        if (store.canOfferDraw && !store.selfDrawOffer && !store.otherDrawOffer) {
+            showDrawButton();
+        } else if (!store.canOfferDraw) {
+            hideDrawOfferButton();
+        }
+    }
+}
+
+function updatePendingDrawReceive() {
+    if (store.selfDrawOffer) {
+        hideWithdrawDrawButton();
+        store.selfDrawOffer = false;
+    }
+}
+
+function updatePendingDrawSend() {
+    if (store.otherDrawOffer) {
+        store.otherDrawOffer = false;
+        hideDrawAcceptAndRejectButtons();
+        if (store.canOfferDraw) {
+            showDrawButton();
+        }
+    }
+}
+
+function receiveMessages() {
+    store.ws.addEventListener('message', function(message) {
         let ev;
         try {
             ev = JSON.parse(message.data);
@@ -126,82 +198,75 @@ function receiveMessages(ws) {
 
             case 'join_success':
                 updateGlobals(ev);
-                handleEventJoinSuccess(ev, ws);
+                handleEventJoinSuccess(ev);
                 break;
 
             case 'for_the_watchers':
-
                 displayMessage(ev.message);
                 break;
 
             case 'success':
                 if (ev.move.castle) {
-                    doTheMoveSentCastle(ev.move, side, board);
-                } else if (isEnPassantMove(ev.move, board, side)) {
-                    doTheMoveSentEnPassant(ev.move, board, side);
+                    doTheMoveSentCastle(ev.move, board);
+                } else if (isEnPassantMove(ev.move, board)) {
+                    doTheMoveSentEnPassant(ev.move, board);
                 } else {
-                    const gameState = ev.game_state;
+                    updateGlobals(ev);
+                    updateAbilityToOfferDraw()
                     updateCheckStatus(gameState, checkedKing, setCheckedKing);
-                    let rejectButton = document.getElementById('draw-reject-button');
-                    if ((!rejectButton || rejectButton.style.display === 'inline') && gameState.can_offer_draw_white && side === "white" || gameState.can_offer_draw_black && side === "black") {
-                        showDrawButton(uid, ws, setSelfDrawOffer, gameState.can_offer_draw_white && side === "white" || gameState.can_offer_draw_black && side === "black");
-                    }
                 }
                 break;
 
             case 'move':
                 const move = ev.move;
                 updateGlobals(ev);
-                let rejectButton = document.getElementById('draw-reject-button');
-                if (selfDrawOffer) {
-                    selfDrawOffer = false;
-                    hideWithdrawDrawButton();
-                    if ((!rejectButton || rejectButton.style.display === 'inline') && gameState.can_offer_draw_white && side === "white" || gameState.can_offer_draw_black && side === "black") {
-                        showDrawButton();
-                    }
-                    clearMessage();
-                }
-                const [from, to] = doTheMoveReceived(move, board, side);
+                updateAbilityToOfferDraw()
+                updatePendingDrawReceive();
+                const [from, to] = doTheMoveReceived(move, board);
                 highlightPrevMove(from, to, prevMoveOrigin, prevMoveDest, setPrevMove, board);
-                if ((!rejectButton || rejectButton.style.display === 'inline') && gameState.can_offer_draw_white && side === "white" || gameState.can_offer_draw_black && side === "black") {
-                    showDrawButton(uid, ws, setSelfDrawOffer);
-                }
                 updateCheckStatus(gameState, checkedKing, setCheckedKing);
                 myTurn = true;
-                sendMoves(ws);
+                sendMoves();
                 break;
 
             case 'draw_offer':
-                hideDrawButton();
-                showDrawAcceptAndRejectButtons(ws, uid, gameState.can_offer_draw_white && side === "white" || gameState.can_offer_draw_black && side === "black");
-                displayMessage(ev.message, false);
-                otherDrawOffer = true;
+                document.dispatchEvent(new CustomEvent('drawOffer', {
+                    detail: {
+                        message: {
+                            source: 'other',
+                            message: ev.message,
+                        },
+                    },
+                }));
                 break;
 
             case 'draw_withdraw':
-                if (gameState.can_offer_draw_white && side === "white" || gameState.can_offer_draw_black && side === "black") {
-                    showDrawButton();
-                }
-                hideDrawAcceptAndRejectButtons();
-                clearMessage();
-                displayMessage(ev.message);
-                otherDrawOffer = false;
+                document.dispatchEvent(new CustomEvent('drawWithdraw', {
+                    detail: {
+                        message: {
+                            source: 'other',
+                            message: ev.message,
+                        },
+                    },
+                }));
                 break;
 
             case 'draw_reject':
-                if (!selfDrawOffer && gameState.can_offer_draw_white && side === "white" || gameState.can_offer_draw_black && side === "black") {
-                    showDrawButton();
-                }
-                hideWithdrawDrawButton();
-                selfDrawOffer = false;
-                displayMessage(ev.message);
+                document.dispatchEvent(new CustomEvent('drawReject', {
+                    detail: {
+                        message: {
+                            source: 'other',
+                            message: ev.message,
+                        },
+                    },
+                }));
                 break;
 
             case 'input_required':
                 if (ev.message !== "choose pawn promotion piece") break;
                 pawnPromotionSquare = ev.dest;
                 pawnPromotionMove = ev.move;
-                const queenPiece = `${side[0]}q`;
+                const queenPiece = `${store.side[0]}q`;
                 board.setPiece(pawnPromotionSquare, queenPiece);
                 choosePawnPromotionPiece.showModal();
                 break;
@@ -223,38 +288,38 @@ function receiveMessages(ws) {
                 gameOver = true;
                 board.disableMoveInput();
                 window.removeEventListener("beforeunload", beforeUnloadListener);
-                ws.close();
+                store.ws.close();
                 break;
         }
     });
 }
 
-function handleEventJoinSuccess(event, ws) {
+function handleEventJoinSuccess(event) {
     if (event.game_status === 'waiting') {
-        side = 'white';
+        store.side = 'white';
+        store.otherSide = 'black';
     } else {
-        side = event.side;
-        if (side) {
+        store.side = event.side;
+        if (store.side) {
+            store.otherSide = 'white'
             // otherwise it's a watcher
             clearMessage();
-            showResignButton(uid, ws);
-            if (side === "white") {
-                hideModal();
-            }
+            showResignButton();
+            hideModal();
             displayMessage('game on!');
         }
     }
-    if (event.game_status === 'waiting' && side && side === 'white') {
+    if (event.game_status === 'waiting' && store.side && store.side === 'white') {
         displayModal('waiting for black to join');
     }
-    if (side == 'white' && event.game_status === 'ready') {
+    if (store.side == 'white' && event.game_status === 'ready') {
         myTurn = true;
-        sendMoves(ws);
+        sendMoves();
     } else {
         // game_status is 'waiting', so draw the board this one time.
         board = new Chessboard(document.getElementById('board'), {
             position: FEN.start,
-            orientation: side ? side[0] : "w", // if it's a watcher, display from white's POV
+            orientation: store.side ? store.side[0] : "w", // if it's a watcher, display from white's POV
             style: {
                 moveFromMarker: MARKER_TYPE.square,
                 moveToMarker: MARKER_TYPE.square
@@ -264,7 +329,7 @@ function handleEventJoinSuccess(event, ws) {
     }
 }
 
-function sendMoves(ws) {
+function sendMoves() {
     if (!myTurn) {
         return board.disableMoveInput();
     }
@@ -277,14 +342,16 @@ function sendMoves(ws) {
                     board.removeDots();
                     break;
                 case INPUT_EVENT_TYPE.validateMoveInput:
-                    return sendMove(event, ws);
+                    const result = sendMove(event);
+                    updatePendingDrawSend();
+                    return result
             }
         },
-        side === 'black' ? COLOR.black : COLOR.white
+        store.side === 'black' ? COLOR.black : COLOR.white
     );
 }
 
-function sendMove(event, ws) {
+function sendMove(event) {
     const piece = getPieceAt(event.squareFrom, board);
     let move = {
         piece: null,
@@ -302,7 +369,7 @@ function sendMove(event, ws) {
         to = move.dest = event.squareTo;
         let capture = isCaptureMove(event, piece, board);
         if (capture) move.capture = 1;
-        let promote = isPromotionMove(move, side);
+        let promote = isPromotionMove(move);
         if (promote) move.promote = 1;
     }
 
@@ -311,20 +378,12 @@ function sendMove(event, ws) {
         return false;
     }
 
-    if (otherDrawOffer) {
-        otherDrawOffer = false;
-        hideDrawAcceptAndRejectButtons();
-        if (gameState.can_offer_draw_white && side === "white" || gameState.can_offer_draw_black && side === "black") {
-            showDrawButton();
-        }
-        clearMessage();
-    }
     const msg = JSON.stringify({
-        uid,
+        'uid': store.uid,
         type: 'move',
         ...move
     });
-    ws.send(msg);
+    store.ws.send(msg);
     highlightPrevMove(from, to, prevMoveOrigin, prevMoveDest, setPrevMove, board);
     if (testing) wsMessageElement.value = wsMessageElement.value + `\nsent:\n ${msg}\n`;
 
@@ -346,8 +405,8 @@ function validateMoveInputStarted(event) {
     for (const mv of possibleMoves) {
         if (mv.src === event.square) {
             movesFromSquare.push(mv);
-        } else if (mv.castle && getKingStartSquare(side) === event.square) {
-            const rank = side === "black" ? 8 : 1;
+        } else if (mv.castle && getKingStartSquare(store.side) === event.square) {
+            const rank = store.side === "black" ? 8 : 1;
             if (mv.castle === "k") {
                 movesFromSquare.push({
                     dest: `g${rank}`
@@ -363,59 +422,4 @@ function validateMoveInputStarted(event) {
         board.addDot(move.dest);
     }
     return movesFromSquare.length > 0;
-}
-
-// loading spinner
-document.onreadystatechange = function() {
-    if (document.readyState !== "complete") {
-        document.querySelector("main").style.visibility = "hidden";
-        document.querySelector("#loader").style.visibility = "visible";
-    } else {
-        document.querySelector("#loader").style.display = "none";
-        document.querySelector("main").style.visibility = "visible";
-    }
-};
-
-window.addEventListener('DOMContentLoaded', function() {
-    const ws = new WebSocket(WEBSOCKET_SERVER_ADDR);
-    joinGame(ws);
-    receiveMessages(ws);
-    choosePawnPromotionPiece.addEventListener("close", function() {
-        ws.send(JSON.stringify({
-            type: "pawn_promote",
-            uid,
-            choice: pawnPromotionPiece === "Knight" ? "n" : pawnPromotionPiece.toLowerCase()[0],
-            move: JSON.stringify(pawnPromotionMove),
-        }));
-        pawnPromotionSquare = null;
-        pawnPromotionPiece = "Queen";
-        pawnPromotionMove = null;
-    });
-});
-
-
-// hopefully prevents pinch to zoom
-document.addEventListener('touchmove', e => {
-    if (e.touches.length > 1) {
-        e.preventDefault();
-    }
-}, {
-    passive: false
-})
-
-choosePawnPromotionPiece.addEventListener('cancel', event => {
-    event.preventDefault();
-});
-choosePawnPromotionPieceSelect.addEventListener("change", function(e) {
-    pawnPromotionPiece = choosePawnPromotionPieceSelect.value;
-    const pieceLetter = pawnPromotionPiece === "Knight" ? "n" : pawnPromotionPiece[0].toLowerCase();
-    const piece = `${side[0]}${pieceLetter}`;
-    board.setPiece(pawnPromotionSquare, piece);
-});
-
-window.addEventListener("beforeunload", beforeUnloadListener);
-
-function beforeUnloadListener(e) {
-    e.preventDefault();
-    return "are you sure you want to abandon this game?";
 }

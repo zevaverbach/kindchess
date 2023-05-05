@@ -10,9 +10,10 @@ const storeHandler = {
             }
         }));
         obj[prop] = value;
+        return true;
     },
 };
-export let store = new Proxy(store, storeHandler);
+export let store = new Proxy(_store, storeHandler);
 
 export function initializeStore(obj) {
     for (let prop in obj) {

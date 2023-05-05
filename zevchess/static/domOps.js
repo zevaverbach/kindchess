@@ -2,6 +2,147 @@ import {
     MARKER_TYPE
 } from './node_modules/cm-chessboard/src/cm-chessboard/Chessboard.js';
 
+import {
+    store
+} from './store.js';
+
+const buttonDrawOffer = document.getElementById('draw-button');
+buttonDrawOffer.addEventListener('click', event => {
+    event.preventDefault();
+    document.dispatchEvent(new CustomEvent('drawOffer', {
+        detail: {
+            message: {
+                source: 'self'
+            },
+        },
+    }));
+})
+
+const buttonDrawAccept = document.getElementById('draw-accept-button');
+buttonDrawAccept.addEventListener('click', event => {
+    event.preventDefault();
+    document.dispatchEvent(new CustomEvent('drawAccept'));
+})
+
+const buttonDrawReject = document.getElementById('draw-reject-button');
+buttonDrawReject.addEventListener('click', event => {
+    event.preventDefault();
+    document.dispatchEvent(new CustomEvent('drawReject', {
+        detail: {
+            message: {
+                source: 'self'
+            },
+        },
+    }));
+})
+
+const buttonDrawWithdraw = document.getElementById('draw-withdraw-button');
+buttonDrawWithdraw.addEventListener('click', event => {
+    event.preventDefault();
+    document.dispatchEvent(new CustomEvent('drawWithdraw', {
+        detail: {
+            message: {
+                source: 'self'
+            },
+        },
+    }));
+});
+
+
+document.addEventListener('drawWithdraw', event => {
+    if (event.detail.message.source === 'self') {
+        buttonDrawWithdraw.style.display = 'none';
+        store.ws.send(JSON.stringify({
+            'uid': store.uid,
+            type: "draw",
+            draw: "withdraw"
+        }));
+        store.selfDrawOffer = false;
+    } else {
+        buttonDrawAccept.style.display = 'none';
+        buttonDrawReject.style.display = 'none';
+        clearMessage();
+        displayMessage(event.detail.message.message, false);
+        if (store.canOfferDraw) {
+            buttonDrawOffer.style.display = 'inline';
+        }
+        store.otherDrawOffer = false;
+    }
+})
+
+
+
+document.addEventListener('drawOffer', event => {
+    const message = event.detail.message;
+    if (message.source === 'self') {
+        store.ws.send(JSON.stringify({
+            'uid': store.uid,
+            type: "draw",
+            draw: "offer"
+        }));
+        buttonDrawOffer.style.display = 'none';
+        buttonDrawWithdraw.style.display = 'inline';
+        displayMessage("you have offered a draw.");
+        store.selfDrawOffer = true;
+    } else if (message.source === 'other') {
+        displayMessage(message.message);
+        buttonDrawOffer.style.display = 'none';
+        buttonDrawAccept.style.display = 'inline';
+        buttonDrawReject.style.display = 'inline';
+        store.otherDrawOffer = true;
+    }
+})
+
+document.addEventListener('drawReject', event => {
+    const message = event.detail.message;
+    if (message.source === 'self') {
+        buttonDrawAccept.style.display = 'none';
+        buttonDrawReject.style.display = 'none';
+        if (store.canOfferDraw) {
+            buttonDrawOffer.style.display = 'inline';
+        }
+        store.ws.send(JSON.stringify({
+            'uid': store.uid,
+            type: "draw",
+            draw: "reject"
+        }));
+        store.otherDrawOffer = false;
+    } else {
+        buttonDrawWithdraw.style.display = 'none';
+        clearMessage();
+        displayMessage(message.message);
+        store.selfDrawOffer = false;
+    }
+})
+
+
+
+document.addEventListener('drawAccept', _ => {
+    buttonDrawAccept.style.display = 'none';
+    buttonDrawReject.style.display = 'none';
+    store.ws.send(JSON.stringify({
+        'uid': store.uid,
+        type: "draw",
+        draw: "accept"
+    }));
+})
+
+document.addEventListener('drawWithdraw', event => {
+    const message = event.detail.message;
+    if (message.source === 'self') {
+        buttonDrawWithdraw.style.display = 'none';
+    } else {
+        buttonDrawAccept.style.display = 'none';
+        buttonDrawReject.style.display = 'none';
+        clearMessage();
+        displayMessage(message.message);
+        if (store.canOfferDraw) {
+            buttonDrawOffer.style.display = 'inline';
+        }
+    }
+});
+
+
 const modal = document.getElementById('modal');
 modal.addEventListener('cancel', event => {
     event.preventDefault();
@@ -39,71 +180,20 @@ export function clearMessage() {
     messageBox.innerHTML = "";
 }
 
-export function showResignButton(uid, ws) {
+export function showResignButton() {
     let btn = document.getElementById('resign-button');
-    if (btn && btn.style.display === "inline") return;
-    if (btn) {
-        btn.style.display = "inline";
-    } else {
-        btn = document.createElement("button");
-        btn.id = "resign-button";
-        btn.addEventListener('click', () => {
-            ws.send(JSON.stringify({
-                uid,
-                type: "resign"
-            }));
-        })
-        btn.innerText = "Resign"
-        document.getElementById('buttons-container').appendChild(btn);
-    }
+    btn.style.display = "inline";
+    btn.addEventListener('click', () => {
+        store.ws.send(JSON.stringify({
+            'uid': store.uid,
+            type: "resign"
+        }));
+    })
 }
 
-export function showDrawButton(uid, ws, setSelfDrawOffer, okToShowDrawOfferButton) {
-    let btn = document.getElementById('draw-button');
-    if (btn && btn.style.display === 'inline') return;
-    if (btn) {
-        btn.style.display = "inline";
-    } else {
-        btn = document.createElement("button");
-        btn.id = "draw-button";
-        btn.addEventListener('click', () => {
-            ws.send(JSON.stringify({
-                uid,
-                type: "draw",
-                draw: "offer"
-            }));
-            hideDrawButton();
-            showWithdrawDrawButton(ws, uid, okToShowDrawOfferButton);
-            displayMessage("you have offered a draw.", false);
-            setSelfDrawOffer(true);
-        })
-        btn.innerText = "Offer Draw"
-        document.getElementById('buttons-container').appendChild(btn);
-    }
-}
-
-function showWithdrawDrawButton(ws, uid, okToShowDrawOfferButton) {
-    let btn = document.getElementById('draw-withdraw-button');
-    if (btn && btn.style.display === 'inline') return;
-    if (btn) {
-        btn.style.display = "inline";
-    } else {
-        btn = document.createElement("button");
-        btn.id = "draw-withdraw-button";
-        btn.addEventListener('click', () => {
-            ws.send(JSON.stringify({
-                uid,
-                type: "draw",
-                draw: "withdraw"
-            }));
-            hideWithdrawDrawButton();
-            if (okToShowDrawOfferButton) {
-                showDrawButton();
-            }
-            clearMessage();
-        })
-        btn.innerText = "Withdraw Draw Offer"
-        document.getElementById('buttons-container').appendChild(btn);
+export function showDrawButton() {
+    if (buttonDrawOffer.style.display == 'none') {
+        buttonDrawOffer.style.display = 'inline';
     }
 }
 
@@ -118,82 +208,25 @@ export function hideWithdrawDrawButton() {
 export function hideButtons() {
     hideDrawAcceptAndRejectButtons();
     hideWithdrawDrawButton();
-    hideDrawButton();
-    hideResignButton();
+    hideDrawOfferButton();
+    document.getElementById('resign-button').style.display = 'none';
 }
 
-export function hideDrawButton() {
+export function hideDrawOfferButton() {
     try {
-        document.getElementById('draw-button').style.display = 'none';
+        drawOfferButton.style.display = 'none';
     } catch {
         return null;
     }
 }
-
-function hideResignButton() {
-    try {
-        document.getElementById('resign-button').style.display = 'none';
-    } catch {
-        return null;
-    }
-}
-
-export function showDrawAcceptAndRejectButtons(ws, uid, okToShowDrawOfferButton) {
-    showDrawAcceptButton(ws, uid);
-    showDrawRejectButton(ws, uid, okToShowDrawOfferButton);
-}
-
-function showDrawAcceptButton(ws, uid) {
-    let btn = document.getElementById('draw-accept-button');
-    if (btn && btn.style.display === 'inline') return;
-    if (btn) {
-        btn.style.display = "inline";
-    } else {
-        btn = document.createElement("button");
-        btn.id = "draw-accept-button";
-        btn.addEventListener('click', () => {
-            ws.send(JSON.stringify({
-                uid,
-                type: "draw",
-                draw: "accept"
-            }));
-        })
-        btn.innerText = "Accept Draw"
-        document.getElementById('buttons-container').appendChild(btn);
-    }
-}
-
-function showDrawRejectButton(ws, uid, okToShowDrawOfferButton) {
-    let btn = document.getElementById('draw-reject-button');
-    if (btn && btn.style.display === 'inline') return;
-    if (btn) {
-        btn.style.display = "inline";
-    } else {
-        btn = document.createElement("button");
-        btn.id = "draw-reject-button";
-        btn.addEventListener('click', () => {
-            ws.send(JSON.stringify({
-                uid,
-                type: "draw",
-                draw: "reject"
-            }));
-            hideDrawAcceptAndRejectButtons();
-            clearMessage();
-            if (okToShowDrawOfferButton) {
-                showDrawButton();
-            }
-        })
-        btn.innerText = "Reject Draw"
-        document.getElementById('buttons-container').appendChild(btn);
-    }
-}
-
 export function hideDrawAcceptAndRejectButtons() {
-    try {
-        document.getElementById('draw-accept-button').style.display = 'none';
-        document.getElementById('draw-reject-button').style.display = 'none';
-    } catch {}
-    return null;
+    buttonDrawAccept.style.display = 'none';
+    buttonDrawReject.style.display = 'none';
+}
+
+export function showDrawAcceptAndRejectButtons() {
+    buttonDrawAccept.style.display = 'inline';
+    buttonDrawReject.style.display = 'inline';
 }
 
 export function showStalemate(gameState) {
