@@ -156,6 +156,10 @@ export function displayModal(message) {
     modal.showModal();
 }
 
+export function changeModalText(message) {
+    modal.innerHTML = message;
+}
+
 export function hideModal() {
     modal.close();
 }
