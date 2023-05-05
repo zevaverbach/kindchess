@@ -20,27 +20,32 @@
     <div id="board-container">
       <div id="board"></div>
     </div>
-    <div id="buttons-container"></div>
+    <div id="buttons-container">
+        <button id="resign-button" style="display: none;">Resign</button>
+        <button id="draw-button" style="display: none;">Offer Draw</button>
+        <button id="draw-withdraw-button" style="display: none;">Withdraw Draw Offer</button>
+        <button id="draw-accept-button" style="display: none;">Accept Draw</button>
+        <button id="draw-reject-button" style="display: none;">Reject Draw</button>
+    </div>
     <div id="watcher-count"></div>
     <div id="messagebox"></div>
-    <dialog id="modal">
-    </dialog>
+    <dialog id="modal"></dialog>
     <dialog id="pawn-promote">
-      <form method="dialog">
-        <p>
-          <label>Pawn becomes:
-            <select>
-              <option>Queen</option>
-              <option>Rook</option>
-              <option>Bishop</option>
-              <option>Knight</option>
-            </select>
-          </label>
-        </p>
-        <div>
-          <button id="pawn-confirm-btn" value="default">Confirm</button>
-        </div>
-      </form>
+        <form method="dialog">
+            <p>
+            <label>Pawn becomes:
+                <select>
+                    <option>Queen</option>
+                    <option>Rook</option>
+                    <option>Bishop</option>
+                    <option>Knight</option>
+                </select>
+            </label>
+            </p>
+            <div>
+                <button id="pawn-confirm-btn" value="default">Confirm</button>
+            </div>
+        </form>
     </dialog>
   </main>
   <script src="https://cdn.usefathom.com/script.js" data-site="NAUEEDJJ" defer></script>
