@@ -5,7 +5,24 @@
 - [x] make "page doesnt exist html
 - [x] revert coloring of recent move squares so that white and black squares are differentiated
 - [ ] enable reconnecting instead of 'abandoned' when you leave
-  - [ ] use SocketIO, it includes reconnecting
+  - [ ] front end
+    - [ ] store some info in localStorage
+      - [ ] uid
+      - [ ] side
+    - [ ] make sure to clear this info out when a game is actually over
+    - [ ] on reconnect/reload, check if there's
+        - [ ] a UID in localStorage which matches the current one
+        - [ ] side
+          - if not, it's a watcher, so who cares?
+    - [ ] use a timeout and reconnect in front end, (as seen here)[https://stackoverflow.com/a/23176223/4386191]
+    - [ ] display what's happening in displayMessage, with a timeout
+
+  - [ ] back end
+    - [ ] when a player disconnects, don't end the game and don't clear out the entry in CONNECTIONS and ...
+    - [ ] instead, see if the UID they're supplying is valid and if there's a player missing
+    - [ ] when a use connects, see if they've sent the UID 
+    - [ ] enforce the same timeout on the back end as on the front end for reconnecting
+      - [ ] use a store in redis, maybe with actual expiry
 - [ ] anonymous matchups
 - [ ] move history
 - [ ] use promotion dialog that's built into cm-chessboard
@@ -18,6 +35,9 @@
   - consider using [these web components](https://shoelace.style/) for straightforward, buildless dev.
 - [ ] accounts/auth [link](https://websockets.readthedocs.io/en/10.4/topics/authentication.html#sending-credentials)
 - [ ] enforce move limit (draw)
+- [ ] allow players to choose which side they're on
+- [ ] expire games in redis if they haven't been joined in X mins
+  - [ ] alternatively, don't allow the creation of a game if you're already in one
 - [ ] stockfish
 - [ ] instead of 'white has rejected black's draw offer', 'white has rejected your draw offer'
 
