@@ -20,6 +20,7 @@ import {
     showResignButton,
     showDrawButton,
     hideDrawOfferButton,
+    changeModalText,
     hideDrawAcceptAndRejectButtons,
     hideWithdrawDrawButton,
     hideButtons,
@@ -88,10 +89,6 @@ let checkedKing = "";
 function setCheckedKing(val) {
     checkedKing = val;
 }
-store.eventListenerMessages = null;
-store.eventListenerPawnPromotion = null;
-store.eventListenerWebSocketOpen = null;
-store.eventListenerWebSocketClose = null;
 store.side = null;
 store.otherSide = null;
 store.selfDrawOffer = false;
@@ -136,8 +133,9 @@ function start() {
     store.ws = new WebSocket(WEBSOCKET_SERVER_ADDR);
     joinGame();
     receiveMessages();
-    store.eventListenerPawnPromotion = choosePawnPromotionPiece.addEventListener("close", pawnPromotionHandler)
+    choosePawnPromotionPiece.addEventListener("close", pawnPromotionHandler)
 };
+
 
 function pawnPromotionHandler() {
     store.ws.send(JSON.stringify({
@@ -156,8 +154,8 @@ function itsBeenLessThan(timestamp, threshold) {
 }
 
 function joinGame() {
-    store.eventListenerWebSocketOpen = store.ws.addEventListener('open', handlerWebsocketOpen);
-    store.eventListenerWebSocketClose = store.ws.addEventListener('close', handlerWebsocketClose);
+    store.ws.addEventListener('open', handlerWebsocketOpen);
+    store.ws.addEventListener('close', handlerWebsocketClose);
 }
 
 function handlerWebsocketOpen(_) {
@@ -178,23 +176,29 @@ function handlerWebsocketOpen(_) {
 
 function handlerWebsocketClose(_) {
     const disconnectedTimestamp = new Date().getTime().toString();
-    localStorage.setItem('disconnectedTimestamp', disconnectedTimestamp);
+    localStorage.setItem("disconnectedTimestamp", disconnectedTimestamp);
     board.disableMoveInput();
-    displayMessage("Connection lost. Attempting to reconnect...");
+    displayModal("Connection lost. Attempting to reconnect...");
     let disconnectTimeoutCountdownSeconds = TIMEOUT_DISCONNECTED_GAMES_MS / 1000;
-    // TODO: remove the rest of the event listeners here!
-    choosePawnPromotionPiece.removeEventListener("close", pawnPromotionHandler)
+
+    removeEventListeners();
 
     store.disconnectTimeoutID = setTimeout(function() {
-        clearMessage();
         disconnectTimeoutCountdownSeconds -= 1;
         if (disconnectTimeoutCountdownSeconds <= 0) {
-            displayMessage("Connection lost. Attempting to reconnect...");
+            changeModalText("Connection lost. Attempting to reconnect...");
             clearTimeout(store.disconnectTimeoutID);
         };
-        displayMessage(`Connection lost. Attempting to reconnect... (${disconnectTimeoutCountdownSeconds} seconds)`);
-        // TODO: actually try to reconnect
+        changeModalText(`Connection lost. Attempting to reconnect... (${disconnectTimeoutCountdownSeconds} seconds)`);
+        start();
     }, 1000)
+}
+
+function removeEventListeners() {
+    choosePawnPromotionPiece.removeEventListener("close", pawnPromotionHandler);
+    store.ws.removeEventListener("message", messageHandler);
+    store.ws.removeEventListener('open', handlerWebsocketOpen);
+    store.ws.removeEventListener('close', handlerWebsocketClose);
 }
 
 function updateAbilityToOfferDraw() {
@@ -227,7 +231,7 @@ function updatePendingDrawSend() {
 }
 
 function receiveMessages() {
-    store.eventListenerMessages = store.ws.addEventListener('message', messageHandler);
+    store.ws.addEventListener('message', messageHandler);
 }
 
 function messageHandler(message) {
@@ -248,12 +252,12 @@ function messageHandler(message) {
             break;
 
         case 'rejoin_success':
-            clearMessage();
+            hideModal();
             clearInterval(store.disconnectTimeoutID);
+            localStorage.removeItem('disconnectedTimestamp');
             if (myTurn) {
-                localStorage.removeItem('disconnectedTimestamp');
-                sendMoves() // this re-enables input on the board
-            } else {}
+                sendMoves(); // this re-enables input on the board
+            }
             break;
 
         case 'disconnect':
@@ -266,11 +270,10 @@ function messageHandler(message) {
                 clearMessage();
                 disconnectTimeoutCountdownSeconds -= 1;
                 if (disconnectTimeoutCountdownSeconds <= 0) {
-                    displayMessage(`${otherSide} has disconnected. Waiting...`, false);
+                    changeModalText(`${otherSide} has disconnected. Waiting...`, false);
                     clearTimeout(store.disconnectTimeoutID);
                 };
-                displayMessage(`${otherSide} has disconnected. Waiting (${disconnectTimeoutCountdownSeconds} seconds)`);;
-                // TODO: actually try to reconnect
+                changeModalText(`${otherSide} has disconnected. Waiting (${disconnectTimeoutCountdownSeconds} seconds)`);;
             }, 1000)
             break;
 

@@ -5,7 +5,7 @@
 - [x] make "page doesnt exist html
 - [x] revert coloring of recent move squares so that white and black squares are differentiated
 - [ ] enable reconnecting instead of 'abandoned' when you leave
-  - [ ] front end
+  - [x] front end
     - [x] store some info in localStorage
       - [x] uid
       - [x] side
@@ -14,11 +14,10 @@
         - [x] a UID in localStorage which matches the current one
         - [x] side
         - [x] a timestamp less than X minutes old
-    - [ ] on disconnect,
-        - [ ] try to reconnect in front end for a few mins, (as seen here)[https://stackoverflow.com/a/23176223/4386191]
-        - [ ] 'rejoin_success' case
-        - [ ] remove all the event listeners on ws 'close'
-          - [ ] store their IDs in `store` first!
+    - [x] on disconnect,
+        - [x] try to reconnect in front end for a few mins, (as seen here)[https://stackoverflow.com/a/23176223/4386191]
+        - [x] 'rejoin_success' case
+        - [x] remove all the event listeners on ws 'close'
         - [x] board.disableMoveInput();
         - [x] store a timestamp for when it disconnected
         - [x] display what's happening in displayMessage 
@@ -26,8 +25,8 @@
         - [x] if it times out
           - [x] clearLocalStorage
           - [x] send message that the game should be over
-    - [ ] handle 'disconnect' message from WS server which it will send if other player disconnects
-      - [ ] replicate the logic for displaying the message and countdown
+    - [x] handle 'disconnect' message from WS server which it will send if other player disconnects
+      - [x] replicate the logic for displaying the message and countdown
   - [ ] back end
     - [ ] when a player disconnects, don't end the game and don't clear out the entry in CONNECTIONS and ...
     - [ ] instead, see if the UID they're supplying is valid and if there's a player missing
