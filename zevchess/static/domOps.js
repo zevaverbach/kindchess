@@ -6,6 +6,7 @@ import {
     store
 } from './store.js';
 
+const messageBox = document.getElementById('messagebox');
 const buttonDrawOffer = document.getElementById('draw-button');
 buttonDrawOffer.addEventListener('click', event => {
     event.preventDefault();
@@ -160,7 +161,6 @@ export function hideModal() {
 }
 
 export function displayMessage(message, timeout = true) {
-    const messageBox = document.getElementById('messagebox');
     messageBox.innerHTML = message;
     clearTimeout(store.pendingTimeout);
     if (timeout) {
@@ -179,7 +179,6 @@ export function highlightPrevMove(from, to, fromWas, toWas, setPrevMove, board) 
 }
 
 export function clearMessage() {
-    const messageBox = document.getElementById('messagebox');
     messageBox.innerHTML = "";
 }
 

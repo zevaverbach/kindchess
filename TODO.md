@@ -1,17 +1,9 @@
 # Bugs
-- [x] when navigating away from a game back to the home page, it hangs and only shows a spinner
-- [x] the 'x offers a draw' message doesn't immediately clear when you click 'reject draw'
-- [x] there's some colliding messages with the clearMessage timeout
-  - when a second message comes through, it gets cleared in milliseconds because of the earlier clearMessage call
-- [x] "offer draw" button reappears on a player's screen even if 
-   - [x] they offer a draw, then it's rejected or withdrawn
-   - [x] the other player offers a draw in the same turn, and it's rejected or withdrawn
-   - this is because self.canOfferDraw isn't getting set in the event handler
 
 # Features
-- [ ] brief instructions in 'waiting for black to join' modal about sharing the game URL
-- [ ] make "page doesnt exist html
-- [ ] revert coloring of recent move squares so that white and black squares are differentiated
+- [x] brief instructions in 'waiting for black to join' modal about sharing the game URL
+- [x] make "page doesnt exist html
+- [x] revert coloring of recent move squares so that white and black squares are differentiated
 - [ ] enable reconnecting instead of 'abandoned' when you leave
   - [ ] use SocketIO, it includes reconnecting
 - [ ] anonymous matchups

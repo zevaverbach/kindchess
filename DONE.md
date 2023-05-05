@@ -6,6 +6,14 @@
 - [x] can't click on a space if you're hovering over the blue dot
 - [x] if you click an ineligible square (no dots) after selecting a piece, 
       it doesn't remove the dots but it un-highlights the piece and makes it so you can't click on a dot to move the piece
+- [x] when navigating away from a game back to the home page, it hangs and only shows a spinner
+- [x] the 'x offers a draw' message doesn't immediately clear when you click 'reject draw'
+- [x] there's some colliding messages with the clearMessage timeout
+  - when a second message comes through, it gets cleared in milliseconds because of the earlier clearMessage call
+- [x] "offer draw" button reappears on a player's screen even if 
+   - [x] they offer a draw, then it's rejected or withdrawn
+   - [x] the other player offers a draw in the same turn, and it's rejected or withdrawn
+   - this is because self.canOfferDraw isn't getting set in the event handler
 
 # Front End
 - [x] make room for non-game-over messages, use colors
