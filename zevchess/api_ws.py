@@ -49,6 +49,128 @@ class InvalidArguments(Exception):
 class InvalidMoveEvent(Exception):
     pass
 
+
+async def handler(ws):
+    try:
+        async for message in ws:
+            try:
+                event = json.loads(message)
+            except json.decoder.JSONDecodeError:
+                print(message, "invalid event")
+                await error(ws, "invalid event")
+                continue
+            if "uid" not in event or "type" not in event:
+                print(message, "invalid event")
+                await error(ws, "invalid event")
+                continue
+            uid = event["uid"]
+            match event["type"]:
+                case "join":
+                    try:
+                        await join(ws, uid)
+                    except InvalidUid:
+                        await error(ws, "game not found")
+                    except (
+                        w.exceptions.ConnectionClosedOK, # type: ignore
+                        w.exceptions.ConnectionClosedError, # type: ignore
+                    ):
+                        store = CONNECTIONS[uid]
+                        await game_over(store, "abandoned", which_side(ws, store))
+                case "move":
+                    del event["type"]
+                    await move(ws, event)
+                case "resign":
+                    await resign(ws, uid)
+                case "draw":
+                    if "draw" not in event:
+                        await error(ws, "invalid event")
+                        continue
+                    await draw(ws, uid, event["draw"])
+                case "pawn_promote":
+                    await pawn_promotion_complete(
+                        ws=ws,
+                        uid=uid,
+                        choice=event["choice"],
+                        move_dict=json.loads(event["move"]),
+                    )
+                case _:
+                    print(event, "invalid event")
+                    await error(ws, "invalid event")
+                    continue
+
+    except w.exceptions.ConnectionClosedOK: # type: ignore
+        print("connection closed ok")
+    except w.exceptions.ConnectionClosedError as e: # type: ignore
+        print("connection closed error", str(e))
+
+    print(f"ws {ws} has disconnected")
+    await remove_connection(ws)
+
+
+async def remove_connection(ws):
+    if ws not in CONNECTION_WS_STORE_DICT:
+        return
+
+    store, attribute = CONNECTION_WS_STORE_DICT[ws]
+
+    if attribute == "watchers":
+        if store.watchers is not None and len(store.watchers) > 0:
+            store.watchers.remove(ws)
+            if len(store.watchers) > 0:
+                ws_broadcast(
+                    store.watchers,
+                    json.dumps(
+                        {
+                            "type": "message",
+                            "message": f"someone has left chat, there are {len(store.watchers)} left.",
+                        }
+                    ),
+                )
+        del CONNECTION_WS_STORE_DICT[ws]
+    else:
+        await game_over(store=store, side=attribute, reason="abandoned")
+
+
+
+async def error(ws, msg: str):
+    await ws.send(json.dumps({"type": "error", "message": msg}))
+
+
+async def join(ws, uid: str):
+    if uid not in CONNECTIONS:
+        if not q.uid_exists_and_is_an_active_game(uid):
+            raise InvalidUid
+        return await first_joiner(ws, uid)
+
+    st = CONNECTIONS[uid]
+    game_state = q.get_game_state(uid)
+    all_possible_moves = q.get_all_legal_moves(game_state, json=True)
+    game_state_dict = dc.asdict(game_state)
+    board = t.Board.from_FEN(game_state.FEN).to_array()
+
+    if st.white and st.black and ws not in (st.white, st.black):
+        return await add_watcher(ws, uid, st, game_state_dict, board, all_possible_moves)
+
+    await second_joiner(ws, st, game_state_dict, board, all_possible_moves)
+
+    if not st.white:
+        raise Exception("white is not set")
+
+    await st.white.send(
+        json.dumps(
+            {
+                "type": "join_success",
+                "message": "okay, let's start! it's your turn.",
+                "side": "white",
+                "game_status": "ready",
+                "game_state": game_state_dict,
+                "board": board,
+                "possible_moves": all_possible_moves,
+            }
+        )
+    )
+
+
 async def first_joiner(ws, uid):
     CONNECTIONS[uid] = ConnectionStore(uid)
     st = CONNECTIONS[uid]
@@ -88,40 +210,6 @@ async def add_watcher(ws, uid, st, game_state_dict, board, all_possible_moves):
     )
 
 
-async def join(ws, uid: str):
-    if uid not in CONNECTIONS:
-        if not q.uid_exists_and_is_an_active_game(uid):
-            raise InvalidUid
-        return await first_joiner(ws, uid)
-
-    st = CONNECTIONS[uid]
-    game_state = q.get_game_state(uid)
-    all_possible_moves = q.get_all_legal_moves(game_state, json=True)
-    game_state_dict = dc.asdict(game_state)
-    board = t.Board.from_FEN(game_state.FEN).to_array()
-
-    if st.white and st.black and ws not in (st.white, st.black):
-        return await add_watcher(ws, uid, st, game_state_dict, board, all_possible_moves)
-
-    await second_joiner(ws, st, game_state_dict, board, all_possible_moves)
-
-    if not st.white:
-        raise Exception("white is not set")
-
-    await st.white.send(
-        json.dumps(
-            {
-                "type": "join_success",
-                "message": "okay, let's start! it's your turn.",
-                "side": "white",
-                "game_status": "ready",
-                "game_state": game_state_dict,
-                "board": board,
-                "possible_moves": all_possible_moves,
-            }
-        )
-    )
-
 async def second_joiner(ws, st, game_state_dict, board, all_possible_moves):
     st.black = ws
     print("second player has joined the game")
@@ -139,38 +227,6 @@ async def second_joiner(ws, st, game_state_dict, board, all_possible_moves):
             }
         )
     )
-
-
-async def error(ws, msg: str):
-    await ws.send(json.dumps({"type": "error", "message": msg}))
-
-
-async def remove_connection(ws):
-    if ws not in CONNECTION_WS_STORE_DICT:
-        return
-
-    store, attribute = CONNECTION_WS_STORE_DICT[ws]
-
-    if attribute == "watchers":
-        if store.watchers is not None and len(store.watchers) > 0:
-            store.watchers.remove(ws)
-            if len(store.watchers) > 0:
-                ws_broadcast(
-                    store.watchers,
-                    json.dumps(
-                        {
-                            "type": "message",
-                            "message": f"someone has left chat, there are {len(store.watchers)} left.",
-                        }
-                    ),
-                )
-        del CONNECTION_WS_STORE_DICT[ws]
-    else:
-        await game_over(store=store, side=attribute, reason="abandoned")
-
-
-def other_color(color):
-    return "black" if color == "white" else "white"
 
 
 async def game_over(
@@ -256,70 +312,17 @@ async def game_over(
             await store.black.close()
         if store.watchers:
             for watcher in store.watchers:
-                watcher.close()
+                await watcher.close()
         if uid in CONNECTIONS:
             del CONNECTIONS[uid]
 
 
-async def handler(ws):
-    try:
-        async for message in ws:
-            try:
-                event = json.loads(message)
-            except json.decoder.JSONDecodeError:
-                print(message, "invalid event")
-                await error(ws, "invalid event")
-                continue
-            if "uid" not in event or "type" not in event:
-                print(message, "invalid event")
-                await error(ws, "invalid event")
-                continue
-            uid = event["uid"]
-            match event["type"]:
-                case "join":
-                    try:
-                        await join(ws, uid)
-                    except InvalidUid:
-                        await error(ws, "game not found")
-                    except (
-                        w.exceptions.ConnectionClosedOK,
-                        w.exceptions.ConnectionClosedError,
-                    ):
-                        store = CONNECTIONS[uid]
-                        await game_over(store, "abandoned", which_side(ws, store))
-                case "move":
-                    del event["type"]
-                    await move(ws, event)
-                case "resign":
-                    await resign(ws, uid)
-                case "draw":
-                    if "draw" not in event:
-                        await error(ws, "invalid event")
-                        continue
-                    await draw(ws, uid, event["draw"])
-                case "pawn_promote":
-                    await pawn_promotion_complete(
-                        ws=ws,
-                        uid=uid,
-                        choice=event["choice"],
-                        move_dict=json.loads(event["move"]),
-                    )
-                case _:
-                    print(event, "invalid event")
-                    await error(ws, "invalid event")
-                    continue
-
-    except w.exceptions.ConnectionClosedOK: # type: ignore
-        print("connection closed ok")
-    except w.exceptions.ConnectionClosedError as e: # type: ignore
-        print("connection closed error", str(e))
-
-    print(f"ws {ws} has disconnected")
-    await remove_connection(ws)
+def which_side(ws, store):
+    return "white" if ws == store.white else "black"
 
 
-def get_watchers(store):
-    return get_all_participants(store, but=(store.white, store.black))
+def other_color(color):
+    return "black" if color == "white" else "white"
 
 
 def get_all_participants(store: ConnectionStore, but: tuple[Ws, ...] | None = None) -> set[Ws]:
@@ -334,83 +337,6 @@ def get_all_participants(store: ConnectionStore, but: tuple[Ws, ...] | None = No
     if but is None:
         return ps
     return {p for p in ps if p not in but}
-
-
-async def pawn_promotion_prompt(ws, need_to_choose, move) -> None:
-    _, dest, _ = need_to_choose.split(" ")
-    return await ws.send(
-        json.dumps(
-            {
-                "type": "input_required",
-                "message": "choose pawn promotion piece",
-                "dest": dest,
-                "move": move,
-            }
-        )
-    )
-
-
-async def pawn_promotion_complete(ws, uid, choice, move_dict) -> None:
-    store = CONNECTIONS[uid]
-    state = q.get_game_state(uid)
-    the_move = t.Move(**move_dict)
-    try:
-        new_state = c.choose_promotion_piece(uid, choice, state)
-    except c.NoPendingPawnPromotion:
-        print(
-            "a pawn promotion was attempted to be copmleted, but there isn't a pending one!"
-        )
-        await error(ws, "there was no pending pawn promotion")
-    except c.InvalidMove as e:
-        print(f"{state=}")
-        print(str(e))
-        await error(ws, "invalid move")
-    except c.NotYourTurn:
-        print("someone tried to make a move when it wasn't their turn")
-        await error(ws, "not your turn!")
-    except c.InvalidState:
-        await error(ws, "haven't chosen promotion piece")
-    except c.Stalemate as e:
-        side = "black" if str(e) == "0" else "white"
-        await game_over(
-            store=store, reason="stalemate", side=side, the_move=the_move
-        )
-    except c.Checkmate as e:
-        winner = "black" if str(e) == "0" else "white"
-        await game_over(
-            store=store, side=winner, reason="checkmate", the_move=the_move
-        )
-    else:
-        recipients = get_all_participants(store, but=(ws,))
-        board = t.Board.from_FEN(new_state.FEN).to_array()
-        all_possible_moves = q.get_all_legal_moves(new_state, json=True)
-        move = the_move.to_json()
-        move["promotion_piece"] = choice.upper(
-        ) if store.white == ws else choice
-        ws_broadcast(
-            recipients,
-            json.dumps(
-                {
-                    "type": "move",
-                    "move": move,
-                    "side": "black" if new_state.turn else "white",
-                    "game_state": dc.asdict(new_state),
-                    "board": board,
-                    "possible_moves": all_possible_moves,
-                }
-            ),
-        )
-        await ws.send(
-            json.dumps(
-                {
-                    "type": "success",
-                    "message": "move acknowledged",
-                    "game_state": dc.asdict(new_state),
-                    "move": the_move.to_json(),
-                }
-            )
-        )
-        await its_your_move(uid, new_state)
 
 
 async def move(ws, event: dict) -> None:
@@ -516,32 +442,34 @@ def validate_move_event(event: dict) -> None:
         )
 
 
-async def its_your_move(uid: str, state: t.GameState) -> None:
-    all_possible_moves = q.get_all_legal_moves(state, json=True)
-    turn = state.turn
-    store = CONNECTIONS[uid]
-    ws = store.black if turn else store.white
-    await ws.send(
+async def pawn_promotion_prompt(ws, need_to_choose, move) -> None:
+    _, dest, _ = need_to_choose.split(" ")
+    return await ws.send(
         json.dumps(
             {
-                "type": "possible_moves",
-                "possible_moves": all_possible_moves,
-                "message": "it's your turn!",
+                "type": "input_required",
+                "message": "choose pawn promotion piece",
+                "dest": dest,
+                "move": move,
             }
         )
     )
 
 
-def which_side(ws, store):
-    return "white" if ws == store.white else "black"
-
-
-async def resign(ws, uid: str) -> None:
-    store = CONNECTIONS[uid]
-    if store.white is None or store.black is None:
-        return await error(ws, "we don't have two players, can't resign!")
-    requester = which_side(ws, store)
-    return await game_over(reason="resigned", store=store, side=requester)
+async def draw(
+    ws, uid, draw_action: typing.Literal["offer", "accept", "reject", "withdraw", "three_repetitions"]
+) -> None:
+    match draw_action:
+        case "offer":
+            return await offer_draw(ws, uid)
+        case "accept":
+            return await accept_draw(ws, uid)
+        case "reject":
+            return await reject_draw(ws, uid)
+        case "withdraw":
+            return await withdraw_draw(ws, uid)
+        case "three_repetitions":
+            return await three_repetitions_draw(ws, uid)
 
 
 async def offer_draw(ws, uid) -> None:
@@ -567,26 +495,16 @@ async def offer_draw(ws, uid) -> None:
         }))
 
 
-async def withdraw_draw(ws, uid) -> None:
+async def accept_draw(ws, uid: str) -> None:
     store = CONNECTIONS[uid]
     requester = which_side(ws, store)
     side = 0 if ws == store.white else 1
     try:
-        c.withdraw_draw(uid, side)
+        c.accept_draw(uid, side)
     except c.InvalidArguments as e:
-        await error(ws, str(e))
+        await ws.send(str(e))
     else:
-        ws_broadcast(
-            get_watchers(store),
-            json.dumps({
-                "type": "for_the_watchers",
-                "message": f"{requester} has withdrawn their draw offer"
-            }))
-        other_ws = store.white if ws == store.black else store.black
-        await other_ws.send(json.dumps({
-            "type": "draw_withdraw",
-            "message": f"{requester} has withdrawn their draw offer"
-        }))
+        return await game_over(store=store, reason="draw", side=requester)
 
 
 async def reject_draw(ws, uid) -> None:
@@ -606,44 +524,135 @@ async def reject_draw(ws, uid) -> None:
                 "message": f"{requester} has rejected {other}'s draw offer",
             }))
         other_ws = store.white if ws == store.black else store.black
+        if other_ws is None:
+            raise ValueError("no other player to notify of draw rejection")
         await other_ws.send(json.dumps({
             "type": "draw_reject",
             "message": f"{requester} has rejected {other}'s draw offer",
         }))
 
 
-async def accept_draw(ws, uid: str) -> None:
+async def withdraw_draw(ws, uid) -> None:
     store = CONNECTIONS[uid]
     requester = which_side(ws, store)
     side = 0 if ws == store.white else 1
     try:
-        c.accept_draw(uid, side)
+        c.withdraw_draw(uid, side)
     except c.InvalidArguments as e:
-        await ws.send(str(e))
+        await error(ws, str(e))
     else:
-        return await game_over(store=store, reason="draw", side=requester)
-
-
-async def draw(
-    ws, uid, draw_action: typing.Literal["offer", "accept", "reject", "withdraw", "three_repetitions"]
-) -> None:
-    match draw_action:
-        case "offer":
-            return await offer_draw(ws, uid)
-        case "accept":
-            return await accept_draw(ws, uid)
-        case "reject":
-            return await reject_draw(ws, uid)
-        case "withdraw":
-            return await withdraw_draw(ws, uid)
-        case "three_repetitions":
-            return await three_repetitions_draw(ws, uid)
+        ws_broadcast(
+            get_watchers(store),
+            json.dumps({
+                "type": "for_the_watchers",
+                "message": f"{requester} has withdrawn their draw offer"
+            }))
+        other_ws = store.white if ws == store.black else store.black
+        if other_ws is None:
+            raise ValueError("no other player to notify of draw withdrawal")
+        await other_ws.send(json.dumps({
+            "type": "draw_withdraw",
+            "message": f"{requester} has withdrawn their draw offer"
+        }))
 
 
 async def three_repetitions_draw(ws, uid):
     store = CONNECTIONS[uid]
     requester = which_side(ws, store)
     return await game_over(store=store, reason="draw_by_three_repetitions", side=requester)
+
+
+async def its_your_move(uid: str, state: t.GameState) -> None:
+    all_possible_moves = q.get_all_legal_moves(state, json=True)
+    turn = state.turn
+    store = CONNECTIONS[uid]
+    ws = store.black if turn else store.white
+    if ws is None:
+        raise ValueError("no websocket for player whose turn it is")
+    await ws.send(
+        json.dumps(
+            {
+                "type": "possible_moves",
+                "possible_moves": all_possible_moves,
+                "message": "it's your turn!",
+            }
+        )
+    )
+
+
+async def resign(ws, uid: str) -> None:
+    store = CONNECTIONS[uid]
+    if store.white is None or store.black is None:
+        return await error(ws, "we don't have two players, can't resign!")
+    requester = which_side(ws, store)
+    return await game_over(reason="resigned", store=store, side=requester)
+
+
+def get_watchers(store):
+    return get_all_participants(store, but=(store.white, store.black))
+
+
+async def pawn_promotion_complete(ws, uid, choice, move_dict) -> None:
+    store = CONNECTIONS[uid]
+    state = q.get_game_state(uid)
+    the_move = t.Move(**move_dict)
+    try:
+        new_state = c.choose_promotion_piece(uid, choice, state)
+    except c.NoPendingPawnPromotion:
+        print(
+            "a pawn promotion was attempted to be copmleted, but there isn't a pending one!"
+        )
+        await error(ws, "there was no pending pawn promotion")
+    except c.InvalidMove as e:
+        print(f"{state=}")
+        print(str(e))
+        await error(ws, "invalid move")
+    except c.NotYourTurn:
+        print("someone tried to make a move when it wasn't their turn")
+        await error(ws, "not your turn!")
+    except c.InvalidState:
+        await error(ws, "haven't chosen promotion piece")
+    except c.Stalemate as e:
+        side = "black" if str(e) == "0" else "white"
+        await game_over(
+            store=store, reason="stalemate", side=side, the_move=the_move
+        )
+    except c.Checkmate as e:
+        winner = "black" if str(e) == "0" else "white"
+        await game_over(
+            store=store, side=winner, reason="checkmate", the_move=the_move
+        )
+    else:
+        recipients = get_all_participants(store, but=(ws,))
+        board = t.Board.from_FEN(new_state.FEN).to_array()
+        all_possible_moves = q.get_all_legal_moves(new_state, json=True)
+        move = the_move.to_json()
+        move["promotion_piece"] = choice.upper(
+        ) if store.white == ws else choice
+        ws_broadcast(
+            recipients,
+            json.dumps(
+                {
+                    "type": "move",
+                    "move": move,
+                    "side": "black" if new_state.turn else "white",
+                    "game_state": dc.asdict(new_state),
+                    "board": board,
+                    "possible_moves": all_possible_moves,
+                }
+            ),
+        )
+        await ws.send(
+            json.dumps(
+                {
+                    "type": "success",
+                    "message": "move acknowledged",
+                    "game_state": dc.asdict(new_state),
+                    "move": the_move.to_json(),
+                }
+            )
+        )
+        await its_your_move(uid, new_state)
 
 
 async def health_check(path, _):
