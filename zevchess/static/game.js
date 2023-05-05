@@ -194,6 +194,7 @@ function receiveMessages() {
             case 'join_success':
                 updateGlobals(ev);
                 handleEventJoinSuccess(ev);
+                storeGameInLocalStorage();
                 break;
 
             case 'for_the_watchers':
@@ -281,6 +282,7 @@ function receiveMessages() {
                 }
                 displayModal("GAME OVER: " + ev.message);
                 gameOver = true;
+                clearLocalStorage();
                 board.disableMoveInput();
                 window.removeEventListener("beforeunload", beforeUnloadListener);
                 store.ws.close();
@@ -288,6 +290,17 @@ function receiveMessages() {
         }
     });
 }
+
+function storeGameInLocalStorage() {
+    localStorage.setItem('uid', store.uid);
+    localStorage.setItem('side', store.side);
+}
+
+function clearLocalStorage() {
+    localStorage.removeItem('uid');
+    localStorage.removeItem('side');
+}
+
 
 function handleEventJoinSuccess(event) {
     window.addEventListener("beforeunload", beforeUnloadListener);

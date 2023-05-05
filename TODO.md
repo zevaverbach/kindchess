@@ -6,15 +6,20 @@
 - [x] revert coloring of recent move squares so that white and black squares are differentiated
 - [ ] enable reconnecting instead of 'abandoned' when you leave
   - [ ] front end
-    - [ ] store some info in localStorage
-      - [ ] uid
-      - [ ] side
-    - [ ] make sure to clear this info out when a game is actually over
+    - [x] store some info in localStorage
+      - [x] uid
+      - [x] side
+    - [x] make sure to clear this info out when a game is actually over
     - [ ] on reconnect/reload, check if there's
         - [ ] a UID in localStorage which matches the current one
         - [ ] side
           - if not, it's a watcher, so who cares?
-    - [ ] use a timeout and reconnect in front end, (as seen here)[https://stackoverflow.com/a/23176223/4386191]
+        - [ ] a timestamp less than X minutes old
+    - [ ] on disconnect,
+        - [ ] board.disableMoveInput();
+        - [ ] store a timestamp for when it disconnected
+        - [ ] try to reconnect in front end for a few mins, (as seen here)[https://stackoverflow.com/a/23176223/4386191]
+        - [ ] if it times out, clearLocalStorage
     - [ ] display what's happening in displayMessage, with a timeout
 
   - [ ] back end
