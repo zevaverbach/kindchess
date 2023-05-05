@@ -10,24 +10,35 @@
       - [x] uid
       - [x] side
     - [x] make sure to clear this info out when a game is actually over
-    - [ ] on reconnect/reload, check if there's
-        - [ ] a UID in localStorage which matches the current one
-        - [ ] side
-          - if not, it's a watcher, so who cares?
-        - [ ] a timestamp less than X minutes old
+    - [x] on reconnect/reload, check if there's
+        - [x] a UID in localStorage which matches the current one
+        - [x] side
+        - [x] a timestamp less than X minutes old
     - [ ] on disconnect,
-        - [ ] board.disableMoveInput();
-        - [ ] store a timestamp for when it disconnected
         - [ ] try to reconnect in front end for a few mins, (as seen here)[https://stackoverflow.com/a/23176223/4386191]
-        - [ ] if it times out, clearLocalStorage
-    - [ ] display what's happening in displayMessage, with a timeout
-
+        - [ ] 'rejoin_success' case
+        - [x] board.disableMoveInput();
+        - [x] store a timestamp for when it disconnected
+        - [x] display what's happening in displayMessage 
+        - [x] display countdown
+        - [x] if it times out
+          - [x] clearLocalStorage
+          - [x] send message that the game should be over
+        - [x] send message to WS server about the disconnection so it can tell opponent and others
+    - [ ] handle 'disconnect' message from WS server which it will send if other player disconnects
+      - [ ] replicate the logic for displaying the message and countdown
   - [ ] back end
     - [ ] when a player disconnects, don't end the game and don't clear out the entry in CONNECTIONS and ...
     - [ ] instead, see if the UID they're supplying is valid and if there's a player missing
-    - [ ] when a use connects, see if they've sent the UID 
+    - [ ] tell other players/watchers about the disconnection
+    - [ ] when a user connects, see if they've sent 
+      - [ ] the UID 
+      - [ ] the side
+      - [ ] the correct disconnected_timestamp, give or take
+      - [ ] send 'rejoin_success'
     - [ ] enforce the same timeout on the back end as on the front end for reconnecting
       - [ ] use a store in redis, maybe with actual expiry
+    - [ ] if you receive a "disconnect" message -without- disconnected_timestamp, that means game_over, so emit that
 - [ ] anonymous matchups
 - [ ] move history
 - [ ] use promotion dialog that's built into cm-chessboard
@@ -39,12 +50,14 @@
 - [ ] material tracking - points, pieces
   - consider using [these web components](https://shoelace.style/) for straightforward, buildless dev.
 - [ ] accounts/auth [link](https://websockets.readthedocs.io/en/10.4/topics/authentication.html#sending-credentials)
+- [ ] show YOUR active game(s) on home page
 - [ ] enforce move limit (draw)
 - [ ] allow players to choose which side they're on
 - [ ] expire games in redis if they haven't been joined in X mins
   - [ ] alternatively, don't allow the creation of a game if you're already in one
 - [ ] stockfish
 - [ ] instead of 'white has rejected black's draw offer', 'white has rejected your draw offer'
+- [ ] use cookies instead of localStorage for reconnecting
 
 # Deployment
 - [ ] create `init_db_prod.py` script 

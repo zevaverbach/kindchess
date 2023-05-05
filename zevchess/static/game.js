@@ -54,6 +54,9 @@ if (["127.0.0.1:5000", "localhost:8000"].includes(window.location.host)) {
 } else {
     WEBSOCKET_SERVER_ADDR = 'wss://ws.kindchess.com';
 }
+// five minutes
+_TIMEOUT_DISCONNECTED_GAMES_MINUTES = 5;
+TIMEOUT_DISCONNECTED_GAMES_MS = 1000 * 60 * _TIMEOUT_DISCONNECTED_GAMES_MINUTES;
 
 // hopefully prevents pinch to zoom
 document.addEventListener('touchmove', e => {
@@ -93,6 +96,7 @@ store.canOfferDraw = false;
 
 store.uid = window.location.pathname.replace('/', '');
 store.pendingTimeout = null;
+store.disconnectTimeoutID = null;
 
 const choosePawnPromotionPiece = document.getElementById("pawn-promote");
 choosePawnPromotionPiece.addEventListener('cancel', event => {
@@ -139,15 +143,53 @@ window.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+function itsBeenLessThan(timestamp, threshold) {
+    return new Date().getTime() - timestamp < threshold;
+}
+
 function joinGame() {
+    let messageObj = {
+        type: 'join',
+        'uid': store.uid,
+    };
+    if (localStorage.getItem('uid') && localStorage.getItem('uid') === store.uid) {
+        const disconnectedTimestamp = parseInt(localStorage.getItem('disconnectedTimestamp'));
+        if (localStorage.getItem('side') && itsBeenLessThan(disconnectedTimestamp, TIMEOUT_DISCONNECTED_GAMES_MS)) {
+            messageObj.side = localStorage.getItem('side');
+            messageObj.disconnected_timestamp = disconnectedTimestamp;
+        }
+    }
+    const message = JSON.stringify(messageObj);
     store.ws.addEventListener('open', function(_) {
-        const message = JSON.stringify({
-            type: 'join',
-            'uid': store.uid,
-        });
         store.ws.send(message);
     });
-    store.ws.addEventListener('close', function(_) {})
+    store.ws.addEventListener('close', function(_) {
+        const disconnectedTimestamp = new Date().getTime().toString();
+        localStorage.setItem('disconnectedTimestamp', disconnectedTimestamp);
+        board.disableMoveInput();
+        displayMessage("Connection lost. Attempting to reconnect...");
+        let disconnectTimeoutCountdownSeconds = TIMEOUT_DISCONNECTED_GAMES_MS / 1000;
+        store.disconnectTimeoutID = setTimeout(function() {
+            clearMessage();
+            disconnectTimeoutCountdownSeconds -= 1;
+            if (disconnectTimeoutCountdownSeconds <= 0) {
+                clearTimeout(store.disconnectTimeoutID);
+                store.ws.send(JSON.stringify({
+                    type: 'disconnect',
+                    'uid': store.uid,
+                    'side': store.side,
+                }))
+            };
+            displayMessage(`Connection lost. Attempting to reconnect... (${disconnectTimeoutCountdownSeconds} seconds)`);
+            // TODO: actually try to reconnect
+        }, 1000)
+        store.ws.send(JSON.stringify({
+            type: 'disconnect',
+            'uid': store.uid,
+            'side': store.side,
+            disconnected_timestamp: disconnectedTimestamp,
+        }));
+    })
 }
 
 function updateAbilityToOfferDraw() {
@@ -195,6 +237,14 @@ function receiveMessages() {
                 updateGlobals(ev);
                 handleEventJoinSuccess(ev);
                 storeGameInLocalStorage();
+                break;
+
+            case 'rejoin_success':
+                localStorage.removeItem('disconnectedTimestamp');
+                clearMessage();
+                clearInterval(store.disconnectTimeoutID);
+                // TODO: enable board input if it's this person's turn
+                // TODO: what if this wasn't the person that disconnected?
                 break;
 
             case 'for_the_watchers':
@@ -299,6 +349,7 @@ function storeGameInLocalStorage() {
 function clearLocalStorage() {
     localStorage.removeItem('uid');
     localStorage.removeItem('side');
+    localStorage.removeItem('disconnectedTimestamp');
 }
 
 
