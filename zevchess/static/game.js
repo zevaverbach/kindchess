@@ -55,8 +55,8 @@ if (["127.0.0.1:5000", "localhost:8000"].includes(window.location.host)) {
     WEBSOCKET_SERVER_ADDR = 'wss://ws.kindchess.com';
 }
 // five minutes
-_TIMEOUT_DISCONNECTED_GAMES_MINUTES = 5;
-TIMEOUT_DISCONNECTED_GAMES_MS = 1000 * 60 * _TIMEOUT_DISCONNECTED_GAMES_MINUTES;
+const _TIMEOUT_DISCONNECTED_GAMES_MINUTES = 5;
+const TIMEOUT_DISCONNECTED_GAMES_MS = 1000 * 60 * _TIMEOUT_DISCONNECTED_GAMES_MINUTES;
 
 // hopefully prevents pinch to zoom
 document.addEventListener('touchmove', e => {
@@ -88,6 +88,10 @@ let checkedKing = "";
 function setCheckedKing(val) {
     checkedKing = val;
 }
+store.eventListenerMessages = null;
+store.eventListenerPawnPromotion = null;
+store.eventListenerWebSocketOpen = null;
+store.eventListenerWebSocketClose = null;
 store.side = null;
 store.otherSide = null;
 store.selfDrawOffer = false;
@@ -126,28 +130,37 @@ document.onreadystatechange = function() {
     }
 };
 
-window.addEventListener('DOMContentLoaded', function() {
+window.addEventListener('DOMContentLoaded', start);
+
+function start() {
     store.ws = new WebSocket(WEBSOCKET_SERVER_ADDR);
     joinGame();
     receiveMessages();
-    choosePawnPromotionPiece.addEventListener("close", function() {
-        store.ws.send(JSON.stringify({
-            type: "pawn_promote",
-            'uid': store.uid,
-            choice: pawnPromotionPiece === "Knight" ? "n" : pawnPromotionPiece.toLowerCase()[0],
-            move: JSON.stringify(pawnPromotionMove),
-        }));
-        pawnPromotionSquare = null;
-        pawnPromotionPiece = "Queen";
-        pawnPromotionMove = null;
-    });
-});
+    store.eventListenerPawnPromotion = choosePawnPromotionPiece.addEventListener("close", pawnPromotionHandler)
+};
+
+function pawnPromotionHandler() {
+    store.ws.send(JSON.stringify({
+        type: "pawn_promote",
+        'uid': store.uid,
+        choice: pawnPromotionPiece === "Knight" ? "n" : pawnPromotionPiece.toLowerCase()[0],
+        move: JSON.stringify(pawnPromotionMove),
+    }));
+    pawnPromotionSquare = null;
+    pawnPromotionPiece = "Queen";
+    pawnPromotionMove = null;
+}
 
 function itsBeenLessThan(timestamp, threshold) {
     return new Date().getTime() - timestamp < threshold;
 }
 
 function joinGame() {
+    store.eventListenerWebSocketOpen = store.ws.addEventListener('open', handlerWebsocketOpen);
+    store.eventListenerWebSocketClose = store.ws.addEventListener('close', handlerWebsocketClose);
+}
+
+function handlerWebsocketOpen(_) {
     let messageObj = {
         type: 'join',
         'uid': store.uid,
@@ -160,36 +173,28 @@ function joinGame() {
         }
     }
     const message = JSON.stringify(messageObj);
-    store.ws.addEventListener('open', function(_) {
-        store.ws.send(message);
-    });
-    store.ws.addEventListener('close', function(_) {
-        const disconnectedTimestamp = new Date().getTime().toString();
-        localStorage.setItem('disconnectedTimestamp', disconnectedTimestamp);
-        board.disableMoveInput();
-        displayMessage("Connection lost. Attempting to reconnect...");
-        let disconnectTimeoutCountdownSeconds = TIMEOUT_DISCONNECTED_GAMES_MS / 1000;
-        store.disconnectTimeoutID = setTimeout(function() {
-            clearMessage();
-            disconnectTimeoutCountdownSeconds -= 1;
-            if (disconnectTimeoutCountdownSeconds <= 0) {
-                clearTimeout(store.disconnectTimeoutID);
-                store.ws.send(JSON.stringify({
-                    type: 'disconnect',
-                    'uid': store.uid,
-                    'side': store.side,
-                }))
-            };
-            displayMessage(`Connection lost. Attempting to reconnect... (${disconnectTimeoutCountdownSeconds} seconds)`);
-            // TODO: actually try to reconnect
-        }, 1000)
-        store.ws.send(JSON.stringify({
-            type: 'disconnect',
-            'uid': store.uid,
-            'side': store.side,
-            disconnected_timestamp: disconnectedTimestamp,
-        }));
-    })
+    store.ws.send(message);
+};
+
+function handlerWebsocketClose(_) {
+    const disconnectedTimestamp = new Date().getTime().toString();
+    localStorage.setItem('disconnectedTimestamp', disconnectedTimestamp);
+    board.disableMoveInput();
+    displayMessage("Connection lost. Attempting to reconnect...");
+    let disconnectTimeoutCountdownSeconds = TIMEOUT_DISCONNECTED_GAMES_MS / 1000;
+    // TODO: remove the rest of the event listeners here!
+    choosePawnPromotionPiece.removeEventListener("close", pawnPromotionHandler)
+
+    store.disconnectTimeoutID = setTimeout(function() {
+        clearMessage();
+        disconnectTimeoutCountdownSeconds -= 1;
+        if (disconnectTimeoutCountdownSeconds <= 0) {
+            displayMessage("Connection lost. Attempting to reconnect...");
+            clearTimeout(store.disconnectTimeoutID);
+        };
+        displayMessage(`Connection lost. Attempting to reconnect... (${disconnectTimeoutCountdownSeconds} seconds)`);
+        // TODO: actually try to reconnect
+    }, 1000)
 }
 
 function updateAbilityToOfferDraw() {
@@ -222,123 +227,145 @@ function updatePendingDrawSend() {
 }
 
 function receiveMessages() {
-    store.ws.addEventListener('message', function(message) {
-        let ev;
-        try {
-            ev = JSON.parse(message.data);
-        } catch (e) {
-            console.log(message.data);
-            throw e;
-        }
+    store.eventListenerMessages = store.ws.addEventListener('message', messageHandler);
+}
 
-        switch (ev.type) {
+function messageHandler(message) {
+    let ev;
+    try {
+        ev = JSON.parse(message.data);
+    } catch (e) {
+        console.log(message.data);
+        throw e;
+    }
 
-            case 'join_success':
-                updateGlobals(ev);
-                handleEventJoinSuccess(ev);
-                storeGameInLocalStorage();
-                break;
+    switch (ev.type) {
 
-            case 'rejoin_success':
+        case 'join_success':
+            updateGlobals(ev);
+            handleEventJoinSuccess(ev);
+            storeGameInLocalStorage();
+            break;
+
+        case 'rejoin_success':
+            clearMessage();
+            clearInterval(store.disconnectTimeoutID);
+            if (myTurn) {
                 localStorage.removeItem('disconnectedTimestamp');
+                sendMoves() // this re-enables input on the board
+            } else {}
+            break;
+
+        case 'disconnect':
+            const disconnectedTimestamp = new Date().getTime().toString();
+            localStorage.setItem('disconnectedTimestamp', disconnectedTimestamp);
+            board.disableMoveInput();
+            displayMessage(`${otherSide} has disconnected. Waiting...`);
+            let disconnectTimeoutCountdownSeconds = TIMEOUT_DISCONNECTED_GAMES_MS / 1000;
+            store.disconnectTimeoutID = setTimeout(function() {
                 clearMessage();
-                clearInterval(store.disconnectTimeoutID);
-                // TODO: enable board input if it's this person's turn
-                // TODO: what if this wasn't the person that disconnected?
-                break;
+                disconnectTimeoutCountdownSeconds -= 1;
+                if (disconnectTimeoutCountdownSeconds <= 0) {
+                    displayMessage(`${otherSide} has disconnected. Waiting...`, false);
+                    clearTimeout(store.disconnectTimeoutID);
+                };
+                displayMessage(`${otherSide} has disconnected. Waiting (${disconnectTimeoutCountdownSeconds} seconds)`);;
+                // TODO: actually try to reconnect
+            }, 1000)
+            break;
 
-            case 'for_the_watchers':
-                displayMessage(ev.message);
-                break;
+        case 'for_the_watchers':
+            displayMessage(ev.message);
+            break;
 
-            case 'success':
-                if (ev.move.castle) {
-                    doTheMoveSentCastle(ev.move, board);
-                } else if (isEnPassantMove(ev.move, board)) {
-                    doTheMoveSentEnPassant(ev.move, board);
-                } else {
-                    updateGlobals(ev);
-                    updateAbilityToOfferDraw()
-                    updateCheckStatus(gameState, checkedKing, setCheckedKing);
-                }
-                break;
-
-            case 'move':
-                const move = ev.move;
+        case 'success':
+            if (ev.move.castle) {
+                doTheMoveSentCastle(ev.move, board);
+            } else if (isEnPassantMove(ev.move, board)) {
+                doTheMoveSentEnPassant(ev.move, board);
+            } else {
                 updateGlobals(ev);
                 updateAbilityToOfferDraw()
-                updatePendingDrawReceive();
-                const [from, to] = doTheMoveReceived(move, board);
-                highlightPrevMove(from, to, prevMoveOrigin, prevMoveDest, setPrevMove, board);
                 updateCheckStatus(gameState, checkedKing, setCheckedKing);
-                myTurn = true;
-                sendMoves();
-                break;
+            }
+            break;
 
-            case 'draw_offer':
-                document.dispatchEvent(new CustomEvent('drawOffer', {
-                    detail: {
-                        message: {
-                            source: 'other',
-                            message: ev.message,
-                        },
+        case 'move':
+            const move = ev.move;
+            updateGlobals(ev);
+            updateAbilityToOfferDraw()
+            updatePendingDrawReceive();
+            const [from, to] = doTheMoveReceived(move, board);
+            highlightPrevMove(from, to, prevMoveOrigin, prevMoveDest, setPrevMove, board);
+            updateCheckStatus(gameState, checkedKing, setCheckedKing);
+            myTurn = true;
+            sendMoves();
+            break;
+
+        case 'draw_offer':
+            document.dispatchEvent(new CustomEvent('drawOffer', {
+                detail: {
+                    message: {
+                        source: 'other',
+                        message: ev.message,
                     },
-                }));
-                break;
+                },
+            }));
+            break;
 
-            case 'draw_withdraw':
-                document.dispatchEvent(new CustomEvent('drawWithdraw', {
-                    detail: {
-                        message: {
-                            source: 'other',
-                            message: ev.message,
-                        },
+        case 'draw_withdraw':
+            document.dispatchEvent(new CustomEvent('drawWithdraw', {
+                detail: {
+                    message: {
+                        source: 'other',
+                        message: ev.message,
                     },
-                }));
-                break;
+                },
+            }));
+            break;
 
-            case 'draw_reject':
-                document.dispatchEvent(new CustomEvent('drawReject', {
-                    detail: {
-                        message: {
-                            source: 'other',
-                            message: ev.message,
-                        },
+        case 'draw_reject':
+            document.dispatchEvent(new CustomEvent('drawReject', {
+                detail: {
+                    message: {
+                        source: 'other',
+                        message: ev.message,
                     },
-                }));
-                break;
+                },
+            }));
+            break;
 
-            case 'input_required':
-                if (ev.message !== "choose pawn promotion piece") break;
-                pawnPromotionSquare = ev.dest;
-                pawnPromotionMove = ev.move;
-                const queenPiece = `${store.side[0]}q`;
-                board.setPiece(pawnPromotionSquare, queenPiece);
-                choosePawnPromotionPiece.showModal();
-                break;
+        case 'input_required':
+            if (ev.message !== "choose pawn promotion piece") break;
+            pawnPromotionSquare = ev.dest;
+            pawnPromotionMove = ev.move;
+            const queenPiece = `${store.side[0]}q`;
+            board.setPiece(pawnPromotionSquare, queenPiece);
+            choosePawnPromotionPiece.showModal();
+            break;
 
-            case 'game_over':
-                if (gameOver) { // already gameOver
-                    break;
-                }
-                const winner = ev.winner;
-                gameState = ev.game_state;
-                hideButtons();
-                clearMessage()
-                if (winner != null && ev.reason === "checkmate") {
-                    showCheckmate(winner, gameState);
-                } else if (ev.message === "stalemate!") {
-                    showStalemate(gameState);
-                }
-                displayModal("GAME OVER: " + ev.message);
-                gameOver = true;
-                clearLocalStorage();
-                board.disableMoveInput();
-                window.removeEventListener("beforeunload", beforeUnloadListener);
-                store.ws.close();
+        case 'game_over':
+            if (gameOver) { // already gameOver
                 break;
-        }
-    });
+            }
+            const winner = ev.winner;
+            gameState = ev.game_state;
+            hideButtons();
+            clearMessage()
+            if (winner != null && ev.reason === "checkmate") {
+                showCheckmate(winner, gameState);
+            } else if (ev.message === "stalemate!") {
+                showStalemate(gameState);
+            }
+            displayModal("GAME OVER: " + ev.message);
+            gameOver = true;
+            clearLocalStorage();
+            board.disableMoveInput();
+            window.removeEventListener("beforeunload", beforeUnloadListener);
+
+            store.ws.close();
+            break;
+    }
 }
 
 function storeGameInLocalStorage() {

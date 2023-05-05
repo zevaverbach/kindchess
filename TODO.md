@@ -17,6 +17,8 @@
     - [ ] on disconnect,
         - [ ] try to reconnect in front end for a few mins, (as seen here)[https://stackoverflow.com/a/23176223/4386191]
         - [ ] 'rejoin_success' case
+        - [ ] remove all the event listeners on ws 'close'
+          - [ ] store their IDs in `store` first!
         - [x] board.disableMoveInput();
         - [x] store a timestamp for when it disconnected
         - [x] display what's happening in displayMessage 
@@ -24,13 +26,12 @@
         - [x] if it times out
           - [x] clearLocalStorage
           - [x] send message that the game should be over
-        - [x] send message to WS server about the disconnection so it can tell opponent and others
     - [ ] handle 'disconnect' message from WS server which it will send if other player disconnects
       - [ ] replicate the logic for displaying the message and countdown
   - [ ] back end
     - [ ] when a player disconnects, don't end the game and don't clear out the entry in CONNECTIONS and ...
     - [ ] instead, see if the UID they're supplying is valid and if there's a player missing
-    - [ ] tell other players/watchers about the disconnection
+    - [ ] tell other players/watchers about the disconnection to start the countdown
     - [ ] when a user connects, see if they've sent 
       - [ ] the UID 
       - [ ] the side
@@ -38,7 +39,8 @@
       - [ ] send 'rejoin_success'
     - [ ] enforce the same timeout on the back end as on the front end for reconnecting
       - [ ] use a store in redis, maybe with actual expiry
-    - [ ] if you receive a "disconnect" message -without- disconnected_timestamp, that means game_over, so emit that
+    - [ ] send a timeout from the back end once the game is truly over because time has run out
+      - [ ] how?
 - [ ] anonymous matchups
 - [ ] move history
 - [ ] use promotion dialog that's built into cm-chessboard
