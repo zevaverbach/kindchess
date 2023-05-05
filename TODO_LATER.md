@@ -11,5 +11,4 @@
 - [ ] make "private room" functionality where you can create a room and it's always available
   - [ ] allow room owner to put name tags on for both players
   - [ ] what would be cool is chess.org/myname/friendname
-- [ ] cache spinner instead of loading from CDN
 - [ ] make unique boards and pieces

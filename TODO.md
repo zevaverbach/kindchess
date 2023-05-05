@@ -1,19 +1,14 @@
 # Bugs
+- [ ] when navigating away from a game back to the home page, it hangs and only shows a spinner
+- [ ] the 'x offers a draw' message doesn't immediately clear when you click 'reject draw'
+- [ ] there's some colliding messages with the clearMessage timeout
+  - when a second message comes through, it gets cleared in milliseconds because of the earlier clearMessage call
+- [ ] "offer draw" button reappears on a player's screen even if 
+   - [ ] they offer a draw, then it's rejected or withdrawn
+   - [ ] the other player offers a draw in the same turn, and it's rejected or withdrawn
+   - this is because self.canOfferDraw isn't getting set in the event handler
 
 # Features
-- [x] limits to draw offers
-    - [x] A player who has offered a draw shall not, before completing a further six moves be entitled to make another offer. 
-    - [x] No player shall be entitled to offer more than three draws in any one game.
-    - [x] bug: black can't offer a draw until after -three- half moves, should be two
-    - bug: black's 'offer draw' button disappears after rejecting a draw offer from white
-      - ONLY when white's offer was sent during white's turn
-      - ONLY in the first couple moves
-    - bug: black's 'offer draw' button reappears after white rejects a draw offer
-      - ONLY when black's offer was sent during black's turn
-      - if you do it a second time, the 'offer draw' won't reappear
-    - [x] remove most of the parameters from `gameOps` functions, in favor of events (pub/sub) which elements can react to
-      - [x] show/hide draw-related buttons
-      - https://gomakethings.com/simple-reactive-data-stores-with-vanilla-javascript-and-proxies/
 - [ ] brief instructions in 'waiting for black to join' modal about sharing the game URL
 - [ ] make "page doesnt exist html
 - [ ] revert coloring of recent move squares so that white and black squares are differentiated
@@ -24,7 +19,6 @@
 - [ ] use promotion dialog that's built into cm-chessboard
 - [ ] build out the site, make it look nice
   - [ ] nav bar
-- [ ] stockfish
 - [ ] some basic rate limiting/IP-banning
 - [ ] game clock
   - [ ] need to send an 'ack'(knowledged) message when the curernt player receives the previous move of the other player
@@ -32,6 +26,8 @@
   - consider using [these web components](https://shoelace.style/) for straightforward, buildless dev.
 - [ ] accounts/auth [link](https://websockets.readthedocs.io/en/10.4/topics/authentication.html#sending-credentials)
 - [ ] enforce move limit (draw)
+- [ ] stockfish
+- [ ] instead of 'white has rejected black's draw offer', 'white has rejected your draw offer'
 
 # Deployment
 - [ ] create `init_db_prod.py` script 

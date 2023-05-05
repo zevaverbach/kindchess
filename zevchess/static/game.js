@@ -67,7 +67,6 @@ document.addEventListener('touchmove', e => {
 
 let board, pawnPromotionSquare, pawnPromotionMove;
 let myTurn = false;
-let testing = false;
 let gameOver = false;
 let gameState = {};
 let boardArray = [];
@@ -106,11 +105,9 @@ choosePawnPromotionPieceSelect.addEventListener("change", function(_) {
     board.setPiece(pawnPromotionSquare, piece);
 });
 
-window.addEventListener("beforeunload", beforeUnloadListener);
 
 function beforeUnloadListener(e) {
     e.preventDefault();
-    return "are you sure you want to abandon this game?";
 }
 
 document.onreadystatechange = function() {
@@ -147,9 +144,6 @@ function joinGame() {
             'uid': store.uid,
         });
         store.ws.send(message);
-        if (testing)
-            wsMessageElement.value =
-            wsMessageElement.value + `\nsent:\n ${message}\n`;
     });
     store.ws.addEventListener('close', function(_) {})
 }
@@ -192,7 +186,6 @@ function receiveMessages() {
             console.log(message.data);
             throw e;
         }
-        if (testing) wsMessageElement.value = wsMessageElement.value + `\nreceived:\n ${message.data}\n`;
 
         switch (ev.type) {
 
@@ -295,6 +288,7 @@ function receiveMessages() {
 }
 
 function handleEventJoinSuccess(event) {
+    window.addEventListener("beforeunload", beforeUnloadListener);
     if (event.game_status === 'waiting') {
         store.side = 'white';
         store.otherSide = 'black';
@@ -368,9 +362,13 @@ function sendMove(event) {
         from = move.src = event.squareFrom;
         to = move.dest = event.squareTo;
         let capture = isCaptureMove(event, piece, board);
-        if (capture) move.capture = 1;
+        if (capture) {
+            move.capture = 1;
+        }
         let promote = isPromotionMove(move);
-        if (promote) move.promote = 1;
+        if (promote) {
+            move.promote = 1;
+        }
     }
 
     if (invalidMove(move, possibleMoves)) {
@@ -385,7 +383,6 @@ function sendMove(event) {
     });
     store.ws.send(msg);
     highlightPrevMove(from, to, prevMoveOrigin, prevMoveDest, setPrevMove, board);
-    if (testing) wsMessageElement.value = wsMessageElement.value + `\nsent:\n ${msg}\n`;
 
     myTurn = false;
     board.removeDots();

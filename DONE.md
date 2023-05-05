@@ -13,8 +13,22 @@
 - [x] add ethical analytics
 - [x] maybe get rid of the 'share url' button altogether
 - [x] make the 'create game' button bigger on mobile
+- [x] cache spinner instead of loading from CDN
 
 # Features
+- [x] limits to draw offers
+    - [x] A player who has offered a draw shall not, before completing a further six moves be entitled to make another offer. 
+    - [x] No player shall be entitled to offer more than three draws in any one game.
+    - [x] bug: black can't offer a draw until after -three- half moves, should be two
+    - bug: black's 'offer draw' button disappears after rejecting a draw offer from white
+      - ONLY when white's offer was sent during white's turn
+      - ONLY in the first couple moves
+    - bug: black's 'offer draw' button reappears after white rejects a draw offer
+      - ONLY when black's offer was sent during black's turn
+      - if you do it a second time, the 'offer draw' won't reappear
+    - [x] remove most of the parameters from `gameOps` functions, in favor of events (pub/sub) which elements can react to
+      - [x] show/hide draw-related buttons
+      - https://gomakethings.com/simple-reactive-data-stores-with-vanilla-javascript-and-proxies/
 - [x] prevent modals from being dismissed via 'escape'
 - [x] support landscape mode on mobile (fill the screen ,no scrolling)
 - [x] make the board centered
