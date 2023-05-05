@@ -18,6 +18,12 @@ from zevchess import queries as q
 from zevchess import ztypes as t
 
 
+VALID_ORIGINS = ("http://localhost:8000", 'http://127.0.0.1:5000')
+
+load_dotenv()
+if os.getenv("KINDCHESS_ENVIRONMENT") == "prod":
+    VALID_ORIGINS = ("https://zevchess-ws.onrender.com",
+                     "https://kindchess.com")
 
 @dc.dataclass
 class ConnectionStore:
@@ -25,14 +31,6 @@ class ConnectionStore:
     white: Ws | None = None
     black: Ws | None = None
     watchers: set[Ws] | None = None
-
-
-VALID_ORIGINS = ("http://localhost:8000", 'http://127.0.0.1:5000')
-
-load_dotenv()
-if os.getenv("KINDCHESS_ENVIRONMENT") == "prod":
-    VALID_ORIGINS = ("https://zevchess-ws.onrender.com",
-                     "https://kindchess.com")
 
 CONNECTIONS: dict[str, ConnectionStore] = {}
 CONNECTION_WS_STORE_DICT: dict[
@@ -51,53 +49,80 @@ class InvalidArguments(Exception):
 class InvalidMoveEvent(Exception):
     pass
 
+async def first_joiner(ws, uid):
+    CONNECTIONS[uid] = ConnectionStore(uid)
+    st = CONNECTIONS[uid]
+    st.white = ws
+    print("first player has joined the game")
+    CONNECTION_WS_STORE_DICT[ws] = (st, "white")
+    return await ws.send(
+        json.dumps(
+            {
+                "type": "join_success",
+                "message": "you are player one, you're playing the white pieces",
+                "game_status": "waiting",
+            }
+        )
+    )
+
+
+async def add_watcher(ws, uid, st, game_state_dict, board, all_possible_moves):
+    if st.watchers is None:
+        st.watchers = {ws}
+    else:
+        st.watchers.add(ws)
+    CONNECTION_WS_STORE_DICT[ws] = (st, "watchers")
+    print(f"watcher #{len(st.watchers)} has joined")
+    return await ws.send(
+        json.dumps(
+            {
+                "type": "join_success",
+                "message": f"you're watching game {uid}, you're joined"
+                f" by {len(st.watchers) - 1} others",
+                "game_state": game_state_dict,
+                "game_status": "ready",
+                "board": board,
+                "possible_moves": all_possible_moves,
+            }
+        )
+    )
+
 
 async def join(ws, uid: str):
-    # this is true if it's the second or greater joiner
     if uid not in CONNECTIONS:
         if not q.uid_exists_and_is_an_active_game(uid):
             raise InvalidUid
-        CONNECTIONS[uid] = ConnectionStore(uid)
-        st = CONNECTIONS[uid]
-        st.white = ws
-        print("first player has joined the game")
-        # how does this work?
-        CONNECTION_WS_STORE_DICT[ws] = (st, "white")
-        return await ws.send(
-            json.dumps(
-                {
-                    "type": "join_success",
-                    "message": "you are player one, you're playing the white pieces",
-                    "game_status": "waiting",
-                }
-            )
-        )
+        return await first_joiner(ws, uid)
 
     st = CONNECTIONS[uid]
     game_state = q.get_game_state(uid)
     all_possible_moves = q.get_all_legal_moves(game_state, json=True)
     game_state_dict = dc.asdict(game_state)
     board = t.Board.from_FEN(game_state.FEN).to_array()
+
     if st.white and st.black and ws not in (st.white, st.black):
-        if st.watchers is None:
-            st.watchers = {ws}
-        else:
-            st.watchers.add(ws)
-        CONNECTION_WS_STORE_DICT[ws] = (st, "watchers")
-        print(f"watcher #{len(st.watchers)} has joined")
-        return await ws.send(
-            json.dumps(
-                {
-                    "type": "join_success",
-                    "message": f"you're watching game {uid}, you're joined"
-                    f" by {len(st.watchers) - 1} others",
-                    "game_state": game_state_dict,
-                    "game_status": "ready",
-                    "board": board,
-                    "possible_moves": all_possible_moves,
-                }
-            )
+        return await add_watcher(ws, uid, st, game_state_dict, board, all_possible_moves)
+
+    await second_joiner(ws, st, game_state_dict, board, all_possible_moves)
+
+    if not st.white:
+        raise Exception("white is not set")
+
+    await st.white.send(
+        json.dumps(
+            {
+                "type": "join_success",
+                "message": "okay, let's start! it's your turn.",
+                "side": "white",
+                "game_status": "ready",
+                "game_state": game_state_dict,
+                "board": board,
+                "possible_moves": all_possible_moves,
+            }
         )
+    )
+
+async def second_joiner(ws, st, game_state_dict, board, all_possible_moves):
     st.black = ws
     print("second player has joined the game")
     CONNECTION_WS_STORE_DICT[ws] = (st, "black")
@@ -107,19 +132,6 @@ async def join(ws, uid: str):
                 "type": "join_success",
                 "message": "you are player two, you're playing the black pieces",
                 "side": "black",
-                "game_status": "ready",
-                "game_state": game_state_dict,
-                "board": board,
-                "possible_moves": all_possible_moves,
-            }
-        )
-    )
-    return await st.white.send(
-        json.dumps(
-            {
-                "type": "join_success",
-                "message": "okay, let's start! it's your turn.",
-                "side": "white",
                 "game_status": "ready",
                 "game_state": game_state_dict,
                 "board": board,
