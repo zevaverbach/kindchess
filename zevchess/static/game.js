@@ -92,11 +92,13 @@ store.otherDrawOffer = false;
 store.canOfferDraw = false;
 
 store.uid = window.location.pathname.replace('/', '');
+store.pendingTimeout = null;
 
 const choosePawnPromotionPiece = document.getElementById("pawn-promote");
 choosePawnPromotionPiece.addEventListener('cancel', event => {
     event.preventDefault();
 });
+
 const choosePawnPromotionPieceSelect = choosePawnPromotionPiece.querySelector("select");
 choosePawnPromotionPieceSelect.addEventListener("change", function(_) {
     pawnPromotionPiece = choosePawnPromotionPieceSelect.value;

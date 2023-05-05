@@ -48,6 +48,28 @@ buttonDrawWithdraw.addEventListener('click', event => {
     }));
 });
 
+document.addEventListener('drawOffer', event => {
+    const message = event.detail.message;
+    if (message.source === 'self') {
+        store.ws.send(JSON.stringify({
+            'uid': store.uid,
+            type: "draw",
+            draw: "offer"
+        }));
+        buttonDrawOffer.style.display = 'none';
+        buttonDrawWithdraw.style.display = 'inline';
+        displayMessage("you have offered a draw.");
+        store.selfDrawOffer = true;
+        store.canOfferDraw = false;
+    } else if (message.source === 'other') {
+        displayMessage(message.message);
+        buttonDrawOffer.style.display = 'none';
+        buttonDrawAccept.style.display = 'inline';
+        buttonDrawReject.style.display = 'inline';
+        store.otherDrawOffer = true;
+    }
+})
+
 
 document.addEventListener('drawWithdraw', event => {
     if (event.detail.message.source === 'self') {
@@ -72,30 +94,10 @@ document.addEventListener('drawWithdraw', event => {
 
 
 
-document.addEventListener('drawOffer', event => {
-    const message = event.detail.message;
-    if (message.source === 'self') {
-        store.ws.send(JSON.stringify({
-            'uid': store.uid,
-            type: "draw",
-            draw: "offer"
-        }));
-        buttonDrawOffer.style.display = 'none';
-        buttonDrawWithdraw.style.display = 'inline';
-        displayMessage("you have offered a draw.");
-        store.selfDrawOffer = true;
-    } else if (message.source === 'other') {
-        displayMessage(message.message);
-        buttonDrawOffer.style.display = 'none';
-        buttonDrawAccept.style.display = 'inline';
-        buttonDrawReject.style.display = 'inline';
-        store.otherDrawOffer = true;
-    }
-})
-
 document.addEventListener('drawReject', event => {
     const message = event.detail.message;
     if (message.source === 'self') {
+        clearMessage();
         buttonDrawAccept.style.display = 'none';
         buttonDrawReject.style.display = 'none';
         if (store.canOfferDraw) {
@@ -160,8 +162,9 @@ export function hideModal() {
 export function displayMessage(message, timeout = true) {
     const messageBox = document.getElementById('messagebox');
     messageBox.innerHTML = message;
+    clearTimeout(store.pendingTimeout);
     if (timeout) {
-        setTimeout(function() {
+        store.pendingTimeout = setTimeout(function() {
             clearMessage();
         }, 3000);
     }
