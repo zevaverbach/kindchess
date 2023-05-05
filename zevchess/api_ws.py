@@ -297,11 +297,10 @@ async def handler(ws):
                     await error(ws, "invalid event")
                     continue
 
-    except (
-        w.exceptions.ConnectionClosedOK, # type: ignore
-        w.exceptions.ConnectionClosedError, # type: ignore 
-    ):
-        pass
+    except w.exceptions.ConnectionClosedOK: # type: ignore
+        print("connection closed ok")
+    except w.exceptions.ConnectionClosedError as e: # type: ignore
+        print("connection closed error", str(e))
 
     print(f"ws {ws} has disconnected")
     await remove_connection(ws)
@@ -541,7 +540,7 @@ async def offer_draw(ws, uid) -> None:
     try:
         c.offer_draw(uid, 0 if ws == store.white else 1)
     except (c.InvalidArguments, c.NoMoreDraws) as e:
-        await ws.send(str(e))
+        await error(ws, str(e))
     else:
         ws_broadcast(
             get_watchers(store),
@@ -563,7 +562,7 @@ async def withdraw_draw(ws, uid) -> None:
     try:
         c.withdraw_draw(uid, side)
     except c.InvalidArguments as e:
-        await ws.send(str(e))
+        await error(ws, str(e))
     else:
         ws_broadcast(
             get_watchers(store),
@@ -586,7 +585,7 @@ async def reject_draw(ws, uid) -> None:
     try:
         c.reject_draw(uid, side)
     except c.InvalidArguments as e:
-        await ws.send(str(e))
+        await error(ws, str(e))
     else:
         ws_broadcast(
             get_watchers(store),
@@ -641,7 +640,6 @@ async def health_check(path, _):
 
 
 async def main():
-    # Set the stop condition when receiving SIGTERM.
     loop = asyncio.get_running_loop()
     stop = loop.create_future()
     loop.add_signal_handler(signal.SIGTERM, stop.set_result, None)
@@ -649,7 +647,7 @@ async def main():
     async with w.serve( # type: ignore
         handler,
         host="0.0.0.0",
-        port=8080,
+        port=8081,
         origins=VALID_ORIGINS,
         process_request=health_check,
     ):
