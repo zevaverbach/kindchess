@@ -1,11 +1,12 @@
 # Bugs
+- [ ] watchers are not getting the game state when arriving late
 
 # Features
 - [x] brief instructions in 'waiting for black to join' modal about sharing the game URL
 - [x] make "page doesnt exist html
 - [x] revert coloring of recent move squares so that white and black squares are differentiated
 - [ ] enable reconnecting instead of 'abandoned' when you leave
-  - [x] front end
+  - [ ] front end
     - [x] store some info in localStorage
       - [x] uid
       - [x] side
@@ -27,20 +28,26 @@
           - [x] send message that the game should be over
     - [x] handle 'disconnect' message from WS server which it will send if other player disconnects
       - [x] replicate the logic for displaying the message and countdown
+    - [ ] after someone rejoins, make sure to remove the rejoin interval
+    - [ ] handle "NoOpponent" if a player tries to rejoin a game which has been abandoned by everyone
+      - [ ] ideally there should be a countdown for each player
+    - [ ] make it so 'resign' doesn't trigger 'connection lost' or 'white has disconnected'
   - [ ] back end
-    - [ ] when a player disconnects, don't end the game and don't clear out the entry in CONNECTIONS and ...
-    - [ ] instead, see if the UID they're supplying is valid and if there's a player missing
-    - [ ] tell other players/watchers about the disconnection to start the countdown
-    - [ ] when a user connects, see if they've sent 
-      - [ ] the UID 
-      - [ ] the side
+    - [x] when a player disconnects, don't end the game and don't clear out the entry in CONNECTIONS and ...
+    - [x] instead, see if the UID they're supplying is valid and if there's a player missing
+    - [x] tell other players/watchers about the disconnection to start the countdown
+    - [ ] when a user rejoins, see if they've sent 
+      - [x] the UID 
+      - [x] the side
       - [ ] the correct disconnected_timestamp, give or take
-      - [ ] send 'rejoin_success'
+      - [x] send 'rejoin_success'
     - [ ] enforce the same timeout on the back end as on the front end for reconnecting
       - [ ] use a store in redis, maybe with actual expiry
     - [ ] send a timeout from the back end once the game is truly over because time has run out
       - [ ] how?
+      - [ ] alternatively, have it be triggered from the still-connected player
 - [ ] anonymous matchups
+- [ ] indicate that you're a watcher in a game
 - [ ] move history
 - [ ] use promotion dialog that's built into cm-chessboard
 - [ ] build out the site, make it look nice

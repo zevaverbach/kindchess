@@ -1,5 +1,6 @@
 import asyncio
 import dataclasses as dc
+import datetime as dt
 import http
 import json
 import os
@@ -38,6 +39,10 @@ CONNECTION_WS_STORE_DICT: dict[
 ] = {}
 
 
+class NoOpponent(Exception):
+    pass
+
+
 class InvalidUid(Exception):
     pass
 
@@ -51,6 +56,8 @@ class InvalidMoveEvent(Exception):
 
 
 async def handler(ws):
+    uid = None
+    store = None
     try:
         async for message in ws:
             try:
@@ -76,6 +83,11 @@ async def handler(ws):
                     ):
                         store = CONNECTIONS[uid]
                         await game_over(store, "abandoned", which_side(ws, store))
+                case "rejoin":
+                    try:
+                        await rejoin(ws, uid, event['side'], event['disconnected_timestamp'])
+                    except InvalidUid:
+                        await error(ws, "game not found")
                 case "move":
                     del event["type"]
                     await move(ws, event)
@@ -97,18 +109,23 @@ async def handler(ws):
                     print(event, "invalid event")
                     await error(ws, "invalid event")
                     continue
+        # else:
+        #     print(f"ws {ws} has disconnected at {dt.datetime.now().timestamp()}")
+        #     return await remove_connection(ws)
+    
 
     except w.exceptions.ConnectionClosedOK: # type: ignore
         print("connection closed ok")
+        return await remove_connection(ws)
     except w.exceptions.ConnectionClosedError as e: # type: ignore
         print("connection closed error", str(e))
+        return await remove_connection(ws)
 
-    print(f"ws {ws} has disconnected")
-    await remove_connection(ws)
 
 
 async def remove_connection(ws):
     if ws not in CONNECTION_WS_STORE_DICT:
+        print(f"{ws} not in CONNECTION_WS_STORE_DICT")
         return
 
     store, attribute = CONNECTION_WS_STORE_DICT[ws]
@@ -126,14 +143,68 @@ async def remove_connection(ws):
                         }
                     ),
                 )
-        del CONNECTION_WS_STORE_DICT[ws]
     else:
-        await game_over(store=store, side=attribute, reason="abandoned")
+        setattr(store, attribute, None)
+        message = json.dumps(
+                {"type": "disconnect", "disconnected_timestamp": dt.datetime.now().timestamp()}
+            )
+        print(f"sending message '{message}'")
+        ws_broadcast(
+            get_all_participants(store), 
+            message,
+        )
+    del CONNECTION_WS_STORE_DICT[ws]
 
 
 
 async def error(ws, msg: str):
     await ws.send(json.dumps({"type": "error", "message": msg}))
+
+
+async def rejoin(ws, uid, side, disconnected_timestamp):
+    if uid not in CONNECTIONS:
+        if not q.uid_exists_and_is_an_active_game(uid):
+            raise InvalidUid
+    try:
+        st = CONNECTIONS[uid]
+    except KeyError:
+        return await error(ws, "invalid UID")
+    
+    if getattr(st, side) is not None:
+        print(f"{st=}")
+        return await error(ws, "invalid UID")
+    if getattr(st, other_color(side)) is None:
+        return await game_over(st, "abandoned", side)
+    print(f"{st=}")
+
+    game_state = q.get_game_state(uid)
+    all_possible_moves = q.get_all_legal_moves(game_state, json=True)
+    game_state_dict = dc.asdict(game_state)
+    board = t.Board.from_FEN(game_state.FEN).to_array()
+
+    setattr(st, side, ws)
+    CONNECTION_WS_STORE_DICT[ws] = (st, side)
+    print(f"{side} has rejoined the game")
+    await ws.send(
+        json.dumps(
+            {
+                "type": "rejoin_success",
+                "game_state": game_state_dict,
+                "board": board,
+                "possible_moves": all_possible_moves,
+            }
+        )
+    )
+    other_ws = getattr(st, other_color(side))
+    await other_ws.send(
+        json.dumps(
+            {
+                "type": "rejoin_success",
+                }
+            )
+        )
+
+
 
 
 async def join(ws, uid: str):
@@ -151,24 +222,24 @@ async def join(ws, uid: str):
     if st.white and st.black and ws not in (st.white, st.black):
         return await add_watcher(ws, uid, st, game_state_dict, board, all_possible_moves)
 
+    if not st.white:
+        return await game_over(st, "abandoned", "black")
+
     await second_joiner(ws, st, game_state_dict, board, all_possible_moves)
 
-    if not st.white:
-        raise Exception("white is not set")
-
     await st.white.send(
-        json.dumps(
-            {
-                "type": "join_success",
-                "message": "okay, let's start! it's your turn.",
-                "side": "white",
-                "game_status": "ready",
-                "game_state": game_state_dict,
-                "board": board,
-                "possible_moves": all_possible_moves,
-            }
-        )
-    )
+            json.dumps(
+                {
+                    "type": "join_success",
+                    "message": "okay, let's start! it's your turn.",
+                    "side": "white",
+                    "game_status": "ready",
+                    "game_state": game_state_dict,
+                    "board": board,
+                    "possible_moves": all_possible_moves,
+                    }
+                )
+            )
 
 
 async def first_joiner(ws, uid):
@@ -178,14 +249,14 @@ async def first_joiner(ws, uid):
     print("first player has joined the game")
     CONNECTION_WS_STORE_DICT[ws] = (st, "white")
     return await ws.send(
-        json.dumps(
-            {
-                "type": "join_success",
-                "message": "you are player one, you're playing the white pieces",
-                "game_status": "waiting",
-            }
-        )
-    )
+            json.dumps(
+                {
+                    "type": "join_success",
+                    "message": "you are player one, you're playing the white pieces",
+                    "game_status": "waiting",
+                    }
+                )
+            )
 
 
 async def add_watcher(ws, uid, st, game_state_dict, board, all_possible_moves):
@@ -196,18 +267,18 @@ async def add_watcher(ws, uid, st, game_state_dict, board, all_possible_moves):
     CONNECTION_WS_STORE_DICT[ws] = (st, "watchers")
     print(f"watcher #{len(st.watchers)} has joined")
     return await ws.send(
-        json.dumps(
-            {
-                "type": "join_success",
-                "message": f"you're watching game {uid}, you're joined"
-                f" by {len(st.watchers) - 1} others",
-                "game_state": game_state_dict,
-                "game_status": "ready",
-                "board": board,
-                "possible_moves": all_possible_moves,
-            }
-        )
-    )
+            json.dumps(
+                {
+                    "type": "join_success",
+                    "message": f"you're watching game {uid}, you're joined"
+                    f" by {len(st.watchers) - 1} others",
+                    "game_state": game_state_dict,
+                    "game_status": "ready",
+                    "board": board,
+                    "possible_moves": all_possible_moves,
+                    }
+                )
+            )
 
 
 async def second_joiner(ws, st, game_state_dict, board, all_possible_moves):
@@ -215,26 +286,26 @@ async def second_joiner(ws, st, game_state_dict, board, all_possible_moves):
     print("second player has joined the game")
     CONNECTION_WS_STORE_DICT[ws] = (st, "black")
     await ws.send(
-        json.dumps(
-            {
-                "type": "join_success",
-                "message": "you are player two, you're playing the black pieces",
-                "side": "black",
-                "game_status": "ready",
-                "game_state": game_state_dict,
-                "board": board,
-                "possible_moves": all_possible_moves,
-            }
-        )
-    )
+            json.dumps(
+                {
+                    "type": "join_success",
+                    "message": "you are player two, you're playing the black pieces",
+                    "side": "black",
+                    "game_status": "ready",
+                    "game_state": game_state_dict,
+                    "board": board,
+                    "possible_moves": all_possible_moves,
+                    }
+                )
+            )
 
 
 async def game_over(
-    store: ConnectionStore,
-    reason: typing.Literal["abandoned", "checkmate", "stalemate", "resigned", "draw", "draw_by_three_repetitions"],
-    side: typing.Literal["white", "black"],
-    the_move: t.Move | None = None,
-) -> None:
+        store: ConnectionStore,
+        reason: typing.Literal["abandoned", "checkmate", "stalemate", "resigned", "draw", "draw_by_three_repetitions"],
+        side: typing.Literal["white", "black"],
+        the_move: t.Move | None = None,
+        ) -> None:
     winner = None
     match reason:
         case "checkmate":
@@ -267,27 +338,27 @@ async def game_over(
     else:
         state_dict = dc.asdict(state)
     recipients = get_all_participants(store)
-    if reason not in ("abandoned", "resigned", "draw", "draw_by_three_repetitions"):
+    if reason in ("checkmate", "stalemate"):
         if the_move is None:
             raise InvalidArguments
         non_winner_participants = get_all_participants(
-            store, but=(getattr(store, side),))
+                store, but=(getattr(store, side),))
         payload = {"type": "move", "move": the_move.to_json()}
         if state:
             payload["game_state"] = state_dict
             ws_broadcast(non_winner_participants, json.dumps(payload))
     ws_broadcast(
-        recipients,
-        json.dumps(
-            {
-                "type": "game_over",
-                "message": msg,
-                "winner": winner,
-                "game_state": state_dict,
-                "reason": reason,
-            }
-        ),
-    )
+            recipients,
+            json.dumps(
+                {
+                    "type": "game_over",
+                    "message": msg,
+                    "winner": winner,
+                    "game_state": state_dict,
+                    "reason": reason,
+                    }
+                ),
+            )
 
     if state is not None and reason == "abandoned":
         # otherwise, the `checkmate` or `stalemate`
@@ -376,7 +447,7 @@ async def move(ws, event: dict) -> None:
     the_move = t.Move(**event)
     try:
         new_state = c.make_move_and_persist(
-            uid=uid, move=the_move, state=state)
+                uid=uid, move=the_move, state=state)
     except c.InvalidMove as e:
         print(f"{state=}")
         print(str(e))
@@ -389,20 +460,20 @@ async def move(ws, event: dict) -> None:
     except c.Stalemate as e:
         side = "black" if str(e) == "0" else "white"
         await game_over(
-            store=store, reason="stalemate", side=side, the_move=the_move
-        )
+                store=store, reason="stalemate", side=side, the_move=the_move
+                )
     except c.Checkmate as e:
         winner = "black" if str(e) == "0" else "white"
         await game_over(
-            store=store, side=winner, reason="checkmate", the_move=the_move
-        )
+                store=store, side=winner, reason="checkmate", the_move=the_move
+                )
     else:
         if new_state.need_to_choose_pawn_promotion_piece != "":
             return await pawn_promotion_prompt(
-                ws=ws,
-                need_to_choose=new_state.need_to_choose_pawn_promotion_piece,
-                move=event,
-            )
+                    ws=ws,
+                    need_to_choose=new_state.need_to_choose_pawn_promotion_piece,
+                    move=event,
+                    )
         if new_state.draw:
             return await draw(ws, uid, "three_repetitions")
         recipients = get_all_participants(store, but=(ws,))

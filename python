@@ -1,0 +1,1 @@
+import multiprocessing; multiprocessing.get_cpu_count()

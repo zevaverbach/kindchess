@@ -56,8 +56,10 @@ if (["127.0.0.1:5000", "localhost:8000"].includes(window.location.host)) {
     WEBSOCKET_SERVER_ADDR = 'wss://ws.kindchess.com';
 }
 // five minutes
-const _TIMEOUT_DISCONNECTED_GAMES_MINUTES = 5;
+const _TIMEOUT_DISCONNECTED_GAMES_MINUTES = 1;
 const TIMEOUT_DISCONNECTED_GAMES_MS = 1000 * 60 * _TIMEOUT_DISCONNECTED_GAMES_MINUTES;
+store.disconnectTimeoutCountdownSeconds = TIMEOUT_DISCONNECTED_GAMES_MS / 1000;
+const MAX_REJOIN_ATTEMPTS = 3;
 
 // hopefully prevents pinch to zoom
 document.addEventListener('touchmove', e => {
@@ -89,6 +91,7 @@ let checkedKing = "";
 function setCheckedKing(val) {
     checkedKing = val;
 }
+store.numTimesSentRejoinMessage = 0;
 store.side = null;
 store.otherSide = null;
 store.selfDrawOffer = false;
@@ -97,7 +100,7 @@ store.canOfferDraw = false;
 
 store.uid = window.location.pathname.replace('/', '');
 store.pendingTimeout = null;
-store.disconnectTimeoutID = null;
+store.disconnectIntervalID = null;
 
 const choosePawnPromotionPiece = document.getElementById("pawn-promote");
 choosePawnPromotionPiece.addEventListener('cancel', event => {
@@ -150,7 +153,10 @@ function pawnPromotionHandler() {
 }
 
 function itsBeenLessThan(timestamp, threshold) {
-    return new Date().getTime() - timestamp < threshold;
+    const result = new Date().getTime() - timestamp;
+    console.log("new Date().getTime():", result);
+    if (result < threshold);
+    return result;
 }
 
 function joinGame() {
@@ -159,37 +165,46 @@ function joinGame() {
 }
 
 function handlerWebsocketOpen(_) {
+    sendJoinOrRejoinMessage()
+}
+
+function sendJoinOrRejoinMessage() {
+    store.numTimesSentRejoinMessage += 1;
     let messageObj = {
         type: 'join',
         'uid': store.uid,
     };
     if (localStorage.getItem('uid') && localStorage.getItem('uid') === store.uid) {
         const disconnectedTimestamp = parseInt(localStorage.getItem('disconnectedTimestamp'));
-        if (localStorage.getItem('side') && itsBeenLessThan(disconnectedTimestamp, TIMEOUT_DISCONNECTED_GAMES_MS)) {
+        if (localStorage.getItem('side') !== "undefined" && itsBeenLessThan(disconnectedTimestamp, TIMEOUT_DISCONNECTED_GAMES_MS)) {
+            messageObj.type = 'rejoin';
             messageObj.side = localStorage.getItem('side');
             messageObj.disconnected_timestamp = disconnectedTimestamp;
         }
     }
     const message = JSON.stringify(messageObj);
+    console.log("sending message type:", messageObj.type);
     store.ws.send(message);
 };
 
 function handlerWebsocketClose(_) {
     const disconnectedTimestamp = new Date().getTime().toString();
     localStorage.setItem("disconnectedTimestamp", disconnectedTimestamp);
-    board.disableMoveInput();
-    displayModal("Connection lost. Attempting to reconnect...");
-    let disconnectTimeoutCountdownSeconds = TIMEOUT_DISCONNECTED_GAMES_MS / 1000;
+    if (board != null) {
+        board.disableMoveInput();
+    }
+    changeModalText("Connection lost. Attempting to reconnect...");
 
     removeEventListeners();
 
-    store.disconnectTimeoutID = setTimeout(function() {
-        disconnectTimeoutCountdownSeconds -= 1;
-        if (disconnectTimeoutCountdownSeconds <= 0) {
+    store.disconnectIntervalID = setTimeout(function() {
+        store.disconnectTimeoutCountdownSeconds -= 1;
+        if (store.disconnectTimeoutCountdownSeconds <= 0) {
             changeModalText("Connection lost. Attempting to reconnect...");
-            clearTimeout(store.disconnectTimeoutID);
+            clearTimeout(store.disconnectIntervalID);
+            store.disconnectIntervalID = null;
         };
-        changeModalText(`Connection lost. Attempting to reconnect... (${disconnectTimeoutCountdownSeconds} seconds)`);
+        changeModalText(`Connection lost. Attempting to reconnect... (${store.disconnectTimeoutCountdownSeconds} seconds)`);
         start();
     }, 1000)
 }
@@ -253,28 +268,34 @@ function messageHandler(message) {
 
         case 'rejoin_success':
             hideModal();
-            clearInterval(store.disconnectTimeoutID);
+            clearInterval(store.disconnectIntervalID);
             localStorage.removeItem('disconnectedTimestamp');
+            store.side = localStorage.getItem('side');
+            if (ev.hasOwnProperty('game_state')) {
+                updateGlobals(ev);
+            }
+            drawBoardIfNecessary(gameState.FEN);
             if (myTurn) {
                 sendMoves(); // this re-enables input on the board
             }
             break;
 
         case 'disconnect':
-            const disconnectedTimestamp = new Date().getTime().toString();
-            localStorage.setItem('disconnectedTimestamp', disconnectedTimestamp);
+            console.log('received disconnect message', ev);
+            localStorage.setItem('disconnectedTimestamp', ev.disconnected_timestamp);
             board.disableMoveInput();
-            displayMessage(`${otherSide} has disconnected. Waiting...`);
-            let disconnectTimeoutCountdownSeconds = TIMEOUT_DISCONNECTED_GAMES_MS / 1000;
-            store.disconnectTimeoutID = setTimeout(function() {
-                clearMessage();
-                disconnectTimeoutCountdownSeconds -= 1;
-                if (disconnectTimeoutCountdownSeconds <= 0) {
-                    changeModalText(`${otherSide} has disconnected. Waiting...`, false);
-                    clearTimeout(store.disconnectTimeoutID);
+            displayModal(`${store.otherSide} has disconnected. Waiting...`);
+            console.log("disconnectTimeoutCountdownSeconds", store.disconnectTimeoutCountdownSeconds);
+            clearMessage();
+            store.disconnectIntervalID = setInterval(function() {
+                store.disconnectTimeoutCountdownSeconds -= 1;
+                console.log("disconnectTimeoutCountdownSeconds", store.disconnectTimeoutCountdownSeconds);
+                if (store.disconnectTimeoutCountdownSeconds <= 0) {
+                    changeModalText(`${store.otherSide} has disconnected. Waiting...`, false);
+                    clearTimeout(store.disconnectIntervalID);
                 };
-                changeModalText(`${otherSide} has disconnected. Waiting (${disconnectTimeoutCountdownSeconds} seconds)`);;
-            }, 1000)
+                changeModalText(`${store.otherSide} has disconnected. Waiting (${store.disconnectTimeoutCountdownSeconds} seconds before terminating the game in ${store.side}'s favor)`);
+            }, 1000);
             break;
 
         case 'for_the_watchers':
@@ -296,7 +317,7 @@ function messageHandler(message) {
         case 'move':
             const move = ev.move;
             updateGlobals(ev);
-            updateAbilityToOfferDraw()
+            updateAbilityToOfferDraw();
             updatePendingDrawReceive();
             const [from, to] = doTheMoveReceived(move, board);
             highlightPrevMove(from, to, prevMoveOrigin, prevMoveDest, setPrevMove, board);
@@ -347,27 +368,49 @@ function messageHandler(message) {
             choosePawnPromotionPiece.showModal();
             break;
 
+        case 'error':
+            if (ev.message === "invalid UID") {
+                console.log("numTimesSentRejoinMessage", store.numTimesSentRejoinMessage);
+                clearLocalStorage();
+                if (store.numTimesSentRejoinMessage > MAX_REJOIN_ATTEMPTS) {
+                    return doGameOver(ev);
+                }
+                return sendJoinOrRejoinMessage();
+            } else {
+                console.log("error", ev);
+            }
+            break;
         case 'game_over':
             if (gameOver) { // already gameOver
                 break;
             }
-            const winner = ev.winner;
-            gameState = ev.game_state;
-            hideButtons();
-            clearMessage()
-            if (winner != null && ev.reason === "checkmate") {
-                showCheckmate(winner, gameState);
-            } else if (ev.message === "stalemate!") {
-                showStalemate(gameState);
-            }
-            displayModal("GAME OVER: " + ev.message);
-            gameOver = true;
-            clearLocalStorage();
-            board.disableMoveInput();
-            window.removeEventListener("beforeunload", beforeUnloadListener);
-
-            store.ws.close();
+            doGameOver(ev);
             break;
+    }
+}
+
+function doGameOver(ev) {
+    console.log("game_over", ev);
+    const winner = ev.winner;
+    gameState = ev.game_state;
+    hideButtons();
+    clearMessage();
+    if (winner != null && ev.reason === "checkmate") {
+        showCheckmate(winner, gameState);
+    } else if (ev.message === "stalemate!") {
+        showStalemate(gameState);
+    }
+    displayModal("GAME OVER: " + ev.message);
+    gameOver = true;
+    clearLocalStorage();
+    board.disableMoveInput();
+    window.removeEventListener("beforeunload", beforeUnloadListener);
+    console.log("closing websocket connection at ", new Date().getTime());
+    store.ws.close();
+    if (["game not found, redirecting to home page", "invalid UID"].includes(ev.message)) {
+        setTimeout(function() {
+            window.location.href = "/";
+        }, 2000);
     }
 }
 
@@ -382,9 +425,15 @@ function clearLocalStorage() {
     localStorage.removeItem('disconnectedTimestamp');
 }
 
+function unloadListener(e) {
+    e.preventDefault();
+    store.ws.close();
+}
+
 
 function handleEventJoinSuccess(event) {
     window.addEventListener("beforeunload", beforeUnloadListener);
+    window.addEventListener("unload", unloadListener);
     if (event.game_status === 'waiting') {
         store.side = 'white';
         store.otherSide = 'black';
@@ -407,15 +456,20 @@ function handleEventJoinSuccess(event) {
         sendMoves();
     } else {
         // game_status is 'waiting', so draw the board this one time.
+        drawBoardIfNecessary();
+    }
+}
+
+function drawBoardIfNecessary(position = FEN.start) {
+    if (board == null) {
         board = new Chessboard(document.getElementById('board'), {
-            position: FEN.start,
+            position,
             orientation: store.side ? store.side[0] : "w", // if it's a watcher, display from white's POV
             style: {
                 moveFromMarker: MARKER_TYPE.square,
                 moveToMarker: MARKER_TYPE.square
             }, // disable standard markers
         });
-        window.B = board;
     }
 }
 
@@ -423,6 +477,7 @@ function sendMoves() {
     if (!myTurn) {
         return board.disableMoveInput();
     }
+    console.log("enabling board input", new Date().getTime())
     board.enableMoveInput(
         function(event) {
             switch (event.type) {
