@@ -1,0 +1,32 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetPolicyVersion",
+                "iam:GetPolicy",
+                "iam:ListGroupsForUser",
+                "iam:ListGroupPolicies",
+                "iam:ListAttachedUserPolicies",
+                "iam:ListAttachedGroupPolicies",
+                "iam:ListUserPolicies",
+                "iam:GetGroup",
+                "iam:PutGroupPolicy",
+                "elasticbeanstalk:DeleteApplication"
+            ],
+            "Resource": [
+                "arn:aws:iam::904645255421:group/group-kindchess-admin",
+                "arn:aws:iam::904645255421:policy/*",
+                "arn:aws:iam::904645255421:user/*"
+            ]
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": "iam:ListPolicies",
+            "Resource": "*"
+        }
+    ]
+}
