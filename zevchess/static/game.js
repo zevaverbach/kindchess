@@ -310,7 +310,7 @@ function handleEventJoinSuccess(event) {
         }
     }
     if (event.game_status === 'waiting' && store.side && store.side === 'white') {
-        displayModal('waiting for black to join');
+        displayModal('waiting for black to join (share the 👆 URL with your opponent!)');
     }
     if (store.side == 'white' && event.game_status === 'ready') {
         myTurn = true;
