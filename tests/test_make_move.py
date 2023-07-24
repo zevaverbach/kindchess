@@ -114,7 +114,7 @@ def test_before_pawn_promotion_piece_is_chosen():
         need_to_choose_pawn_promotion_piece="yes",
     )
     move = t.Move(piece="P", src="c2", dest="c3")
-    with pytest.raises(c.InvalidState):
+    with pytest.raises(c.PawnPromotionPending):
         c.make_move_and_persist(uid="hi", move=move, state=state)
 
 

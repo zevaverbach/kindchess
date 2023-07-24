@@ -9,7 +9,7 @@ related topics.
 
 ## Production
 - a Redis server 
-- a Postgres instance
+- a Postgres instance (with a database called "games")
 - Python 3.11
 - `./requirements.txt`
 
@@ -30,6 +30,8 @@ related topics.
 # Local Dev Environment
 1) start a local Redis server using default port (`$ redis-server`)
 1) activate the virtual environment (`cd kindchess && source env/bin/activate`)
+1) first time: `$ python init_db.py`
+1) run tests: `$ python -m pytest`
 1) `$ flask run`
 1) open another tab, activate the venv and `$ python ws_server.py`
 
