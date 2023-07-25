@@ -3,3 +3,4 @@ env/
 *__pycache__/
 zevchess/__pycache__/
 .env*
+.vscode/

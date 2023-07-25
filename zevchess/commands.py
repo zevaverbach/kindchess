@@ -60,7 +60,6 @@ def validate_move_arg(move, turn: int) -> None:
 
 
 def delete_game_from_redis(uid: str) -> None:
-    print('delet_game_from_redis')
     delete_moves_from_redis(uid)
     delete_state_from_redis(uid)
     delete_position_stores_from_redis(uid)
@@ -284,10 +283,10 @@ def get_new_state(state: t.GameState, move: t.Move, board: t.Board, uid: str) ->
         recalculate_castling_state(new_state, move)
         recalculate_king_position(new_state, move)
 
-    new_state.turn = abs(new_state.turn - 1)
-    # TODO: should this be moved above the turn change?
     update_draw_offer_state(new_state)
+    new_state.turn = abs(new_state.turn - 1)
     position_string = make_position_string(new_state)
+
     try:
         add_position_to_position_store(uid, position_string)
     except ThreeRepetitions:

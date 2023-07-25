@@ -4,6 +4,16 @@ from zevchess import commands as c
 from zevchess import queries as q
 from zevchess import ztypes as t
 
+@pytest.fixture
+def test_uid():
+    return "hi"
+
+
+@pytest.fixture
+def clear_redis(test_uid):
+    yield
+    c.delete_game_from_redis(test_uid)
+
 
 def test_make_move_en_passant():
     state = t.GameState(
@@ -86,7 +96,7 @@ def test_pawn_promotion_no_capture():
     assert new_state.FEN == state.FEN
 
 
-def test_after_pawn_promotion_piece_is_chosen():
+def test_after_pawn_promotion_piece_is_chosen(test_uid):
     state = t.GameState(
         FEN="r2qkbnr/pPpppppp/8/8/8/8/P1PPPPPP/RNBQKBNR",
         half_moves=20,
@@ -98,7 +108,7 @@ def test_after_pawn_promotion_piece_is_chosen():
     board = t.Board.from_FEN(state.FEN)
     new_state = c.get_new_state(state, move, board, "abc")
     newer_state = c.choose_promotion_piece(
-        uid="hi", piece_type="q", state=new_state, testing=True
+        uid=test_uid, piece_type="q", state=new_state, testing=True
     )
     assert newer_state.FEN == "rQ1qkbnr/p1pppppp/8/8/8/8/P1PPPPPP/RNBQKBNR"
     assert not newer_state.need_to_choose_pawn_promotion_piece
@@ -115,21 +125,20 @@ def test_before_pawn_promotion_piece_is_chosen():
     )
     move = t.Move(piece="P", src="c2", dest="c3")
     with pytest.raises(c.PawnPromotionPending):
-        c.make_move_and_persist(uid="hi", move=move, state=state)
+        c.make_move_and_persist(uid=test_uid, move=move, state=state)
 
 
-def test_before_draw_offer_is_addressed():
+def test_before_draw_offer_is_addressed(clear_redis, test_uid):
     """
     If you move when someone has offered a draw, the draw is automatically rejected and the move is accepted.
     """
-    state = t.GameState(FEN=t.STARTING_FEN, draw_offered=1)
+    state = t.GameState(FEN=t.STARTING_FEN, draw_offered=1, half_moves=3)
     move = t.Move(piece="P", src="c2", dest="c3")
-    # doesn't raise InvalidState
-    new_state = c.make_move_and_persist(uid="hi", move=move, state=state)
+    new_state = c.make_move_and_persist(uid=test_uid, move=move, state=state)
     assert new_state.draw_offered == -1
 
 
-def test_make_move_for_specific_bug_2():
+def test_make_move_for_specific_bug_2(clear_redis, test_uid):
     state = t.GameState(
         FEN="rnbqkbnr/ppppp2p/5p2/6p1/3P4/4P3/PPP2PPP/RNBQKBNR",
         king_square_white="e1",
@@ -139,7 +148,7 @@ def test_make_move_for_specific_bug_2():
     )
     with pytest.raises(c.Checkmate):
         c.make_move_and_persist(
-            uid="hi",
+            uid=test_uid,
             state=state,
             move=t.Move(piece="Q", src="d1", dest="h5", capture=0, castle=None),
             testing=True,
@@ -385,7 +394,7 @@ def test_make_move_bug_12():
     assert new_state.check == 1
 
 
-def test_make_move_and_persist_bug_12():
+def test_make_move_and_persist_bug_12(clear_redis, test_uid):
     state = t.GameState(
         king_square_white="g1",
         king_square_black="e8",
@@ -393,11 +402,11 @@ def test_make_move_and_persist_bug_12():
         FEN="rnbqkbnr/p3pppp/8/3p4/4P3/1p3N2/P1PPBPPP/RNBQ1RK1",
     )
     move = t.Move(**{"src": "e2", "dest": "b5", "piece": "B"})
-    new_state = c.make_move_and_persist(uid="hi", move=move, state=state)
+    new_state = c.make_move_and_persist(uid=test_uid, move=move, state=state)
     assert new_state.check == 1
 
 
-def test_make_move_and_persist_bug_13():
+def test_make_move_and_persist_bug_13(clear_redis, test_uid):
     state = t.GameState(
         half_moves=10,
         king_square_white="f1",
@@ -407,4 +416,4 @@ def test_make_move_and_persist_bug_13():
     )
     move = t.Move(src="c2", dest="d3", piece="b")
     with pytest.raises(c.Checkmate):
-        c.make_move_and_persist(uid="hi", move=move, state=state)
+        c.make_move_and_persist(uid=test_uid, move=move, state=state)
