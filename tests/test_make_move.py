@@ -25,7 +25,7 @@ def test_make_move_en_passant():
     )
     board = t.Board.from_FEN(state.FEN)
     move = t.Move(piece="P", src="e5", dest="d6", capture=1)
-    new_state = c.get_new_state(state, move, board, "abc")
+    new_state = c.get_new_state(state, move, board, test_uid)
     new_board = t.Board.from_FEN(new_state.FEN)
     assert new_state.en_passant_square == ""
     assert new_board.d6 == t.Pawn(color=False, square="d6")
@@ -64,7 +64,7 @@ def test_pawn_promotion_with_capture():
     )
     move = t.Move(piece="P", src="b7", dest="a8", capture=1)
     board = t.Board.from_FEN(state.FEN)
-    new_state = c.get_new_state(state, move, board, "abc")
+    new_state = c.get_new_state(state, move, board, test_uid)
     assert new_state.turn == state.turn
     assert new_state.need_to_choose_pawn_promotion_piece
     assert (
@@ -85,7 +85,7 @@ def test_pawn_promotion_no_capture():
     )
     move = t.Move(piece="P", src="b7", dest="b8")
     board = t.Board.from_FEN(state.FEN)
-    new_state = c.get_new_state(state, move, board, "abc")
+    new_state = c.get_new_state(state, move, board, test_uid)
     assert new_state.turn == state.turn
     assert new_state.need_to_choose_pawn_promotion_piece
     assert (
@@ -96,7 +96,7 @@ def test_pawn_promotion_no_capture():
     assert new_state.FEN == state.FEN
 
 
-def test_after_pawn_promotion_piece_is_chosen(test_uid):
+def test_after_pawn_promotion_piece_is_chosen(clear_redis, test_uid):
     state = t.GameState(
         FEN="r2qkbnr/pPpppppp/8/8/8/8/P1PPPPPP/RNBQKBNR",
         half_moves=20,
@@ -106,7 +106,7 @@ def test_after_pawn_promotion_piece_is_chosen(test_uid):
     )
     move = t.Move(piece="P", src="b7", dest="b8")
     board = t.Board.from_FEN(state.FEN)
-    new_state = c.get_new_state(state, move, board, "abc")
+    new_state = c.get_new_state(state, move, board, test_uid)
     newer_state = c.choose_promotion_piece(
         uid=test_uid, piece_type="q", state=new_state, testing=True
     )
@@ -114,7 +114,7 @@ def test_after_pawn_promotion_piece_is_chosen(test_uid):
     assert not newer_state.need_to_choose_pawn_promotion_piece
 
 
-def test_before_pawn_promotion_piece_is_chosen():
+def test_before_pawn_promotion_piece_is_chosen(clear_redis, test_uid):
     state = t.GameState(
         FEN="r2qkbnr/pPpppppp/8/8/8/8/P1PPPPPP/RNBQKBNR",
         half_moves=20,
@@ -155,7 +155,7 @@ def test_make_move_for_specific_bug_2(clear_redis, test_uid):
         )
 
 
-def test_get_new_state_for_specific_bug_2():
+def test_get_new_state_for_specific_bug_2(clear_redis, test_uid):
     fen = "rnbqkbnr/ppppp2p/5p2/6p1/3P4/4P3/PPP2PPP/RNBQKBNR"
     state = t.GameState(
         FEN=fen,
@@ -165,7 +165,7 @@ def test_get_new_state_for_specific_bug_2():
         turn=0,
     )
     move = t.Move(piece="Q", src="d1", dest="h5", capture=0, castle=None)
-    new_state = c.get_new_state(state, move, t.Board.from_FEN(fen), "abc")
+    new_state = c.get_new_state(state, move, t.Board.from_FEN(fen), test_uid)
     assert new_state.FEN == "rnbqkbnr/ppppp2p/5p2/6pQ/3P4/4P3/PPP2PPP/RNB1KBNR"
     assert new_state.checkmate == 1
     assert new_state.turn == 1
@@ -205,7 +205,7 @@ def test_get_new_state_for_specific_bug_3():
         FEN=fen,
     )
     move = t.Move(**{"src": "a6", "dest": "h6", "piece": "r"})
-    new_state = c.get_new_state(state, move, t.Board.from_FEN(fen), "abc")
+    new_state = c.get_new_state(state, move, t.Board.from_FEN(fen), test_uid)
     assert new_state.FEN == "1nbqkbnr/1pQpppp1/7r/7p/8/4P3/PPPP1PPP/RNB1KBNR"
 
 
@@ -264,7 +264,7 @@ def test_stalemate_bug_4():
     assert q.its_stalemate(state, t.Board.from_FEN(state.FEN))
 
 
-def test_stalemate_bug_4_make_move():
+def test_stalemate_bug_4_make_move(clear_redis, test_uid):
     fen = "2Q2bnr/4p1pq/5pkr/7p/7P/4P3/PPPP1PP1/RNB1KBNR"
     state = t.GameState(
         king_square_white="e1",
@@ -273,12 +273,12 @@ def test_stalemate_bug_4_make_move():
         FEN="5bnr/4p1pq/4Qpkr/7p/7P/4P3/PPPP1PP1/RNB1KBNR",
     )
     move = t.Move(**{"src": "c8", "dest": "e6", "piece": "Q"})
-    new_state = c.get_new_state(state, move, t.Board.from_FEN(fen), "abc")
+    new_state = c.get_new_state(state, move, t.Board.from_FEN(fen), test_uid)
     assert new_state.FEN == "5bnr/4p1pq/4Qpkr/7p/7P/4P3/PPPP1PP1/RNB1KBNR"
     assert new_state.stalemate == 1
 
 
-def test_make_move_bug_9():
+def test_make_move_bug_9(clear_redis, test_uid):
     fen = "2kr3r/p2pQ2p/1p2p3/8/5b2/P7/1N3PPP/4K2R"
     state = t.GameState(
         king_square_white="e1",
@@ -288,13 +288,13 @@ def test_make_move_bug_9():
         FEN=fen,
     )
     move = t.Move(castle="k")
-    new_state = c.get_new_state(state, move, t.Board.from_FEN(fen), "abc")
+    new_state = c.get_new_state(state, move, t.Board.from_FEN(fen), test_uid)
     assert new_state.FEN == "2kr3r/p2pQ2p/1p2p3/8/5b2/P7/1N3PPP/5RK1"
     assert new_state.white_can_castle_kingside == 0
     assert new_state.white_can_castle_queenside == 0
 
 
-def test_make_move_bug_10():
+def test_make_move_bug_10(clear_redis, test_uid):
     state = t.GameState(
         king_square_white="g1",
         king_square_black="g8",
@@ -307,11 +307,11 @@ def test_make_move_bug_10():
         half_moves=20,
     )
     move = t.Move(**{"src": "e7", "dest": "e8", "piece": "Q"})
-    new_state = c.get_new_state(state, move, t.Board.from_FEN(state.FEN), "abc")
+    new_state = c.get_new_state(state, move, t.Board.from_FEN(state.FEN), test_uid)
     assert new_state.checkmate == 1
 
 
-def test_make_move_bug_11():
+def test_make_move_bug_11(clear_redis, test_uid):
     """
     After castling it seems like we don't know where the king is.
     """
@@ -334,9 +334,9 @@ def test_make_move_bug_11():
         t.Move(**{"src": "a3", "dest": "a4", "piece": "Q"}),
         t.Move(**{"src": "f6", "dest": "g6", "piece": "r"}),
     ]:
-        new_state = c.get_new_state(new_state, move, t.Board.from_FEN(state.FEN), "abc")
+        new_state = c.get_new_state(new_state, move, t.Board.from_FEN(state.FEN), test_uid)
     move = t.Move(**{"src": "a4", "dest": "e8", "piece": "Q"})
-    new_state = c.get_new_state(new_state, move, t.Board.from_FEN(state.FEN), "abc")
+    new_state = c.get_new_state(new_state, move, t.Board.from_FEN(state.FEN), test_uid)
     assert new_state.checkmate == 1
 
 
@@ -348,7 +348,7 @@ def test_make_move_bug_6():
         FEN="2kr4/p2p4/1p2p2p/6r1/6b1/P2Q4/1N3PPP/5RK1",
     )
     move = t.Move(**{"src": "d3", "dest": "c3", "piece": "Q"})
-    new_state = c.get_new_state(state, move, t.Board.from_FEN(state.FEN), "abc")
+    new_state = c.get_new_state(state, move, t.Board.from_FEN(state.FEN), test_uid)
     assert new_state.check == 1
 
 
@@ -382,7 +382,7 @@ def test_state_after_move_for_bug_12():
     assert q.its_check(state, t.Board.from_FEN(state.FEN))
 
 
-def test_make_move_bug_12():
+def test_make_move_bug_12(clear_redis, test_uid):
     state = t.GameState(
         king_square_white="g1",
         king_square_black="e8",
@@ -390,7 +390,7 @@ def test_make_move_bug_12():
         FEN="rnbqkbnr/p3pppp/8/3p4/4P3/1p3N2/P1PPBPPP/RNBQ1RK1",
     )
     move = t.Move(**{"src": "e2", "dest": "b5", "piece": "B"})
-    new_state = c.get_new_state(state, move, t.Board.from_FEN(state.FEN), "abc")
+    new_state = c.get_new_state(state, move, t.Board.from_FEN(state.FEN), test_uid)
     assert new_state.check == 1
 
 
